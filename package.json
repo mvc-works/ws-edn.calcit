@@ -2,6 +2,11 @@
   "dependencies": {
     "@calcit/procs": "^0.2.62"
   },
+  "scripts": {
+    "watch-server": "cr --emit-js",
+    "build-server": "target=node entry=./server.js yarn webpack && node js-out/bundle.js",
+    "watch-page": "cr --emit-js --emit-path:out-page/ --init-fn:ws-edn.page/main! --reload-fn:ws-edn.page/reload!"
+  },
   "devDependencies": {
     "shortid": "^2.2.16",
     "vite": "^2.0.0",

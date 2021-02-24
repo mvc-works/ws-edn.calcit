@@ -5,7 +5,7 @@
     |ws-edn.client $ {}
       :ns $ quote
         ns ws-edn.client $ :require
-          [] cljs.reader :refer $ [] read-string
+          [] ws-edn.util :refer $ [] when-let parse-data stringify-data
       :defs $ {}
         |*global-ws $ quote (defatom *global-ws nil)
         |ws-connect! $ quote
@@ -28,8 +28,7 @@
                 fn (event)
                   when-let
                     on-data $ :on-data options
-                    on-data $ to-calcit-data
-                      js/JSON.parse $ .-data event
+                    on-data $ parse-data (.-data event)
               set! (.-onerror ws)
                 fn (error) (js/console.error "\"Failed to establish connection" error)
                   when-let
@@ -42,16 +41,8 @@
             let
                 ws @*global-ws
               if (some? ws)
-                .send ws $ js/JSON.stringify (to-js-data data)
+                .send ws $ stringify-data data
                 js/console.warn "|WebSocket at close state!"
-        |when-let $ quote
-          defmacro when-let (pair & body)
-            assert "\"expected 2 tokens" $ and (list? pair)
-              = 2 $ count pair
-            quote-replace $ &let ~pair
-              when
-                some? $ ~ (first pair)
-                , ~@body
       :proc $ quote ()
     |ws-edn.main $ {}
       :ns $ quote
@@ -68,7 +59,7 @@
               :on-close $ fn (sid event) (println "\"close" sid)
             js/setInterval
               fn () (println "\"heartbeat")
-                wss-each! $ fn (sid socket) (println sid socket)
+                wss-each! $ fn (sid socket) (js/console.log sid)
               , 2000
         |reload! $ quote
           defn reload! () $ println "\"reload!"
@@ -93,7 +84,9 @@
       :proc $ quote ()
     |ws-edn.server $ {}
       :ns $ quote
-        ns ws-edn.server $ :require ([] "\"ws" :as ws) ([] "\"shortid" :as shortid)
+        ns ws-edn.server $ :require ([] "\"ws" :as ws)
+          [] ws-edn.util :refer $ [] when-let parse-data stringify-data
+          [] "\"shortid" :as shortid
       :defs $ {}
         |*global-connections $ quote
           defatom *global-connections $ {}
@@ -108,8 +101,8 @@
               .on socket "\"message" $ fn (rawData)
                 when-let
                   on-data $ :on-data options
-                  on-data sid $ to-calcit-data (js/JSON.parse rawData)
-              .on socket "\"close" $ fn (event) (swap! *global-connections dissoc sid)
+                  on-data sid $ parse-data rawData
+              .on socket "\"close" $ fn (event ? arg) (swap! *global-connections dissoc sid)
                 when-let
                   on-close $ :on-close options
                   on-close sid event
@@ -119,14 +112,15 @@
                   if (some? on-error) (on-error error) (js/console.error error)
         |wss-each! $ quote
           defn wss-each! (handler)
-            &doseq (pair @*global-connections)
+            &doseq
+              pair $ to-pairs @*global-connections
               let[] (sid socket) pair $ handler sid socket
         |wss-send! $ quote
           defn wss-send! (sid data)
             let
                 socket $ get @*global-connections sid
               if (some? socket)
-                .send socket $ js/JSON.stringify (to-js-data data)
+                .send socket $ stringify-data data
                 js/console.warn "\"socket not found for" sid
         |wss-serve! $ quote
           defn wss-serve! (port options)
@@ -143,6 +137,10 @@
                 let
                     on-error $ :on-error options
                   if (some? on-error) (on-error error) (js/console.error error)
+      :proc $ quote ()
+    |ws-edn.util $ {}
+      :ns $ quote (ns ws-edn.util)
+      :defs $ {}
         |when-let $ quote
           defmacro when-let (pair & body)
             assert "\"expected 2 tokens" $ and (list? pair)
@@ -151,4 +149,11 @@
               when
                 some? $ ~ (first pair)
                 , ~@body
+        |parse-data $ quote
+          defn parse-data (x)
+            extract-cirru-edn $ js/JSON.parse x
+        |stringify-data $ quote
+          defn stringify-data (x)
+            js/JSON.stringify $ to-cirru-edn x
       :proc $ quote ()
+      :configs $ {}
