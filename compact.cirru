@@ -1,6 +1,6 @@
 
 {} (:package |ws-edn)
-  :configs $ {} (:init-fn |ws-edn.main/main!) (:reload-fn |ws-edn.main/reload!) (:modules nil) (:version nil)
+  :configs $ {} (:init-fn |ws-edn.app.server/main!) (:reload-fn |ws-edn.app.server/reload!) (:modules nil) (:version |0.0.2)
   :files $ {}
     |ws-edn.client $ {}
       :ns $ quote
@@ -51,51 +51,6 @@
                   fn (event)
                     on-data $ parse-cirru-edn (.-data event)
                 js/console.warn "\"missing running ws instance"
-      :proc $ quote ()
-    |ws-edn.main $ {}
-      :ns $ quote
-        ns ws-edn.main $ :require
-          [] ws-edn.server :refer $ [] wss-serve! wss-send! wss-each! wss-set-on-data!
-      :defs $ {}
-        |main! $ quote
-          defn main! () (println "\"started")
-            wss-serve! 5001 $ {}
-              :on-listening $ fn () (println "\"server listening")
-              :on-open $ fn (sid socket) (println "\"opened" sid)
-                wss-send! sid $ {} (:op "\"initial message")
-              :on-data $ fn (sid data) (println "\"just data" sid data)
-              :on-close $ fn (sid event) (println "\"close" sid)
-            js/setInterval
-              fn () (println "\"heartbeat")
-                wss-each! $ fn (sid socket) (js/console.log sid)
-                  wss-send! sid $ {} (:message "\"event 2s")
-              , 2000
-        |reload! $ quote
-          defn reload! ()
-            wss-set-on-data! $ fn (sid data) (println "\"reloaded 11:" sid data)
-            println "\"reload!"
-      :proc $ quote ()
-    |ws-edn.page $ {}
-      :ns $ quote
-        ns ws-edn.page $ :require
-          [] ws-edn.client :refer $ [] ws-connect! ws-send! ws-connected? ws-set-on-data!
-      :defs $ {}
-        |main! $ quote
-          defn main! () (println "\"start")
-            ws-connect! "\"ws://localhost:5001" $ {}
-              :on-open $ fn (event) (println "\"open")
-                ws-send! $ {} (:op :test)
-              :on-data $ fn (data) (println "\"data" data)
-              :on-close $ fn (event) (println "\"close")
-            js/setInterval
-              fn ()
-                println "\"connected try send" $ ws-connected?
-                ws-send! $ {} (:data "\"just message")
-              , 2000
-        |reload! $ quote
-          defn reload! ()
-            ws-set-on-data! $ fn (data) (println "\"reloaded 7:" data)
-            println "\"reload"
       :proc $ quote ()
     |ws-edn.server $ {}
       :ns $ quote
@@ -169,3 +124,48 @@
                 , ~@body
       :proc $ quote ()
       :configs $ {}
+    |ws-edn.app.server $ {}
+      :ns $ quote
+        ns ws-edn.app.server $ :require
+          [] ws-edn.server :refer $ [] wss-serve! wss-send! wss-each! wss-set-on-data!
+      :defs $ {}
+        |main! $ quote
+          defn main! () (println "\"started")
+            wss-serve! 5001 $ {}
+              :on-listening $ fn () (println "\"server listening")
+              :on-open $ fn (sid socket) (println "\"opened" sid)
+                wss-send! sid $ {} (:op "\"initial message")
+              :on-data $ fn (sid data) (println "\"just data" sid data)
+              :on-close $ fn (sid event) (println "\"close" sid)
+            js/setInterval
+              fn () (println "\"heartbeat")
+                wss-each! $ fn (sid socket) (js/console.log sid)
+                  wss-send! sid $ {} (:message "\"event 2s")
+              , 2000
+        |reload! $ quote
+          defn reload! ()
+            wss-set-on-data! $ fn (sid data) (println "\"reloaded 8:" sid data)
+            println "\"reload!"
+      :proc $ quote ()
+    |ws-edn.app.page $ {}
+      :ns $ quote
+        ns ws-edn.app.page $ :require
+          [] ws-edn.client :refer $ [] ws-connect! ws-send! ws-connected? ws-set-on-data!
+      :defs $ {}
+        |main! $ quote
+          defn main! () (println "\"start")
+            ws-connect! "\"ws://localhost:5001" $ {}
+              :on-open $ fn (event) (println "\"open")
+                ws-send! $ {} (:op :test)
+              :on-data $ fn (data) (println "\"data" data)
+              :on-close $ fn (event) (println "\"close")
+            js/setInterval
+              fn ()
+                println "\"connected try send" $ ws-connected?
+                ws-send! $ {} (:data "\"just message")
+              , 2000
+        |reload! $ quote
+          defn reload! ()
+            ws-set-on-data! $ fn (data) (println "\"reloaded 8:" data)
+            println "\"reload"
+      :proc $ quote ()
