@@ -1,10 +1,10 @@
 
-import { main_BANG_, reload_BANG_ } from "./js-out/ws-edn.app.server.js"
+import { main_$x_, reload_$x_ } from "./js-out/ws-edn.app.server.js"
 
-main_BANG_()
+main_$x_()
 
 if (module.hot) {
   module.hot.accept('./js-out/ws-edn.app.server.js', (main) => {
-    reload_BANG_()
+    reload_$x_()
   })
 }

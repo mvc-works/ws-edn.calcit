@@ -1,6 +1,6 @@
 
 {} (:package |ws-edn)
-  :configs $ {} (:init-fn |ws-edn.app.server/main!) (:reload-fn |ws-edn.app.server/reload!) (:modules nil) (:version |0.0.2)
+  :configs $ {} (:init-fn |ws-edn.app.server/main!) (:reload-fn |ws-edn.app.server/reload!) (:modules nil) (:version |0.0.3)
   :files $ {}
     |ws-edn.client $ {}
       :ns $ quote
@@ -40,7 +40,7 @@
             let
                 ws @*global-ws
               if (some? ws)
-                .send ws $ write-cirru-edn data
+                .!send ws $ format-cirru-edn data
                 js/console.warn "|WebSocket at close state!"
         |ws-set-on-data! $ quote
           defn ws-set-on-data! (on-data)
@@ -90,7 +90,7 @@
             let
                 socket $ get @*global-connections sid
               if (some? socket)
-                .send socket $ write-cirru-edn data
+                .!send socket $ format-cirru-edn data
                 js/console.warn "\"socket not found for" sid
         |wss-serve! $ quote
           defn wss-serve! (port options)
@@ -98,12 +98,12 @@
             let
                 wss $ new ws/Server
                   js-object $ "\"port" port
-              .on wss "\"connection" $ fn (socket ? req) (maintain-socket! socket options)
-              .on wss "\"listening" $ fn ()
+              .!on wss "\"connection" $ fn (socket ? req) (maintain-socket! socket options)
+              .!on wss "\"listening" $ fn ()
                 let
                     on-listening $ :on-listening options
                   if (some? on-listening) (on-listening)
-              .on wss "\"error" $ fn (error)
+              .!on wss "\"error" $ fn (error)
                 let
                     on-error $ :on-error options
                   if (some? on-error) (on-error error) (js/console.error error)
@@ -118,7 +118,7 @@
           defmacro when-let (pair & body)
             assert "\"expected 2 tokens" $ and (list? pair)
               = 2 $ count pair
-            quote-replace $ &let ~pair
+            quasiquote $ &let ~pair
               when
                 some? $ ~ (first pair)
                 , ~@body

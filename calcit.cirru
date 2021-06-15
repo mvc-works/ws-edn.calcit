@@ -223,11 +223,11 @@
                           |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1544464559588) (:text |ws) (:id |8Cvo4y7_ftW)
                       |r $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1544464559588) (:id |0ZlMXHLKP9N)
                         :data $ {}
-                          |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1544464559588) (:text |.send) (:id |W0sWZ2E-XBd)
+                          |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1623719034335) (:text |.!send) (:id |W0sWZ2E-XBd)
                           |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1544464559588) (:text |ws) (:id |2Fotv7ralCW)
                           |r $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1544464559588) (:id |v8mWe1-LguB)
                             :data $ {}
-                              |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1621496732245) (:text |write-cirru-edn) (:id |vLm9TVzHe3A)
+                              |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1623719032857) (:text |format-cirru-edn) (:id |vLm9TVzHe3A)
                               |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1544549830171) (:text |data) (:id |j2bsnBFP4T)
                       |v $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1544464559588) (:id |9TgREcwZqw7)
                         :data $ {}
@@ -534,11 +534,11 @@
                           |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1544549606278) (:text |socket) (:id |hkQe7OKCO4)
                       |r $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1544549606823) (:id |j_YFHNtOEK)
                         :data $ {}
-                          |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1544549647163) (:text |.send) (:id |j_YFHNtOEKleaf)
+                          |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1623719041581) (:text |.!send) (:id |j_YFHNtOEKleaf)
                           |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1544549641365) (:text |socket) (:id |9hnTFJodt)
                           |r $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1544549642700) (:id |Fiv3j9HsA)
                             :data $ {}
-                              |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1621496703103) (:text |write-cirru-edn) (:id |zpic-VR-I)
+                              |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1623719044483) (:text |format-cirru-edn) (:id |zpic-VR-I)
                               |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1544549644666) (:text |data) (:id |QhagPC6ldm)
                       |v $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1544549647604) (:id |xGeWt5wKq)
                         :data $ {}
@@ -582,7 +582,7 @@
                                       |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1614091598372) (:text |port)
                   |r $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1544464609226) (:id |xabG3zTY_q5)
                     :data $ {}
-                      |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1544464609226) (:text |.on) (:id |UZbIDsqp0cP)
+                      |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1623719187027) (:text |.!on) (:id |UZbIDsqp0cP)
                       |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1544464609226) (:text |wss) (:id |BonJfhc9VFV)
                       |r $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1544464672410) (:text "|\"connection") (:id |uyocwopRBfV)
                       |v $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1544724102470) (:id |7b1M3vwNa)
@@ -600,7 +600,7 @@
                               |r $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1544724110072) (:text |options) (:id |PWSAayLR4c)
                   |v $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1544548299847) (:id |R2gtAZYA6)
                     :data $ {}
-                      |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1544548300457) (:text |.on) (:id |R2gtAZYA6leaf)
+                      |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1623719188364) (:text |.!on) (:id |R2gtAZYA6leaf)
                       |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1544548302607) (:text |wss) (:id |95g5BEqqK)
                       |r $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1544548303823) (:text "|\"listening") (:id |Ib04k_6k1E)
                       |v $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1544548304487) (:id |Nxfww3C3M_)
@@ -632,7 +632,7 @@
                                       |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1614085974715) (:text |on-listening)
                   |x $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1544548343602) (:id |eUA3PAzaU)
                     :data $ {}
-                      |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1544548345392) (:text |.on) (:id |eUA3PAzaUleaf)
+                      |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1623719190996) (:text |.!on) (:id |eUA3PAzaUleaf)
                       |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1544548346030) (:text |wss) (:id |ErqxRJ7q0)
                       |r $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1544548351169) (:text "|\"error") (:id |HuRPhuxlKk)
                       |v $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1544548351624) (:id |c3IfKjpSs)
@@ -723,7 +723,7 @@
                               |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1614144465118) (:text |pair)
               |x $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1614144465118)
                 :data $ {}
-                  |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1614144465118) (:text |quote-replace)
+                  |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1623719007545) (:text |quasiquote)
                   |j $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1614144465118)
                     :data $ {}
                       |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1614144465118) (:text |&let)
@@ -1058,4 +1058,4 @@
                           |r $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1621497463566) (:text |data)
         :proc $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1544464189777) (:id |R8-slnikeQ)
           :data $ {}
-  :configs $ {} (:reload-fn |ws-edn.app.server/reload!) (:local-storage-key |calcit-storage) (:output |src) (:port 6001) (:extension |.cljs) (:init-fn |ws-edn.app.server/main!) (:compact-output? true) (:storage-key |calcit.cirru) (:version |0.0.2)
+  :configs $ {} (:reload-fn |ws-edn.app.server/reload!) (:local-storage-key |calcit-storage) (:output |src) (:port 6001) (:extension |.cljs) (:init-fn |ws-edn.app.server/main!) (:compact-output? true) (:storage-key |calcit.cirru) (:version |0.0.3)
