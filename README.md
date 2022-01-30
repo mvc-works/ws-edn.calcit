@@ -56,6 +56,12 @@ ws-edn.client/ws-set-on-data! $ fn (data)
   println data
 ```
 
+Deps:
+
+```bash
+yarn add nanoid
+```
+
 ### License
 
 MIT
