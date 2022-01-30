@@ -20,7 +20,7 @@ module.exports = {
   devtool: "hidden-source-map",
   externals: {
     ws: "commonjs ws",
-    shortid: "commonjs shortid",
+    nanoid: "commonjs nanoid",
   },
   output: {
     path: path.resolve(__dirname, "js-out/"),

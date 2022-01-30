@@ -1,22 +1,22 @@
 {
-  "version": "0.0.4",
+  "version": "0.0.5",
   "dependencies": {
-    "@calcit/procs": "^0.4.13"
+    "@calcit/procs": "^0.5.16",
+    "nanoid": "^3.2.0"
   },
   "scripts": {
-    "watch-server": "cr --emit-js",
-    "compile-server": "cr --emit-js --once",
-    "compile-page": "cr --emit-js --once --emit-path out-page/ --init-fn ws-edn.app.page/main! --reload-fn ws-edn.app.page/reload!",
+    "watch-server": "cr --emit-js --entry server",
+    "compile-server": "cr --emit-js --once --entry server",
+    "compile-page": "cr --emit-js --once --emit-path out-page/",
     "build-server": "webpack",
     "dev-server": "hot=true yarn webpack --watch",
     "build-page": "vite build --base=./",
-    "watch-page": "cr --emit-js --emit-path out-page/ --init-fn ws-edn.app.page/main! --reload-fn ws-edn.app.page/reload!"
+    "watch-page": "cr --emit-js --emit-path out-page/"
   },
   "devDependencies": {
-    "shortid": "^2.2.16",
-    "vite": "^2.4.4",
-    "webpack": "5.45.1",
-    "webpack-cli": "^4.7.2",
-    "ws": "^8.0.0"
+    "vite": "^2.7.13",
+    "webpack": "5.67.0",
+    "webpack-cli": "^4.9.2",
+    "ws": "^8.4.2"
   }
 }

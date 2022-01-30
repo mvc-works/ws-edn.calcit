@@ -1,8 +1,12 @@
 
 {} (:package |ws-edn)
-  :configs $ {} (:init-fn |ws-edn.app.server/main!) (:reload-fn |ws-edn.app.server/reload!)
+  :configs $ {} (:init-fn |ws-edn.app.page/main!) (:reload-fn |ws-edn.app.page/reload!)
     :modules $ []
-    :version |0.0.4
+    :version |0.0.5
+  :entries $ {}
+    :server $ {} (:reload-fn |ws-edn.app.server/reload!) (:storage-key |calcit.cirru)
+      :modules $ []
+      :init-fn |ws-edn.app.server/main!
   :files $ {}
     |ws-edn.client $ {}
       :ns $ quote
@@ -77,9 +81,9 @@
             println "\"reload!"
     |ws-edn.server $ {}
       :ns $ quote
-        ns ws-edn.server $ :require ([] "\"ws" :as ws)
-          [] ws-edn.util :refer $ [] when-let parse-data
-          [] "\"shortid" :as shortid
+        ns ws-edn.server $ :require ("\"ws" :as ws)
+          ws-edn.util :refer $ when-let parse-data
+          "\"nanoid" :refer $ nanoid
       :defs $ {}
         |wss-each! $ quote
           defn wss-each! (handler)
@@ -116,7 +120,7 @@
         |maintain-socket! $ quote
           defn maintain-socket! (socket options)
             let
-                sid $ shortid/generate
+                sid $ nanoid
               swap! *global-connections assoc sid socket
               when-let
                 on-open $ :on-open options

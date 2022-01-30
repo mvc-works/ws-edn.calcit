@@ -1,8 +1,8 @@
 
 {}
-  :configs $ {} (:reload-fn |ws-edn.app.server/reload!) (:port 6001) (:output |src) (:compact-output? true) (:local-storage-key |calcit-storage) (:storage-key |calcit.cirru) (:version |0.0.4)
-    :modules $ []
-    :init-fn |ws-edn.app.server/main!
+  :users $ {}
+    |VDPjyAOgV $ {} (:avatar nil) (:name |root) (:nickname |root) (:id |VDPjyAOgV) (:theme :star-trail) (:password |d41d8cd98f00b204e9800998ecf8427e)
+    |aQJLUBr_Hp $ {} (:avatar nil) (:name |chen) (:nickname |chen) (:id |aQJLUBr_Hp) (:theme :star-trail) (:password |d41d8cd98f00b204e9800998ecf8427e)
   :ir $ {} (:package |ws-edn)
     :files $ {}
       |ws-edn.client $ {}
@@ -1563,7 +1563,7 @@
                           |T $ {} (:text |sid) (:type :leaf) (:at 1544724084862) (:by |aQJLUBr_Hp) (:id |lu1cUcucOm)
                           |j $ {}
                             :data $ {}
-                              |j $ {} (:text |shortid/generate) (:type :leaf) (:at 1597742328904) (:by |aQJLUBr_Hp) (:id |22uKv3IfGR4)
+                              |j $ {} (:text |nanoid) (:type :leaf) (:at 1643535454710) (:by |aQJLUBr_Hp) (:id |22uKv3IfGR4)
                             :type :expr
                             :at 1544724084862
                             :by |aQJLUBr_Hp
@@ -1700,7 +1700,6 @@
                 |T $ {} (:text |:require) (:type :leaf) (:at 1544546001037) (:by |aQJLUBr_Hp) (:id |Fo1iFkJ6sN)
                 |r $ {}
                   :data $ {}
-                    |T $ {} (:text |[]) (:type :leaf) (:at 1544548021110) (:by |aQJLUBr_Hp) (:id |2I34DaAp6leaf)
                     |j $ {} (:text "|\"ws") (:type :leaf) (:at 1544548022455) (:by |aQJLUBr_Hp) (:id |pZJGG-2bjP)
                     |r $ {} (:text |:as) (:type :leaf) (:at 1544548023614) (:by |aQJLUBr_Hp) (:id |ZLH2ADfdz)
                     |v $ {} (:text |ws) (:type :leaf) (:at 1544548024445) (:by |aQJLUBr_Hp) (:id |E8s0aL140n)
@@ -1710,12 +1709,10 @@
                   :id |2I34DaAp6
                 |t $ {}
                   :data $ {}
-                    |T $ {} (:text |[]) (:type :leaf) (:at 1614144541752) (:by |aQJLUBr_Hp)
                     |j $ {} (:text |ws-edn.util) (:type :leaf) (:at 1614144544495) (:by |aQJLUBr_Hp)
                     |r $ {} (:text |:refer) (:type :leaf) (:at 1614144546529) (:by |aQJLUBr_Hp)
                     |v $ {}
                       :data $ {}
-                        |T $ {} (:text |[]) (:type :leaf) (:at 1614144547025) (:by |aQJLUBr_Hp)
                         |j $ {} (:text |when-let) (:type :leaf) (:at 1614144550081) (:by |aQJLUBr_Hp)
                         |r $ {} (:text |parse-data) (:type :leaf) (:at 1614144552635) (:by |aQJLUBr_Hp)
                       :type :expr
@@ -1726,10 +1723,11 @@
                   :by |aQJLUBr_Hp
                 |v $ {}
                   :data $ {}
-                    |T $ {} (:text |[]) (:type :leaf) (:at 1544548029652) (:by |aQJLUBr_Hp) (:id |NK1JtS71lZleaf)
-                    |j $ {} (:text "|\"shortid") (:type :leaf) (:at 1544548031856) (:by |aQJLUBr_Hp) (:id |JvMwOvkjDh)
-                    |r $ {} (:text |:as) (:type :leaf) (:at 1544548032303) (:by |aQJLUBr_Hp) (:id |X1qdmcQ2F7)
-                    |v $ {} (:text |shortid) (:type :leaf) (:at 1544548033200) (:by |aQJLUBr_Hp) (:id |uvbJpku6dk)
+                    |j $ {} (:text "|\"nanoid") (:type :leaf) (:at 1643535459379) (:by |aQJLUBr_Hp) (:id |JvMwOvkjDh)
+                    |r $ {} (:text |:refer) (:type :leaf) (:at 1643535461693) (:by |aQJLUBr_Hp) (:id |X1qdmcQ2F7)
+                    |v $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1643535461917)
+                      :data $ {}
+                        |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1643535463245) (:text |nanoid)
                   :type :expr
                   :at 1544548029339
                   :by |aQJLUBr_Hp
@@ -2138,6 +2136,10 @@
           :type :expr
           :at 1614144454159
           :by |aQJLUBr_Hp
-  :users $ {}
-    |VDPjyAOgV $ {} (:avatar nil) (:name |root) (:nickname |root) (:id |VDPjyAOgV) (:theme :star-trail) (:password |d41d8cd98f00b204e9800998ecf8427e)
-    |aQJLUBr_Hp $ {} (:avatar nil) (:name |chen) (:nickname |chen) (:id |aQJLUBr_Hp) (:theme :star-trail) (:password |d41d8cd98f00b204e9800998ecf8427e)
+  :configs $ {} (:reload-fn |ws-edn.app.page/reload!) (:port 6001) (:storage-key |calcit.cirru) (:version |0.0.5)
+    :modules $ []
+    :init-fn |ws-edn.app.page/main!
+  :entries $ {}
+    :server $ {} (:reload-fn |ws-edn.app.server/reload!) (:storage-key |calcit.cirru)
+      :modules $ []
+      :init-fn |ws-edn.app.server/main!
