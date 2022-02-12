@@ -62,6 +62,16 @@ Deps:
 yarn add nanoid
 ```
 
+### WSS
+
+add in options to enabled WSS mode:
+
+```cirru
+{}
+  :key "./path-to.pem"
+  :cert "./path-to.pem"
+```
+
 ### License
 
 MIT

@@ -745,6 +745,14 @@
                         :at 1544547961776
                         :by |aQJLUBr_Hp
                         :id |gCGaCvDL8
+                      |x $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644660486536)
+                        :data $ {}
+                          |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644663074171) (:text |:key)
+                          |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644660502338) (:text "|\"certs/key.pem")
+                      |y $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644660508203)
+                        :data $ {}
+                          |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644663075897) (:text |:cert)
+                          |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644660510986) (:text "|\"certs/cert.pem")
                     :type :expr
                     :at 1544547882463
                     :by |aQJLUBr_Hp
@@ -1144,28 +1152,163 @@
                       |j $ {}
                         :data $ {}
                           |T $ {} (:text |wss) (:type :leaf) (:at 1544464609226) (:by |aQJLUBr_Hp) (:id |Cw1XfnW31mh)
-                          |j $ {}
+                          |j $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662835986)
                             :data $ {}
-                              |T $ {} (:text |new) (:type :leaf) (:at 1544464609226) (:by |aQJLUBr_Hp) (:id |E5d2MdYN346)
-                              |j $ {} (:text |ws/Server) (:type :leaf) (:at 1614094061951) (:by |aQJLUBr_Hp) (:id |TtFhRKPwU9M)
-                              |r $ {}
+                              |T $ {}
                                 :data $ {}
-                                  |T $ {} (:text |js-object) (:type :leaf) (:at 1621498879085) (:by |aQJLUBr_Hp) (:id |0w3zkXdnJJP)
-                                  |j $ {}
+                                  |T $ {} (:text |new) (:type :leaf) (:at 1544464609226) (:by |aQJLUBr_Hp) (:id |E5d2MdYN346)
+                                  |j $ {} (:text |ws/Server) (:type :leaf) (:at 1614094061951) (:by |aQJLUBr_Hp) (:id |TtFhRKPwU9M)
+                                  |r $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662854210)
                                     :data $ {}
-                                      |T $ {} (:text "|\"port") (:type :leaf) (:at 1544464669994) (:by |aQJLUBr_Hp) (:id |Ch5efWIC8Q-)
-                                      |j $ {} (:text |port) (:type :leaf) (:at 1614091598372) (:by |aQJLUBr_Hp)
-                                    :type :expr
-                                    :at 1614091599065
-                                    :by |aQJLUBr_Hp
+                                      |T $ {}
+                                        :data $ {}
+                                          |T $ {} (:text |js-object) (:type :leaf) (:at 1621498879085) (:by |aQJLUBr_Hp) (:id |0w3zkXdnJJP)
+                                          |b $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644660084834)
+                                            :data $ {}
+                                              |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644660098439) (:text |:server)
+                                              |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644660086144) (:text |server)
+                                          |n $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644660092514)
+                                            :data $ {}
+                                              |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644660094789) (:text |:path)
+                                              |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662505571) (:text "|\"/")
+                                        :type :expr
+                                        :at 1544464609226
+                                        :by |aQJLUBr_Hp
+                                        :id |IuGPVDKsQSa
+                                      |D $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662855631) (:text |let)
+                                      |L $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662856262)
+                                        :data $ {}
+                                          |T $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662861764)
+                                            :data $ {}
+                                              |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662861764) (:text |ssl-options)
+                                              |j $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662861764)
+                                                :data $ {}
+                                                  |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662861764) (:text |js-object)
+                                                  |j $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662861764)
+                                                    :data $ {}
+                                                      |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662861764) (:text |:key)
+                                                      |j $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662861764)
+                                                        :data $ {}
+                                                          |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662861764) (:text |fs/readFileSync)
+                                                          |j $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662861764)
+                                                            :data $ {}
+                                                              |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662861764) (:text |:key)
+                                                              |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662861764) (:text |options)
+                                                  |r $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662861764)
+                                                    :data $ {}
+                                                      |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662861764) (:text |:cert)
+                                                      |j $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662861764)
+                                                        :data $ {}
+                                                          |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662861764) (:text |fs/readFileSync)
+                                                          |j $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662861764)
+                                                            :data $ {}
+                                                              |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662861764) (:text |:cert)
+                                                              |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662861764) (:text |options)
+                                          |j $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644663060393)
+                                            :data $ {}
+                                              |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644663060393) (:text |server)
+                                              |j $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644663060393)
+                                                :data $ {}
+                                                  |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644663060393) (:text |https/createServer)
+                                                  |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644663060393) (:text |ssl-options)
+                                                  |r $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644663060393)
+                                                    :data $ {}
+                                                      |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644663060393) (:text |fn)
+                                                      |j $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644663060393)
+                                                        :data $ {}
+                                                          |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644663060393) (:text |req)
+                                                          |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644663060393) (:text |res)
+                                                      |r $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644663060393)
+                                                        :data $ {}
+                                                          |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644663060393) (:text |.!writeHead)
+                                                          |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644663060393) (:text |res)
+                                                          |r $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644663060393) (:text |200)
+                                                      |v $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644663060393)
+                                                        :data $ {}
+                                                          |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644663060393) (:text |.!end)
+                                                          |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644663060393) (:text |res)
+                                                          |r $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644663060393) (:text "|\"WSS Server")
+                                      |R $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662878756)
+                                        :data $ {}
+                                          |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text |.!addListener)
+                                          |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text |server)
+                                          |r $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text "|\"upgrade")
+                                          |v $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662878756)
+                                            :data $ {}
+                                              |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text |fn)
+                                              |j $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662878756)
+                                                :data $ {}
+                                                  |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text |req)
+                                                  |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text |res)
+                                                  |r $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text |head)
+                                              |r $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662878756)
+                                                :data $ {}
+                                                  |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text |js/console.log)
+                                                  |j $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662878756)
+                                                    :data $ {}
+                                                      |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text |.-url)
+                                                      |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text |req)
+                                      |S $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662878756)
+                                        :data $ {}
+                                          |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text |.!on)
+                                          |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text |server)
+                                          |r $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text "|\"error")
+                                          |v $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662878756)
+                                            :data $ {}
+                                              |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text |fn)
+                                              |j $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662878756)
+                                                :data $ {}
+                                                  |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text |err)
+                                              |r $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662878756)
+                                                :data $ {}
+                                                  |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text |js/console.error)
+                                                  |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text |err)
+                                      |ST $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662878756)
+                                        :data $ {}
+                                          |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text |.!listen)
+                                          |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text |server)
+                                          |r $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text |port)
+                                          |v $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662878756)
+                                            :data $ {}
+                                              |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text |fn)
+                                              |j $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662878756)
+                                                :data $ {}
+                                              |r $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662878756)
+                                                :data $ {}
+                                                  |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text |println)
+                                                  |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text "|\"server at")
+                                                  |r $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text |port)
                                 :type :expr
                                 :at 1544464609226
                                 :by |aQJLUBr_Hp
-                                :id |IuGPVDKsQSa
-                            :type :expr
-                            :at 1544464609226
-                            :by |aQJLUBr_Hp
-                            :id |LxSeefddT2W
+                                :id |LxSeefddT2W
+                              |D $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662836729) (:text |if)
+                              |j $ {}
+                                :data $ {}
+                                  |T $ {} (:text |new) (:type :leaf) (:at 1544464609226) (:by |aQJLUBr_Hp) (:id |E5d2MdYN346)
+                                  |j $ {} (:text |ws/Server) (:type :leaf) (:at 1614094061951) (:by |aQJLUBr_Hp) (:id |TtFhRKPwU9M)
+                                  |r $ {}
+                                    :data $ {}
+                                      |T $ {} (:text |js-object) (:type :leaf) (:at 1621498879085) (:by |aQJLUBr_Hp) (:id |0w3zkXdnJJP)
+                                      |b $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644660084834)
+                                        :data $ {}
+                                          |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662842358) (:text |:port)
+                                          |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662844391) (:text |port)
+                                    :type :expr
+                                    :at 1544464609226
+                                    :by |aQJLUBr_Hp
+                                    :id |IuGPVDKsQSa
+                                :type :expr
+                                :at 1544464609226
+                                :by |aQJLUBr_Hp
+                                :id |LxSeefddT2W
+                              |L $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662890393)
+                                :data $ {}
+                                  |T $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662890943)
+                                    :data $ {}
+                                      |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662890943) (:text |:cert)
+                                      |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662890943) (:text |options)
+                                  |D $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662894040) (:text |some?)
                         :type :expr
                         :at 1544464609226
                         :by |aQJLUBr_Hp
@@ -1563,7 +1706,7 @@
                           |T $ {} (:text |sid) (:type :leaf) (:at 1544724084862) (:by |aQJLUBr_Hp) (:id |lu1cUcucOm)
                           |j $ {}
                             :data $ {}
-                              |j $ {} (:text |nanoid) (:type :leaf) (:at 1643535454710) (:by |aQJLUBr_Hp) (:id |22uKv3IfGR4)
+                              |j $ {} (:text |nanoid) (:type :leaf) (:at 1644659634093) (:by |aQJLUBr_Hp) (:id |22uKv3IfGR4)
                             :type :expr
                             :at 1544724084862
                             :by |aQJLUBr_Hp
@@ -1721,17 +1864,23 @@
                   :type :expr
                   :at 1614144540185
                   :by |aQJLUBr_Hp
-                |v $ {}
+                |w $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644659636641)
                   :data $ {}
-                    |j $ {} (:text "|\"nanoid") (:type :leaf) (:at 1643535459379) (:by |aQJLUBr_Hp) (:id |JvMwOvkjDh)
-                    |r $ {} (:text |:refer) (:type :leaf) (:at 1643535461693) (:by |aQJLUBr_Hp) (:id |X1qdmcQ2F7)
-                    |v $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1643535461917)
+                    |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644659637931) (:text "|\"nanoid")
+                    |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644659640765) (:text |:refer)
+                    |r $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644659643038)
                       :data $ {}
-                        |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1643535463245) (:text |nanoid)
-                  :type :expr
-                  :at 1544548029339
-                  :by |aQJLUBr_Hp
-                  :id |NK1JtS71lZ
+                        |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644659642846) (:text |nanoid)
+                |x $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644659706546)
+                  :data $ {}
+                    |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644659708418) (:text "|\"https")
+                    |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644659709551) (:text |:as)
+                    |r $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644660170409) (:text |https)
+                |y $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644660553453)
+                  :data $ {}
+                    |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644660554139) (:text "|\"fs")
+                    |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644660554976) (:text |:as)
+                    |r $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644660555353) (:text |fs)
               :type :expr
               :at 1544546000331
               :by |aQJLUBr_Hp
@@ -1763,7 +1912,7 @@
               |x $ {}
                 :data $ {}
                   |T $ {} (:text |ws-connect!) (:type :leaf) (:at 1544638474733) (:by |aQJLUBr_Hp) (:id |eaR0xXUY6leaf)
-                  |j $ {} (:text "|\"ws://localhost:5001") (:type :leaf) (:at 1544548465756) (:by |aQJLUBr_Hp) (:id |nkkHAgSNFL)
+                  |j $ {} (:text "|\"wss://localhost:5001") (:type :leaf) (:at 1644663096094) (:by |aQJLUBr_Hp) (:id |nkkHAgSNFL)
                   |r $ {}
                     :data $ {}
                       |T $ {} (:text |{}) (:type :leaf) (:at 1544548468522) (:by |aQJLUBr_Hp) (:id |jTlTgpd5M)
@@ -2136,7 +2285,7 @@
           :type :expr
           :at 1614144454159
           :by |aQJLUBr_Hp
-  :configs $ {} (:reload-fn |ws-edn.app.page/reload!) (:port 6001) (:storage-key |calcit.cirru) (:version |0.0.5)
+  :configs $ {} (:reload-fn |ws-edn.app.page/reload!) (:port 6001) (:storage-key |calcit.cirru) (:version |0.0.6-a1)
     :modules $ []
     :init-fn |ws-edn.app.page/main!
   :entries $ {}
