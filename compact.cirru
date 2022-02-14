@@ -2,7 +2,7 @@
 {} (:package |ws-edn)
   :configs $ {} (:init-fn |ws-edn.app.page/main!) (:reload-fn |ws-edn.app.page/reload!)
     :modules $ []
-    :version |0.0.5
+    :version |0.0.6-a1
   :entries $ {}
     :server $ {} (:reload-fn |ws-edn.app.server/reload!) (:storage-key |calcit.cirru)
       :modules $ []
@@ -70,6 +70,8 @@
                 wss-send! sid $ {} (:op "\"initial message")
               :on-data $ fn (sid data) (println "\"just data" sid data)
               :on-close $ fn (sid event) (println "\"close" sid)
+              :key "\"certs/key.pem"
+              :cert "\"certs/cert.pem"
             js/setInterval
               fn () (println "\"heartbeat")
                 wss-each! $ fn (sid socket) (js/console.log sid)
@@ -84,6 +86,8 @@
         ns ws-edn.server $ :require ("\"ws" :as ws)
           ws-edn.util :refer $ when-let parse-data
           "\"nanoid" :refer $ nanoid
+          "\"https" :as https
+          "\"fs" :as fs
       :defs $ {}
         |wss-each! $ quote
           defn wss-each! (handler)
@@ -105,8 +109,20 @@
           defn wss-serve! (port options)
             assert "\"first argument is port" $ number? port
             let
-                wss $ new ws/Server
-                  js-object $ "\"port" port
+                wss $ if
+                  some? $ :cert options
+                  new ws/Server $ let
+                      ssl-options $ js-object
+                        :key $ fs/readFileSync (:key options)
+                        :cert $ fs/readFileSync (:cert options)
+                      server $ https/createServer ssl-options
+                        fn (req res) (.!writeHead res 200) (.!end res "\"WSS Server")
+                    .!addListener server "\"upgrade" $ fn (req res head)
+                      js/console.log $ .-url req
+                    .!on server "\"error" $ fn (err) (js/console.error err)
+                    .!listen server port $ fn () (println "\"server at" port)
+                    js-object (:server server) (:path "\"/")
+                  new ws/Server $ js-object (:port port)
               .!on wss "\"connection" $ fn (socket ? req) (maintain-socket! socket options)
               .!on wss "\"listening" $ fn ()
                 let
@@ -144,7 +160,7 @@
       :defs $ {}
         |main! $ quote
           defn main! () (println "\"start")
-            ws-connect! "\"ws://localhost:5001" $ {}
+            ws-connect! "\"wss://localhost:5001" $ {}
               :on-open $ fn (event) (println "\"open")
                 ws-send! $ {} (:op :test)
               :on-data $ fn (data) (println "\"data" data)
