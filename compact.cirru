@@ -2,7 +2,7 @@
 {} (:package |ws-edn)
   :configs $ {} (:init-fn |ws-edn.app.page/main!) (:reload-fn |ws-edn.app.page/reload!)
     :modules $ []
-    :version |0.0.6-a1
+    :version |0.0.7
   :entries $ {}
     :server $ {} (:reload-fn |ws-edn.app.server/reload!) (:storage-key |calcit.cirru)
       :modules $ []
@@ -83,7 +83,8 @@
             println "\"reload!"
     |ws-edn.server $ {}
       :ns $ quote
-        ns ws-edn.server $ :require ("\"ws" :as ws)
+        ns ws-edn.server $ :require
+          "\"ws" :refer $ WebSocketServer
           ws-edn.util :refer $ when-let parse-data
           "\"nanoid" :refer $ nanoid
           "\"https" :as https
@@ -111,7 +112,7 @@
             let
                 wss $ if
                   some? $ :cert options
-                  new ws/Server $ let
+                  new WebSocketServer $ let
                       ssl-options $ js-object
                         :key $ fs/readFileSync (:key options)
                         :cert $ fs/readFileSync (:cert options)
@@ -122,7 +123,7 @@
                     .!on server "\"error" $ fn (err) (js/console.error err)
                     .!listen server port $ fn () (println "\"server at" port)
                     js-object (:server server) (:path "\"/")
-                  new ws/Server $ js-object (:port port)
+                  new WebSocketServer $ js-object (:port port)
               .!on wss "\"connection" $ fn (socket ? req) (maintain-socket! socket options)
               .!on wss "\"listening" $ fn ()
                 let

@@ -1,22 +1,18 @@
 {
-  "version": "0.0.6-a1",
+  "version": "0.0.7",
   "dependencies": {
-    "@calcit/procs": "^0.5.17-a1",
-    "nanoid": "^3.2.0"
+    "@calcit/procs": "^0.5.28",
+    "nanoid": "^3.3.2"
   },
   "scripts": {
     "watch-server": "cr --emit-js --entry server",
     "compile-server": "cr --emit-js --once --entry server",
     "compile-page": "cr --emit-js --once --emit-path out-page/",
-    "build-server": "webpack",
-    "dev-server": "hot=true yarn webpack --watch",
     "build-page": "vite build --base=./",
     "watch-page": "cr --emit-js --emit-path out-page/"
   },
   "devDependencies": {
-    "vite": "^2.8.1",
-    "webpack": "5.68.0",
-    "webpack-cli": "^4.9.2",
+    "vite": "^2.9.0",
     "ws": "^8.5.0"
   }
 }

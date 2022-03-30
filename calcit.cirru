@@ -1157,7 +1157,6 @@
                               |T $ {}
                                 :data $ {}
                                   |T $ {} (:text |new) (:type :leaf) (:at 1544464609226) (:by |aQJLUBr_Hp) (:id |E5d2MdYN346)
-                                  |j $ {} (:text |ws/Server) (:type :leaf) (:at 1614094061951) (:by |aQJLUBr_Hp) (:id |TtFhRKPwU9M)
                                   |r $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1644662854210)
                                     :data $ {}
                                       |T $ {}
@@ -1278,6 +1277,7 @@
                                                   |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text |println)
                                                   |j $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text "|\"server at")
                                                   |r $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1644662878756) (:text |port)
+                                  |f $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1648661262629) (:text |WebSocketServer)
                                 :type :expr
                                 :at 1544464609226
                                 :by |aQJLUBr_Hp
@@ -1286,7 +1286,6 @@
                               |j $ {}
                                 :data $ {}
                                   |T $ {} (:text |new) (:type :leaf) (:at 1544464609226) (:by |aQJLUBr_Hp) (:id |E5d2MdYN346)
-                                  |j $ {} (:text |ws/Server) (:type :leaf) (:at 1614094061951) (:by |aQJLUBr_Hp) (:id |TtFhRKPwU9M)
                                   |r $ {}
                                     :data $ {}
                                       |T $ {} (:text |js-object) (:type :leaf) (:at 1621498879085) (:by |aQJLUBr_Hp) (:id |0w3zkXdnJJP)
@@ -1298,6 +1297,7 @@
                                     :at 1544464609226
                                     :by |aQJLUBr_Hp
                                     :id |IuGPVDKsQSa
+                                  |f $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1648661266410) (:text |WebSocketServer)
                                 :type :expr
                                 :at 1544464609226
                                 :by |aQJLUBr_Hp
@@ -1844,8 +1844,10 @@
                 |r $ {}
                   :data $ {}
                     |j $ {} (:text "|\"ws") (:type :leaf) (:at 1544548022455) (:by |aQJLUBr_Hp) (:id |pZJGG-2bjP)
-                    |r $ {} (:text |:as) (:type :leaf) (:at 1544548023614) (:by |aQJLUBr_Hp) (:id |ZLH2ADfdz)
-                    |v $ {} (:text |ws) (:type :leaf) (:at 1544548024445) (:by |aQJLUBr_Hp) (:id |E8s0aL140n)
+                    |r $ {} (:text |:refer) (:type :leaf) (:at 1648661256139) (:by |aQJLUBr_Hp) (:id |ZLH2ADfdz)
+                    |t $ {} (:type :expr) (:by |aQJLUBr_Hp) (:at 1648661256951)
+                      :data $ {}
+                        |T $ {} (:type :leaf) (:by |aQJLUBr_Hp) (:at 1648661257336) (:text |WebSocketServer)
                   :type :expr
                   :at 1544548020782
                   :by |aQJLUBr_Hp
@@ -2285,7 +2287,7 @@
           :type :expr
           :at 1614144454159
           :by |aQJLUBr_Hp
-  :configs $ {} (:reload-fn |ws-edn.app.page/reload!) (:port 6001) (:storage-key |calcit.cirru) (:version |0.0.6-a1)
+  :configs $ {} (:reload-fn |ws-edn.app.page/reload!) (:port 6001) (:storage-key |calcit.cirru) (:version |0.0.7)
     :modules $ []
     :init-fn |ws-edn.app.page/main!
   :entries $ {}
