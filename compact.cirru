@@ -9,16 +9,17 @@
     |ws-edn.app.page $ {}
       :defs $ {}
         |main! $ quote
-          defn main! () (println "\"start")
+          defn main! () (println "\"start") (load-console-formatter!)
             ws-connect! "\"wss://localhost:5001" $ {}
               :on-open $ fn (event) (println "\"open")
-                ws-send! $ {} (:op :test)
+                ws-send! $ : test
               :on-data $ fn (data) (println "\"data" data)
               :on-close $ fn (event) (println "\"close")
             js/setInterval
               fn ()
                 println "\"connected try send" $ ws-connected?
                 ws-send! $ {} (:data "\"just message")
+                ws-send! $ : message "\"in" "\"string"
               , 2000
         |reload! $ quote
           defn reload! ()
@@ -34,7 +35,7 @@
             wss-serve! 5001 $ {}
               :on-listening $ fn () (println "\"server listening")
               :on-open $ fn (sid socket) (println "\"opened" sid)
-                wss-send! sid $ {} (:op "\"initial message")
+                wss-send! sid $ : op "\"initial message"
               :on-data $ fn (sid data) (println "\"just data" sid data)
               :on-close $ fn (sid event) (println "\"close" sid)
               :key "\"certs/key.pem"
@@ -42,7 +43,7 @@
             js/setInterval
               fn () (println "\"heartbeat")
                 wss-each! $ fn (sid socket) (js/console.log sid)
-                  wss-send! sid $ {} (:message "\"event 2s")
+                  wss-send! sid $ : message "\"event 2s"
               , 2000
         |reload! $ quote
           defn reload! ()
