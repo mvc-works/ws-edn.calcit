@@ -1,14 +1,14 @@
 
 {} (:package |ws-edn)
-  :configs $ {} (:init-fn |ws-edn.app.page/main!) (:reload-fn |ws-edn.app.page/reload!) (:version |0.0.8)
+  :configs $ {} (:init-fn |ws-edn.app.page/main!) (:reload-fn |ws-edn.app.page/reload!) (:version |0.0.9)
     :modules $ []
   :entries $ {}
     :server $ {} (:init-fn |ws-edn.app.server/main!) (:reload-fn |ws-edn.app.server/reload!) (:storage-key |calcit.cirru)
       :modules $ []
   :files $ {}
-    |ws-edn.app.page $ {}
+    |ws-edn.app.page $ %{} :FileEntry
       :defs $ {}
-        |main! $ %{} :CodeEntry
+        |main! $ %{} :CodeEntry (:doc |)
           :code $ quote
             defn main! () (println "\"start") (load-console-formatter!)
               ws-connect! "\"wss://localhost:5001" $ {}
@@ -22,21 +22,18 @@
                   ws-send! $ {} (:data "\"just message")
                   ws-send! $ : message "\"in" "\"string"
                 , 2000
-          :doc |
-        |reload! $ %{} :CodeEntry
+        |reload! $ %{} :CodeEntry (:doc |)
           :code $ quote
             defn reload! ()
               ws-set-on-data! $ fn (data) (println "\"reloaded 8:" data)
               println "\"reload"
-          :doc |
-      :ns $ %{} :CodeEntry
+      :ns $ %{} :CodeEntry (:doc |)
         :code $ quote
           ns ws-edn.app.page $ :require
             [] ws-edn.client :refer $ [] ws-connect! ws-send! ws-connected? ws-set-on-data!
-        :doc |
-    |ws-edn.app.server $ {}
+    |ws-edn.app.server $ %{} :FileEntry
       :defs $ {}
-        |main! $ %{} :CodeEntry
+        |main! $ %{} :CodeEntry (:doc |)
           :code $ quote
             defn main! () (println "\"started")
               wss-serve! 5001 $ {}
@@ -52,24 +49,20 @@
                   wss-each! $ fn (sid socket) (js/console.log sid)
                     wss-send! sid $ : message "\"event 2s"
                 , 2000
-          :doc |
-        |reload! $ %{} :CodeEntry
+        |reload! $ %{} :CodeEntry (:doc |)
           :code $ quote
             defn reload! ()
               wss-set-on-data! $ fn (sid data) (println "\"reloaded 8:" sid data)
               println "\"reload!"
-          :doc |
-      :ns $ %{} :CodeEntry
+      :ns $ %{} :CodeEntry (:doc |)
         :code $ quote
           ns ws-edn.app.server $ :require
             [] ws-edn.server :refer $ [] wss-serve! wss-send! wss-each! wss-set-on-data!
-        :doc |
-    |ws-edn.client $ {}
+    |ws-edn.client $ %{} :FileEntry
       :defs $ {}
-        |*global-ws $ %{} :CodeEntry
+        |*global-ws $ %{} :CodeEntry (:doc |)
           :code $ quote (defatom *global-ws nil)
-          :doc |
-        |ws-connect! $ %{} :CodeEntry
+        |ws-connect! $ %{} :CodeEntry (:doc |)
           :code $ quote
             defn ws-connect! (ws-url options)
               assert "\"reqiured an url for ws server" $ string? ws-url
@@ -95,12 +88,10 @@
                     when-let
                       on-error $ :on-error options
                       on-error error
-          :doc |
-        |ws-connected? $ %{} :CodeEntry
+        |ws-connected? $ %{} :CodeEntry (:doc |)
           :code $ quote
             defn ws-connected? () $ some? @*global-ws
-          :doc |
-        |ws-send! $ %{} :CodeEntry
+        |ws-send! $ %{} :CodeEntry (:doc |)
           :code $ quote
             defn ws-send! (data)
               let
@@ -108,8 +99,7 @@
                 if (some? ws)
                   .!send ws $ format-cirru-edn data
                   js/console.warn "|WebSocket at close state!"
-          :doc |
-        |ws-set-on-data! $ %{} :CodeEntry
+        |ws-set-on-data! $ %{} :CodeEntry (:doc |)
           :code $ quote
             defn ws-set-on-data! (on-data)
               let
@@ -119,22 +109,18 @@
                     fn (event)
                       on-data $ parse-cirru-edn (.-data event)
                   js/console.warn "\"missing running ws instance"
-          :doc |
-      :ns $ %{} :CodeEntry
+      :ns $ %{} :CodeEntry (:doc |)
         :code $ quote
           ns ws-edn.client $ :require
             [] ws-edn.util :refer $ [] when-let parse-data stringify-data
-        :doc |
-    |ws-edn.server $ {}
+    |ws-edn.server $ %{} :FileEntry
       :defs $ {}
-        |*global-connections $ %{} :CodeEntry
+        |*global-connections $ %{} :CodeEntry (:doc |)
           :code $ quote
             defatom *global-connections $ {}
-          :doc |
-        |*proxied-data-listener $ %{} :CodeEntry
+        |*proxied-data-listener $ %{} :CodeEntry (:doc |)
           :code $ quote (defatom *proxied-data-listener nil)
-          :doc |
-        |maintain-socket! $ %{} :CodeEntry
+        |maintain-socket! $ %{} :CodeEntry (:doc |)
           :code $ quote
             defn maintain-socket! (socket options)
               let
@@ -155,15 +141,13 @@
                   &let
                     on-error $ :on-error options
                     if (some? on-error) (on-error error) (js/console.error error)
-          :doc |
-        |wss-each! $ %{} :CodeEntry
+        |wss-each! $ %{} :CodeEntry (:doc |)
           :code $ quote
             defn wss-each! (handler)
               &doseq
                 pair $ .to-list @*global-connections
                 let[] (sid socket) pair $ handler sid socket
-          :doc |
-        |wss-send! $ %{} :CodeEntry
+        |wss-send! $ %{} :CodeEntry (:doc |)
           :code $ quote
             defn wss-send! (sid data)
               let
@@ -171,8 +155,7 @@
                 if (some? socket)
                   .!send socket $ format-cirru-edn data
                   js/console.warn "\"socket not found for" sid
-          :doc |
-        |wss-serve! $ %{} :CodeEntry
+        |wss-serve! $ %{} :CodeEntry (:doc |)
           :code $ quote
             defn wss-serve! (port options)
               assert "\"first argument is port" $ number? port
@@ -200,12 +183,10 @@
                   let
                       on-error $ :on-error options
                     if (some? on-error) (on-error error) (js/console.error error)
-          :doc |
-        |wss-set-on-data! $ %{} :CodeEntry
+        |wss-set-on-data! $ %{} :CodeEntry (:doc |)
           :code $ quote
             defn wss-set-on-data! (on-data) (reset! *proxied-data-listener on-data)
-          :doc |
-      :ns $ %{} :CodeEntry
+      :ns $ %{} :CodeEntry (:doc |)
         :code $ quote
           ns ws-edn.server $ :require
             "\"ws" :refer $ WebSocketServer
@@ -213,10 +194,9 @@
             "\"nanoid" :refer $ nanoid
             "\"https" :as https
             "\"fs" :as fs
-        :doc |
-    |ws-edn.util $ {}
+    |ws-edn.util $ %{} :FileEntry
       :defs $ {}
-        |when-let $ %{} :CodeEntry
+        |when-let $ %{} :CodeEntry (:doc |)
           :code $ quote
             defmacro when-let (pair & body)
               assert "\"expected 2 tokens" $ and (list? pair)
@@ -225,7 +205,5 @@
                 when
                   some? $ ~ (first pair)
                   , ~@body
-          :doc |
-      :ns $ %{} :CodeEntry
+      :ns $ %{} :CodeEntry (:doc |)
         :code $ quote (ns ws-edn.util)
-        :doc |
