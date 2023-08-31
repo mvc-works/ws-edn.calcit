@@ -1,14 +1,14 @@
 
 {} (:package |ws-edn)
-  :configs $ {} (:init-fn |ws-edn.app.page/main!) (:port 6001) (:reload-fn |ws-edn.app.page/reload!) (:storage-key |calcit.cirru) (:version |0.0.8)
+  :configs $ {} (:init-fn |ws-edn.app.page/main!) (:port 6001) (:reload-fn |ws-edn.app.page/reload!) (:storage-key |calcit.cirru) (:version |0.0.9)
     :modules $ []
   :entries $ {}
     :server $ {} (:init-fn |ws-edn.app.server/main!) (:reload-fn |ws-edn.app.server/reload!) (:storage-key |calcit.cirru)
       :modules $ []
   :files $ {}
-    |ws-edn.app.page $ {}
+    |ws-edn.app.page $ %{} :FileEntry
       :defs $ {}
-        |main! $ %{} :CodeEntry
+        |main! $ %{} :CodeEntry (:doc |)
           :code $ %{} :Expr (:at 1544546050477) (:by |aQJLUBr_Hp)
             :data $ {}
               |T $ %{} :Leaf (:at 1544546050477) (:by |aQJLUBr_Hp) (:text |defn)
@@ -111,8 +111,7 @@
                               |h $ %{} :Leaf (:at 1688321922622) (:by |aQJLUBr_Hp) (:text "|\"in")
                               |l $ %{} :Leaf (:at 1688321926287) (:by |aQJLUBr_Hp) (:text "|\"string")
                   |j $ %{} :Leaf (:at 1546105624993) (:by |VDPjyAOgV) (:text |2000)
-          :doc |
-        |reload! $ %{} :CodeEntry
+        |reload! $ %{} :CodeEntry (:doc |)
           :code $ %{} :Expr (:at 1544546051379) (:by |aQJLUBr_Hp)
             :data $ {}
               |T $ %{} :Leaf (:at 1544546051379) (:by |aQJLUBr_Hp) (:text |defn)
@@ -137,8 +136,7 @@
                 :data $ {}
                   |T $ %{} :Leaf (:at 1544546058025) (:by |aQJLUBr_Hp) (:text |println)
                   |j $ %{} :Leaf (:at 1544546060744) (:by |aQJLUBr_Hp) (:text "|\"reload")
-          :doc |
-      :ns $ %{} :CodeEntry
+      :ns $ %{} :CodeEntry (:doc |)
         :code $ %{} :Expr (:at 1544464189777) (:by |aQJLUBr_Hp)
           :data $ {}
             |T $ %{} :Leaf (:at 1544464189777) (:by |aQJLUBr_Hp) (:text |ns)
@@ -158,10 +156,9 @@
                         |r $ %{} :Leaf (:at 1544638471535) (:by |aQJLUBr_Hp) (:text |ws-send!)
                         |v $ %{} :Leaf (:at 1546105636878) (:by |VDPjyAOgV) (:text |ws-connected?)
                         |x $ %{} :Leaf (:at 1621499723967) (:by |aQJLUBr_Hp) (:text |ws-set-on-data!)
-        :doc |
-    |ws-edn.app.server $ {}
+    |ws-edn.app.server $ %{} :FileEntry
       :defs $ {}
-        |main! $ %{} :CodeEntry
+        |main! $ %{} :CodeEntry (:doc |)
           :code $ %{} :Expr (:at 1544546020645) (:by |aQJLUBr_Hp)
             :data $ {}
               |T $ %{} :Leaf (:at 1544546020645) (:by |aQJLUBr_Hp) (:text |defn)
@@ -290,8 +287,7 @@
                                       |b $ %{} :Leaf (:at 1688226768527) (:by |aQJLUBr_Hp) (:text |message)
                                       |j $ %{} :Leaf (:at 1621498063826) (:by |aQJLUBr_Hp) (:text "|\"event 2s")
                   |r $ %{} :Leaf (:at 1544723630790) (:by |aQJLUBr_Hp) (:text |2000)
-          :doc |
-        |reload! $ %{} :CodeEntry
+        |reload! $ %{} :CodeEntry (:doc |)
           :code $ %{} :Expr (:at 1544546023324) (:by |aQJLUBr_Hp)
             :data $ {}
               |T $ %{} :Leaf (:at 1544546023324) (:by |aQJLUBr_Hp) (:text |defn)
@@ -318,8 +314,7 @@
                 :data $ {}
                   |T $ %{} :Leaf (:at 1544546036182) (:by |aQJLUBr_Hp) (:text |println)
                   |j $ %{} :Leaf (:at 1544546038619) (:by |aQJLUBr_Hp) (:text "|\"reload!")
-          :doc |
-      :ns $ %{} :CodeEntry
+      :ns $ %{} :CodeEntry (:doc |)
         :code $ %{} :Expr (:at 1544464151788) (:by |aQJLUBr_Hp)
           :data $ {}
             |T $ %{} :Leaf (:at 1544464151788) (:by |aQJLUBr_Hp) (:text |ns)
@@ -339,17 +334,15 @@
                         |r $ %{} :Leaf (:at 1544638506925) (:by |aQJLUBr_Hp) (:text |wss-send!)
                         |v $ %{} :Leaf (:at 1544724447213) (:by |aQJLUBr_Hp) (:text |wss-each!)
                         |x $ %{} :Leaf (:at 1621499630802) (:by |aQJLUBr_Hp) (:text |wss-set-on-data!)
-        :doc |
-    |ws-edn.client $ {}
+    |ws-edn.client $ %{} :FileEntry
       :defs $ {}
-        |*global-ws $ %{} :CodeEntry
+        |*global-ws $ %{} :CodeEntry (:doc |)
           :code $ %{} :Expr (:at 1544464574710) (:by |aQJLUBr_Hp)
             :data $ {}
               |T $ %{} :Leaf (:at 1614084484673) (:by |aQJLUBr_Hp) (:text |defatom)
               |j $ %{} :Leaf (:at 1544464574710) (:by |aQJLUBr_Hp) (:text |*global-ws)
               |r $ %{} :Leaf (:at 1544464574710) (:by |aQJLUBr_Hp) (:text |nil)
-          :doc |
-        |ws-connect! $ %{} :CodeEntry
+        |ws-connect! $ %{} :CodeEntry (:doc |)
           :code $ %{} :Expr (:at 1544464548128) (:by |aQJLUBr_Hp)
             :data $ {}
               |T $ %{} :Leaf (:at 1544464548128) (:by |aQJLUBr_Hp) (:text |defn)
@@ -508,8 +501,7 @@
                                 :data $ {}
                                   |T $ %{} :Leaf (:at 1614085859355) (:by |aQJLUBr_Hp) (:text |on-error)
                                   |j $ %{} :Leaf (:at 1614085859355) (:by |aQJLUBr_Hp) (:text |error)
-          :doc |
-        |ws-connected? $ %{} :CodeEntry
+        |ws-connected? $ %{} :CodeEntry (:doc |)
           :code $ %{} :Expr (:at 1546105592926) (:by |VDPjyAOgV)
             :data $ {}
               |T $ %{} :Leaf (:at 1546105592926) (:by |VDPjyAOgV) (:text |defn)
@@ -520,8 +512,7 @@
                 :data $ {}
                   |T $ %{} :Leaf (:at 1546105599542) (:by |VDPjyAOgV) (:text |some?)
                   |j $ %{} :Leaf (:at 1546105603638) (:by |VDPjyAOgV) (:text |@*global-ws)
-          :doc |
-        |ws-send! $ %{} :CodeEntry
+        |ws-send! $ %{} :CodeEntry (:doc |)
           :code $ %{} :Expr (:at 1544464559588) (:by |aQJLUBr_Hp)
             :data $ {}
               |T $ %{} :Leaf (:at 1544464559588) (:by |aQJLUBr_Hp) (:text |defn)
@@ -557,8 +548,7 @@
                         :data $ {}
                           |j $ %{} :Leaf (:at 1597742375758) (:by |aQJLUBr_Hp) (:text |js/console.warn)
                           |r $ %{} :Leaf (:at 1544464559588) (:by |aQJLUBr_Hp) (:text "||WebSocket at close state!")
-          :doc |
-        |ws-set-on-data! $ %{} :CodeEntry
+        |ws-set-on-data! $ %{} :CodeEntry (:doc |)
           :code $ %{} :Expr (:at 1621497316784) (:by |aQJLUBr_Hp)
             :data $ {}
               |T $ %{} :Leaf (:at 1621497316784) (:by |aQJLUBr_Hp) (:text |defn)
@@ -609,8 +599,7 @@
                         :data $ {}
                           |T $ %{} :Leaf (:at 1621497395616) (:by |aQJLUBr_Hp) (:text |js/console.warn)
                           |j $ %{} :Leaf (:at 1621497424938) (:by |aQJLUBr_Hp) (:text "|\"missing running ws instance")
-          :doc |
-      :ns $ %{} :CodeEntry
+      :ns $ %{} :CodeEntry (:doc |)
         :code $ %{} :Expr (:at 1544464133674) (:by |aQJLUBr_Hp)
           :data $ {}
             |T $ %{} :Leaf (:at 1544464133674) (:by |aQJLUBr_Hp) (:text |ns)
@@ -629,10 +618,9 @@
                         |j $ %{} :Leaf (:at 1614144581839) (:by |aQJLUBr_Hp) (:text |when-let)
                         |r $ %{} :Leaf (:at 1614144583190) (:by |aQJLUBr_Hp) (:text |parse-data)
                         |v $ %{} :Leaf (:at 1614144586597) (:by |aQJLUBr_Hp) (:text |stringify-data)
-        :doc |
-    |ws-edn.server $ {}
+    |ws-edn.server $ %{} :FileEntry
       :defs $ {}
-        |*global-connections $ %{} :CodeEntry
+        |*global-connections $ %{} :CodeEntry (:doc |)
           :code $ %{} :Expr (:at 1544464593464) (:by |aQJLUBr_Hp)
             :data $ {}
               |T $ %{} :Leaf (:at 1614084825136) (:by |aQJLUBr_Hp) (:text |defatom)
@@ -640,15 +628,13 @@
               |r $ %{} :Expr (:at 1544464593464) (:by |aQJLUBr_Hp)
                 :data $ {}
                   |T $ %{} :Leaf (:at 1544464593464) (:by |aQJLUBr_Hp) (:text |{})
-          :doc |
-        |*proxied-data-listener $ %{} :CodeEntry
+        |*proxied-data-listener $ %{} :CodeEntry (:doc |)
           :code $ %{} :Expr (:at 1621498797887) (:by |aQJLUBr_Hp)
             :data $ {}
               |T $ %{} :Leaf (:at 1621498799644) (:by |aQJLUBr_Hp) (:text |defatom)
               |j $ %{} :Leaf (:at 1621498797887) (:by |aQJLUBr_Hp) (:text |*proxied-data-listener)
               |r $ %{} :Leaf (:at 1621498801653) (:by |aQJLUBr_Hp) (:text |nil)
-          :doc |
-        |maintain-socket! $ %{} :CodeEntry
+        |maintain-socket! $ %{} :CodeEntry (:doc |)
           :code $ %{} :Expr (:at 1544724084862) (:by |aQJLUBr_Hp)
             :data $ {}
               |T $ %{} :Leaf (:at 1544724092867) (:by |aQJLUBr_Hp) (:text |defn)
@@ -803,8 +789,7 @@
                                     :data $ {}
                                       |T $ %{} :Leaf (:at 1544724243291) (:by |aQJLUBr_Hp) (:text |js/console.error)
                                       |j $ %{} :Leaf (:at 1544724243291) (:by |aQJLUBr_Hp) (:text |error)
-          :doc |
-        |wss-each! $ %{} :CodeEntry
+        |wss-each! $ %{} :CodeEntry (:doc |)
           :code $ %{} :Expr (:at 1544723456746) (:by |aQJLUBr_Hp)
             :data $ {}
               |T $ %{} :Leaf (:at 1544723456746) (:by |aQJLUBr_Hp) (:text |defn)
@@ -835,8 +820,7 @@
                           |T $ %{} :Leaf (:at 1544723545706) (:by |aQJLUBr_Hp) (:text |handler)
                           |j $ %{} :Leaf (:at 1544723546985) (:by |aQJLUBr_Hp) (:text |sid)
                           |r $ %{} :Leaf (:at 1544723575493) (:by |aQJLUBr_Hp) (:text |socket)
-          :doc |
-        |wss-send! $ %{} :CodeEntry
+        |wss-send! $ %{} :CodeEntry (:doc |)
           :code $ %{} :Expr (:at 1544549548595) (:by |aQJLUBr_Hp)
             :data $ {}
               |T $ %{} :Leaf (:at 1544549548595) (:by |aQJLUBr_Hp) (:text |defn)
@@ -878,8 +862,7 @@
                           |T $ %{} :Leaf (:at 1544549684125) (:by |aQJLUBr_Hp) (:text |js/console.warn)
                           |j $ %{} :Leaf (:at 1544549698727) (:by |aQJLUBr_Hp) (:text "|\"socket not found for")
                           |r $ %{} :Leaf (:at 1544549700063) (:by |aQJLUBr_Hp) (:text |sid)
-          :doc |
-        |wss-serve! $ %{} :CodeEntry
+        |wss-serve! $ %{} :CodeEntry (:doc |)
           :code $ %{} :Expr (:at 1544464609226) (:by |aQJLUBr_Hp)
             :data $ {}
               |T $ %{} :Leaf (:at 1544464609226) (:by |aQJLUBr_Hp) (:text |defn)
@@ -1133,8 +1116,7 @@
                                     :data $ {}
                                       |T $ %{} :Leaf (:at 1544724234946) (:by |aQJLUBr_Hp) (:text |js/console.error)
                                       |j $ %{} :Leaf (:at 1544724235821) (:by |aQJLUBr_Hp) (:text |error)
-          :doc |
-        |wss-set-on-data! $ %{} :CodeEntry
+        |wss-set-on-data! $ %{} :CodeEntry (:doc |)
           :code $ %{} :Expr (:at 1621499006635) (:by |aQJLUBr_Hp)
             :data $ {}
               |T $ %{} :Leaf (:at 1621499006635) (:by |aQJLUBr_Hp) (:text |defn)
@@ -1147,8 +1129,7 @@
                   |D $ %{} :Leaf (:at 1621499036665) (:by |aQJLUBr_Hp) (:text |reset!)
                   |T $ %{} :Leaf (:at 1621499025799) (:by |aQJLUBr_Hp) (:text |*proxied-data-listener)
                   |j $ %{} :Leaf (:at 1621499039114) (:by |aQJLUBr_Hp) (:text |on-data)
-          :doc |
-      :ns $ %{} :CodeEntry
+      :ns $ %{} :CodeEntry (:doc |)
         :code $ %{} :Expr (:at 1544464128346) (:by |aQJLUBr_Hp)
           :data $ {}
             |T $ %{} :Leaf (:at 1544464128346) (:by |aQJLUBr_Hp) (:text |ns)
@@ -1188,11 +1169,9 @@
                     |T $ %{} :Leaf (:at 1644660554139) (:by |aQJLUBr_Hp) (:text "|\"fs")
                     |j $ %{} :Leaf (:at 1644660554976) (:by |aQJLUBr_Hp) (:text |:as)
                     |r $ %{} :Leaf (:at 1644660555353) (:by |aQJLUBr_Hp) (:text |fs)
-        :doc |
-    |ws-edn.util $ {}
-      :configs $ {}
+    |ws-edn.util $ %{} :FileEntry
       :defs $ {}
-        |when-let $ %{} :CodeEntry
+        |when-let $ %{} :CodeEntry (:doc |)
           :code $ %{} :Expr (:at 1614144465118) (:by |aQJLUBr_Hp)
             :data $ {}
               |T $ %{} :Leaf (:at 1614144465118) (:by |aQJLUBr_Hp) (:text |defmacro)
@@ -1242,18 +1221,16 @@
                                       |T $ %{} :Leaf (:at 1614144465118) (:by |aQJLUBr_Hp) (:text |first)
                                       |j $ %{} :Leaf (:at 1614144465118) (:by |aQJLUBr_Hp) (:text |pair)
                           |r $ %{} :Leaf (:at 1614144465118) (:by |aQJLUBr_Hp) (:text |~@body)
-          :doc |
-      :ns $ %{} :CodeEntry
+      :ns $ %{} :CodeEntry (:doc |)
         :code $ %{} :Expr (:at 1614144454159) (:by |aQJLUBr_Hp)
           :data $ {}
             |T $ %{} :Leaf (:at 1614144454159) (:by |aQJLUBr_Hp) (:text |ns)
             |j $ %{} :Leaf (:at 1614144454159) (:by |aQJLUBr_Hp) (:text |ws-edn.util)
-        :doc |
   :ir $ {} (:package |ws-edn)
     :files $ {}
       |ws-edn.app.page $ {}
         :defs $ {}
-          |main! $ %{} :CodeEntry
+          |main! $ %{} :CodeEntry (:doc |)
             :code $ %{} :Expr (:at 1544546050477) (:by |aQJLUBr_Hp)
               :data $ {}
                 |T $ %{} :Leaf (:at 1544546050477) (:by |aQJLUBr_Hp) (:text |defn)
@@ -1356,8 +1333,7 @@
                                 |h $ %{} :Leaf (:at 1688321922622) (:by |aQJLUBr_Hp) (:text "|\"in")
                                 |l $ %{} :Leaf (:at 1688321926287) (:by |aQJLUBr_Hp) (:text "|\"string")
                     |j $ %{} :Leaf (:at 1546105624993) (:by |VDPjyAOgV) (:text |2000)
-            :doc |
-          |reload! $ %{} :CodeEntry
+          |reload! $ %{} :CodeEntry (:doc |)
             :code $ %{} :Expr (:at 1544546051379) (:by |aQJLUBr_Hp)
               :data $ {}
                 |T $ %{} :Leaf (:at 1544546051379) (:by |aQJLUBr_Hp) (:text |defn)
@@ -1382,8 +1358,7 @@
                   :data $ {}
                     |T $ %{} :Leaf (:at 1544546058025) (:by |aQJLUBr_Hp) (:text |println)
                     |j $ %{} :Leaf (:at 1544546060744) (:by |aQJLUBr_Hp) (:text "|\"reload")
-            :doc |
-        :ns $ %{} :CodeEntry
+        :ns $ %{} :CodeEntry (:doc |)
           :code $ %{} :Expr (:at 1544464189777) (:by |aQJLUBr_Hp)
             :data $ {}
               |T $ %{} :Leaf (:at 1544464189777) (:by |aQJLUBr_Hp) (:text |ns)
@@ -1403,10 +1378,9 @@
                           |r $ %{} :Leaf (:at 1544638471535) (:by |aQJLUBr_Hp) (:text |ws-send!)
                           |v $ %{} :Leaf (:at 1546105636878) (:by |VDPjyAOgV) (:text |ws-connected?)
                           |x $ %{} :Leaf (:at 1621499723967) (:by |aQJLUBr_Hp) (:text |ws-set-on-data!)
-          :doc |
       |ws-edn.app.server $ {}
         :defs $ {}
-          |main! $ %{} :CodeEntry
+          |main! $ %{} :CodeEntry (:doc |)
             :code $ %{} :Expr (:at 1544546020645) (:by |aQJLUBr_Hp)
               :data $ {}
                 |T $ %{} :Leaf (:at 1544546020645) (:by |aQJLUBr_Hp) (:text |defn)
@@ -1535,8 +1509,7 @@
                                         |b $ %{} :Leaf (:at 1688226768527) (:by |aQJLUBr_Hp) (:text |message)
                                         |j $ %{} :Leaf (:at 1621498063826) (:by |aQJLUBr_Hp) (:text "|\"event 2s")
                     |r $ %{} :Leaf (:at 1544723630790) (:by |aQJLUBr_Hp) (:text |2000)
-            :doc |
-          |reload! $ %{} :CodeEntry
+          |reload! $ %{} :CodeEntry (:doc |)
             :code $ %{} :Expr (:at 1544546023324) (:by |aQJLUBr_Hp)
               :data $ {}
                 |T $ %{} :Leaf (:at 1544546023324) (:by |aQJLUBr_Hp) (:text |defn)
@@ -1563,8 +1536,7 @@
                   :data $ {}
                     |T $ %{} :Leaf (:at 1544546036182) (:by |aQJLUBr_Hp) (:text |println)
                     |j $ %{} :Leaf (:at 1544546038619) (:by |aQJLUBr_Hp) (:text "|\"reload!")
-            :doc |
-        :ns $ %{} :CodeEntry
+        :ns $ %{} :CodeEntry (:doc |)
           :code $ %{} :Expr (:at 1544464151788) (:by |aQJLUBr_Hp)
             :data $ {}
               |T $ %{} :Leaf (:at 1544464151788) (:by |aQJLUBr_Hp) (:text |ns)
@@ -1584,17 +1556,15 @@
                           |r $ %{} :Leaf (:at 1544638506925) (:by |aQJLUBr_Hp) (:text |wss-send!)
                           |v $ %{} :Leaf (:at 1544724447213) (:by |aQJLUBr_Hp) (:text |wss-each!)
                           |x $ %{} :Leaf (:at 1621499630802) (:by |aQJLUBr_Hp) (:text |wss-set-on-data!)
-          :doc |
       |ws-edn.client $ {}
         :defs $ {}
-          |*global-ws $ %{} :CodeEntry
+          |*global-ws $ %{} :CodeEntry (:doc |)
             :code $ %{} :Expr (:at 1544464574710) (:by |aQJLUBr_Hp)
               :data $ {}
                 |T $ %{} :Leaf (:at 1614084484673) (:by |aQJLUBr_Hp) (:text |defatom)
                 |j $ %{} :Leaf (:at 1544464574710) (:by |aQJLUBr_Hp) (:text |*global-ws)
                 |r $ %{} :Leaf (:at 1544464574710) (:by |aQJLUBr_Hp) (:text |nil)
-            :doc |
-          |ws-connect! $ %{} :CodeEntry
+          |ws-connect! $ %{} :CodeEntry (:doc |)
             :code $ %{} :Expr (:at 1544464548128) (:by |aQJLUBr_Hp)
               :data $ {}
                 |T $ %{} :Leaf (:at 1544464548128) (:by |aQJLUBr_Hp) (:text |defn)
@@ -1753,8 +1723,7 @@
                                   :data $ {}
                                     |T $ %{} :Leaf (:at 1614085859355) (:by |aQJLUBr_Hp) (:text |on-error)
                                     |j $ %{} :Leaf (:at 1614085859355) (:by |aQJLUBr_Hp) (:text |error)
-            :doc |
-          |ws-connected? $ %{} :CodeEntry
+          |ws-connected? $ %{} :CodeEntry (:doc |)
             :code $ %{} :Expr (:at 1546105592926) (:by |VDPjyAOgV)
               :data $ {}
                 |T $ %{} :Leaf (:at 1546105592926) (:by |VDPjyAOgV) (:text |defn)
@@ -1765,8 +1734,7 @@
                   :data $ {}
                     |T $ %{} :Leaf (:at 1546105599542) (:by |VDPjyAOgV) (:text |some?)
                     |j $ %{} :Leaf (:at 1546105603638) (:by |VDPjyAOgV) (:text |@*global-ws)
-            :doc |
-          |ws-send! $ %{} :CodeEntry
+          |ws-send! $ %{} :CodeEntry (:doc |)
             :code $ %{} :Expr (:at 1544464559588) (:by |aQJLUBr_Hp)
               :data $ {}
                 |T $ %{} :Leaf (:at 1544464559588) (:by |aQJLUBr_Hp) (:text |defn)
@@ -1802,8 +1770,7 @@
                           :data $ {}
                             |j $ %{} :Leaf (:at 1597742375758) (:by |aQJLUBr_Hp) (:text |js/console.warn)
                             |r $ %{} :Leaf (:at 1544464559588) (:by |aQJLUBr_Hp) (:text "||WebSocket at close state!")
-            :doc |
-          |ws-set-on-data! $ %{} :CodeEntry
+          |ws-set-on-data! $ %{} :CodeEntry (:doc |)
             :code $ %{} :Expr (:at 1621497316784) (:by |aQJLUBr_Hp)
               :data $ {}
                 |T $ %{} :Leaf (:at 1621497316784) (:by |aQJLUBr_Hp) (:text |defn)
@@ -1854,8 +1821,7 @@
                           :data $ {}
                             |T $ %{} :Leaf (:at 1621497395616) (:by |aQJLUBr_Hp) (:text |js/console.warn)
                             |j $ %{} :Leaf (:at 1621497424938) (:by |aQJLUBr_Hp) (:text "|\"missing running ws instance")
-            :doc |
-        :ns $ %{} :CodeEntry
+        :ns $ %{} :CodeEntry (:doc |)
           :code $ %{} :Expr (:at 1544464133674) (:by |aQJLUBr_Hp)
             :data $ {}
               |T $ %{} :Leaf (:at 1544464133674) (:by |aQJLUBr_Hp) (:text |ns)
@@ -1874,10 +1840,9 @@
                           |j $ %{} :Leaf (:at 1614144581839) (:by |aQJLUBr_Hp) (:text |when-let)
                           |r $ %{} :Leaf (:at 1614144583190) (:by |aQJLUBr_Hp) (:text |parse-data)
                           |v $ %{} :Leaf (:at 1614144586597) (:by |aQJLUBr_Hp) (:text |stringify-data)
-          :doc |
       |ws-edn.server $ {}
         :defs $ {}
-          |*global-connections $ %{} :CodeEntry
+          |*global-connections $ %{} :CodeEntry (:doc |)
             :code $ %{} :Expr (:at 1544464593464) (:by |aQJLUBr_Hp)
               :data $ {}
                 |T $ %{} :Leaf (:at 1614084825136) (:by |aQJLUBr_Hp) (:text |defatom)
@@ -1885,15 +1850,13 @@
                 |r $ %{} :Expr (:at 1544464593464) (:by |aQJLUBr_Hp)
                   :data $ {}
                     |T $ %{} :Leaf (:at 1544464593464) (:by |aQJLUBr_Hp) (:text |{})
-            :doc |
-          |*proxied-data-listener $ %{} :CodeEntry
+          |*proxied-data-listener $ %{} :CodeEntry (:doc |)
             :code $ %{} :Expr (:at 1621498797887) (:by |aQJLUBr_Hp)
               :data $ {}
                 |T $ %{} :Leaf (:at 1621498799644) (:by |aQJLUBr_Hp) (:text |defatom)
                 |j $ %{} :Leaf (:at 1621498797887) (:by |aQJLUBr_Hp) (:text |*proxied-data-listener)
                 |r $ %{} :Leaf (:at 1621498801653) (:by |aQJLUBr_Hp) (:text |nil)
-            :doc |
-          |maintain-socket! $ %{} :CodeEntry
+          |maintain-socket! $ %{} :CodeEntry (:doc |)
             :code $ %{} :Expr (:at 1544724084862) (:by |aQJLUBr_Hp)
               :data $ {}
                 |T $ %{} :Leaf (:at 1544724092867) (:by |aQJLUBr_Hp) (:text |defn)
@@ -2048,8 +2011,7 @@
                                       :data $ {}
                                         |T $ %{} :Leaf (:at 1544724243291) (:by |aQJLUBr_Hp) (:text |js/console.error)
                                         |j $ %{} :Leaf (:at 1544724243291) (:by |aQJLUBr_Hp) (:text |error)
-            :doc |
-          |wss-each! $ %{} :CodeEntry
+          |wss-each! $ %{} :CodeEntry (:doc |)
             :code $ %{} :Expr (:at 1544723456746) (:by |aQJLUBr_Hp)
               :data $ {}
                 |T $ %{} :Leaf (:at 1544723456746) (:by |aQJLUBr_Hp) (:text |defn)
@@ -2080,8 +2042,7 @@
                             |T $ %{} :Leaf (:at 1544723545706) (:by |aQJLUBr_Hp) (:text |handler)
                             |j $ %{} :Leaf (:at 1544723546985) (:by |aQJLUBr_Hp) (:text |sid)
                             |r $ %{} :Leaf (:at 1544723575493) (:by |aQJLUBr_Hp) (:text |socket)
-            :doc |
-          |wss-send! $ %{} :CodeEntry
+          |wss-send! $ %{} :CodeEntry (:doc |)
             :code $ %{} :Expr (:at 1544549548595) (:by |aQJLUBr_Hp)
               :data $ {}
                 |T $ %{} :Leaf (:at 1544549548595) (:by |aQJLUBr_Hp) (:text |defn)
@@ -2123,8 +2084,7 @@
                             |T $ %{} :Leaf (:at 1544549684125) (:by |aQJLUBr_Hp) (:text |js/console.warn)
                             |j $ %{} :Leaf (:at 1544549698727) (:by |aQJLUBr_Hp) (:text "|\"socket not found for")
                             |r $ %{} :Leaf (:at 1544549700063) (:by |aQJLUBr_Hp) (:text |sid)
-            :doc |
-          |wss-serve! $ %{} :CodeEntry
+          |wss-serve! $ %{} :CodeEntry (:doc |)
             :code $ %{} :Expr (:at 1544464609226) (:by |aQJLUBr_Hp)
               :data $ {}
                 |T $ %{} :Leaf (:at 1544464609226) (:by |aQJLUBr_Hp) (:text |defn)
@@ -2378,8 +2338,7 @@
                                       :data $ {}
                                         |T $ %{} :Leaf (:at 1544724234946) (:by |aQJLUBr_Hp) (:text |js/console.error)
                                         |j $ %{} :Leaf (:at 1544724235821) (:by |aQJLUBr_Hp) (:text |error)
-            :doc |
-          |wss-set-on-data! $ %{} :CodeEntry
+          |wss-set-on-data! $ %{} :CodeEntry (:doc |)
             :code $ %{} :Expr (:at 1621499006635) (:by |aQJLUBr_Hp)
               :data $ {}
                 |T $ %{} :Leaf (:at 1621499006635) (:by |aQJLUBr_Hp) (:text |defn)
@@ -2392,8 +2351,7 @@
                     |D $ %{} :Leaf (:at 1621499036665) (:by |aQJLUBr_Hp) (:text |reset!)
                     |T $ %{} :Leaf (:at 1621499025799) (:by |aQJLUBr_Hp) (:text |*proxied-data-listener)
                     |j $ %{} :Leaf (:at 1621499039114) (:by |aQJLUBr_Hp) (:text |on-data)
-            :doc |
-        :ns $ %{} :CodeEntry
+        :ns $ %{} :CodeEntry (:doc |)
           :code $ %{} :Expr (:at 1544464128346) (:by |aQJLUBr_Hp)
             :data $ {}
               |T $ %{} :Leaf (:at 1544464128346) (:by |aQJLUBr_Hp) (:text |ns)
@@ -2433,11 +2391,10 @@
                       |T $ %{} :Leaf (:at 1644660554139) (:by |aQJLUBr_Hp) (:text "|\"fs")
                       |j $ %{} :Leaf (:at 1644660554976) (:by |aQJLUBr_Hp) (:text |:as)
                       |r $ %{} :Leaf (:at 1644660555353) (:by |aQJLUBr_Hp) (:text |fs)
-          :doc |
       |ws-edn.util $ {}
         :configs $ {}
         :defs $ {}
-          |when-let $ %{} :CodeEntry
+          |when-let $ %{} :CodeEntry (:doc |)
             :code $ %{} :Expr (:at 1614144465118) (:by |aQJLUBr_Hp)
               :data $ {}
                 |T $ %{} :Leaf (:at 1614144465118) (:by |aQJLUBr_Hp) (:text |defmacro)
@@ -2487,13 +2444,11 @@
                                         |T $ %{} :Leaf (:at 1614144465118) (:by |aQJLUBr_Hp) (:text |first)
                                         |j $ %{} :Leaf (:at 1614144465118) (:by |aQJLUBr_Hp) (:text |pair)
                             |r $ %{} :Leaf (:at 1614144465118) (:by |aQJLUBr_Hp) (:text |~@body)
-            :doc |
-        :ns $ %{} :CodeEntry
+        :ns $ %{} :CodeEntry (:doc |)
           :code $ %{} :Expr (:at 1614144454159) (:by |aQJLUBr_Hp)
             :data $ {}
               |T $ %{} :Leaf (:at 1614144454159) (:by |aQJLUBr_Hp) (:text |ns)
               |j $ %{} :Leaf (:at 1614144454159) (:by |aQJLUBr_Hp) (:text |ws-edn.util)
-          :doc |
   :users $ {}
     |VDPjyAOgV $ {} (:avatar nil) (:id |VDPjyAOgV) (:name |root) (:nickname |root) (:password |d41d8cd98f00b204e9800998ecf8427e) (:theme :star-trail)
     |aQJLUBr_Hp $ {} (:avatar nil) (:id |aQJLUBr_Hp) (:name |chen) (:nickname |chen) (:password |d41d8cd98f00b204e9800998ecf8427e) (:theme :star-trail)
