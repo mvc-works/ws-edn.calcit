@@ -11,11 +11,12 @@
         |main! $ %{} :CodeEntry (:doc |)
           :code $ quote
             defn main! () (println "\"start") (load-console-formatter!)
-              ws-connect! "\"wss://localhost:5001" $ {}
-                :on-open $ fn (event) (println "\"open")
-                  ws-send! $ : test
-                :on-data $ fn (data) (println "\"data" data)
-                :on-close $ fn (event) (println "\"close")
+              ws-connect! (do "\"wss://localhost:5001" "\"ws://localhost:9001")
+                {}
+                  :on-open $ fn (event) (println "\"open")
+                    ws-send! $ : test
+                  :on-data $ fn (data) (println "\"data" data)
+                  :on-close $ fn (event) (println "\"close")
               js/setInterval
                 fn ()
                   println "\"connected try send" $ ws-connected?

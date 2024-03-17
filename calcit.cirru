@@ -25,7 +25,11 @@
               |x $ %{} :Expr (:at 1544548406724) (:by |aQJLUBr_Hp)
                 :data $ {}
                   |T $ %{} :Leaf (:at 1544638474733) (:by |aQJLUBr_Hp) (:text |ws-connect!)
-                  |j $ %{} :Leaf (:at 1688226660915) (:by |aQJLUBr_Hp) (:text "|\"wss://localhost:5001")
+                  |j $ %{} :Expr (:at 1706635085092) (:by |aQJLUBr_Hp)
+                    :data $ {}
+                      |D $ %{} :Leaf (:at 1706635086818) (:by |aQJLUBr_Hp) (:text |do)
+                      |T $ %{} :Leaf (:at 1688226660915) (:by |aQJLUBr_Hp) (:text "|\"wss://localhost:5001")
+                      |b $ %{} :Leaf (:at 1706635092703) (:by |aQJLUBr_Hp) (:text "|\"ws://localhost:9001")
                   |r $ %{} :Expr (:at 1544548468156) (:by |aQJLUBr_Hp)
                     :data $ {}
                       |T $ %{} :Leaf (:at 1544548468522) (:by |aQJLUBr_Hp) (:text |{})
