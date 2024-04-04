@@ -1,7 +1,7 @@
 {
-  "version": "0.0.9",
+  "version": "0.0.10",
   "dependencies": {
-    "@calcit/procs": "^0.8.41",
+    "@calcit/procs": "^0.8.46",
     "nanoid": "^5.0.6"
   },
   "scripts": {
@@ -12,7 +12,7 @@
     "watch-page": "cr --emit-js --emit-path out-page/"
   },
   "devDependencies": {
-    "vite": "^5.1.6",
+    "vite": "^5.2.8",
     "ws": "^8.16.0"
   }
 }

@@ -1,6 +1,6 @@
 
 {} (:package |ws-edn)
-  :configs $ {} (:init-fn |ws-edn.app.page/main!) (:reload-fn |ws-edn.app.page/reload!) (:version |0.0.9)
+  :configs $ {} (:init-fn |ws-edn.app.page/main!) (:reload-fn |ws-edn.app.page/reload!) (:version |0.0.10)
     :modules $ []
   :entries $ {}
     :server $ {} (:init-fn |ws-edn.app.server/main!) (:reload-fn |ws-edn.app.server/reload!) (:storage-key |calcit.cirru)
@@ -15,13 +15,16 @@
                 {}
                   :on-open $ fn (event) (println "\"open")
                     ws-send! $ : test
-                  :on-data $ fn (data) (println "\"data" data)
+                  :on-data $ fn (data) (js/console.log "\"data" data)
                   :on-close $ fn (event) (println "\"close")
+                  :class-mapper $ {} (:Track Track)
               js/setInterval
                 fn ()
                   println "\"connected try send" $ ws-connected?
                   ws-send! $ {} (:data "\"just message")
                   ws-send! $ : message "\"in" "\"string"
+                  ws-send! $ %{} Track (:message "\"from client")
+                    :time $ .!toISOString (new js/Date)
                 , 2000
         |reload! $ %{} :CodeEntry (:doc |)
           :code $ quote
@@ -31,34 +34,39 @@
       :ns $ %{} :CodeEntry (:doc |)
         :code $ quote
           ns ws-edn.app.page $ :require
-            [] ws-edn.client :refer $ [] ws-connect! ws-send! ws-connected? ws-set-on-data!
+            ws-edn.client :refer $ ws-connect! ws-send! ws-connected? ws-set-on-data!
+            ws-edn.schema :refer $ Track
     |ws-edn.app.server $ %{} :FileEntry
       :defs $ {}
         |main! $ %{} :CodeEntry (:doc |)
           :code $ quote
-            defn main! () (println "\"started")
-              wss-serve! 5001 $ {}
+            defn main! () (println "\"started") (load-console-formatter!)
+              wss-serve! 9001 $ {}
                 :on-listening $ fn () (println "\"server listening")
                 :on-open $ fn (sid socket) (println "\"opened" sid)
                   wss-send! sid $ : op "\"initial message"
-                :on-data $ fn (sid data) (println "\"just data" sid data)
+                :on-data $ fn (sid data) (js/console.log "\"just data" sid data)
                 :on-close $ fn (sid event) (println "\"close" sid)
-                :key "\"certs/key.pem"
-                :cert "\"certs/cert.pem"
+                ; :key "\"certs/key.pem"
+                ; :cert "\"certs/cert.pem"
+                :class-mapper $ {} (:Track Track)
               js/setInterval
                 fn () (println "\"heartbeat")
                   wss-each! $ fn (sid socket) (js/console.log sid)
                     wss-send! sid $ : message "\"event 2s"
+                    wss-send! sid $ %{} Track (:message "\"from server")
+                      :time $ -> js/Date new (.!toISOString)
                 , 2000
         |reload! $ %{} :CodeEntry (:doc |)
           :code $ quote
             defn reload! ()
-              wss-set-on-data! $ fn (sid data) (println "\"reloaded 8:" sid data)
+              wss-set-on-data! $ fn (sid data) (js/console.log "\"reloaded 8:" sid data)
               println "\"reload!"
       :ns $ %{} :CodeEntry (:doc |)
         :code $ quote
           ns ws-edn.app.server $ :require
-            [] ws-edn.server :refer $ [] wss-serve! wss-send! wss-each! wss-set-on-data!
+            ws-edn.server :refer $ wss-serve! wss-send! wss-each! wss-set-on-data!
+            ws-edn.schema :refer $ Track
     |ws-edn.client $ %{} :FileEntry
       :defs $ {}
         |*global-ws $ %{} :CodeEntry (:doc |)
@@ -83,7 +91,7 @@
                   on-data $ :on-data options
                   set! (.-onmessage ws)
                     fn (event)
-                      on-data $ parse-cirru-edn (.-data event)
+                      on-data $ parse-cirru-edn (.-data event) (&map:get options :class-mapper)
                 set! (.-onerror ws)
                   fn (error) (js/console.error "\"Failed to establish connection" error)
                     when-let
@@ -114,6 +122,18 @@
         :code $ quote
           ns ws-edn.client $ :require
             [] ws-edn.util :refer $ [] when-let parse-data stringify-data
+    |ws-edn.schema $ %{} :FileEntry
+      :defs $ {}
+        |Track $ %{} :CodeEntry (:doc |)
+          :code $ quote
+            def Track $ new-class-record TrackMethods :Track :message :time
+        |TrackMethods $ %{} :CodeEntry (:doc |)
+          :code $ quote
+            defrecord! TrackMethods $ :log
+              fn (self)
+                js/console.log (get self :time) "\"-" $ get self :message
+      :ns $ %{} :CodeEntry (:doc |)
+        :code $ quote (ns ws-edn.schema)
     |ws-edn.server $ %{} :FileEntry
       :defs $ {}
         |*global-connections $ %{} :CodeEntry (:doc |)
@@ -133,7 +153,7 @@
                 reset! *proxied-data-listener $ :on-data options
                 .!on socket "\"message" $ fn (raw-data binary?)
                   when-let (on-data @*proxied-data-listener)
-                    on-data sid $ parse-cirru-edn (.!toString raw-data)
+                    on-data sid $ parse-cirru-edn (.!toString raw-data) (&map:get options :class-mapper)
                 .!on socket "\"close" $ fn (event binary?) (swap! *global-connections dissoc sid)
                   when-let
                     on-close $ :on-close options
