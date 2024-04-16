@@ -56,6 +56,13 @@ ws-edn.client/ws-set-on-data! $ fn (data)
   println data
 ```
 
+Class mapper for deserializing with class in Record:
+
+```cirru
+  :class-mapper $ {}
+    :Person Person
+```
+
 Deps:
 
 ```bash
