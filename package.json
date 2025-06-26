@@ -1,18 +1,18 @@
 {
   "version": "0.0.10",
   "dependencies": {
-    "@calcit/procs": "^0.8.46",
-    "nanoid": "^5.0.6"
+    "@calcit/procs": "^0.9.13",
+    "nanoid": "^5.1.5"
   },
   "scripts": {
-    "watch-server": "cr --emit-js --entry server",
-    "compile-server": "cr --emit-js --once --entry server",
-    "compile-page": "cr --emit-js --once --emit-path out-page/",
+    "watch-server": "cr --entry server js",
+    "compile-server": "cr --entry server -1 js",
+    "compile-page": "cr --emit-path out-page/ -1 js",
     "build-page": "vite build --base=./",
-    "watch-page": "cr --emit-js --emit-path out-page/"
+    "watch-page": "cr --emit-path out-page/ js"
   },
   "devDependencies": {
-    "vite": "^5.2.8",
-    "ws": "^8.16.0"
+    "vite": "^7.0.0",
+    "ws": "^8.18.2"
   }
 }
