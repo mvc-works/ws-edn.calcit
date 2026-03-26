@@ -9,4 +9,6 @@ out-page/
 
 certs/
 
+.yarn/*.gz
+
 .DS_Store
