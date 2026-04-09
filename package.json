@@ -1,18 +1,19 @@
 {
-  "version": "0.0.10",
+  "packageManager": "yarn@4.12.0",
   "dependencies": {
-    "@calcit/procs": "^0.9.13",
+    "@calcit/procs": "0.12.13",
     "nanoid": "^5.1.5"
   },
   "scripts": {
-    "watch-server": "cr --entry server js",
-    "compile-server": "cr --entry server -1 js",
-    "compile-page": "cr --emit-path out-page/ -1 js",
+    "watch-server": "cr --entry server js -w",
+    "compile-server": "cr --entry server js",
+    "compile-page": "cr --emit-path out-page/ js",
     "build-page": "vite build --base=./",
-    "watch-page": "cr --emit-path out-page/ js"
+    "watch-page": "cr --emit-path out-page/ js -w"
   },
   "devDependencies": {
-    "vite": "^7.0.0",
+    "vite": "^8.0.2",
     "ws": "^8.18.2"
-  }
+  },
+  "version": "0.0.12"
 }
