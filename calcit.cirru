@@ -1,10 +1,12 @@
 
-{} (:about "|Machine-generated snapshot. Do not edit directly — changes will be overwritten. Use `cr query` to inspect and `cr edit`/`cr tree` to modify. Run `cr docs agents --full` first. Manual edits must follow format and schema conventions, then run `cr edit format`.") (:package |ws-edn)
-  :configs $ {} (:init-fn |ws-edn.app.page/main!) (:reload-fn |ws-edn.app.page/reload!) (:version |0.0.13)
-    :modules $ []
+{} (:about "|Machine-generated snapshot. Do not edit directly — changes will be overwritten. Use `cr query` to inspect and `cr edit`/`cr tree` to modify. Run `cr docs agents --full` first. Manual edits must follow format and schema conventions, then run `cr edit format`.") (:package |ws-edn) (:version |0.0.13)
   :entries $ {}
-    :server $ {} (:init-fn |ws-edn.app.server/main!) (:reload-fn |ws-edn.app.server/reload!) (:version |0.0.0)
+    :default $ {} (:description |) (:init-fn 'ws-edn.app.page/main!) (:mode :native) (:reload-fn 'ws-edn.app.page/reload!)
       :modules $ []
+      :type-slots $ {}
+    :server $ {} (:description |) (:init-fn 'ws-edn.app.server/main!) (:mode :native) (:reload-fn 'ws-edn.app.server/reload!)
+      :modules $ []
+      :type-slots $ {}
   :files $ {}
     |ws-edn.app.page $ %{} :FileEntry
       :defs $ {}
@@ -27,16 +29,17 @@
                     :time $ .!toISOString (new js/Date)
                 , 2000
           :examples $ []
-          :schema $ :: :fn
-            {} (:return :dynamic)
+          :schema $ :: 'Fn
+            {} (:return 'Dynamic)
               :args $ []
               :features $ #{} :js-ffi
-        |reload! $ %{} :CodeEntry (:doc |) (:schema :dynamic)
+        |reload! $ %{} :CodeEntry (:doc |)
           :code $ quote
             defn reload! ()
               ws-set-on-data! $ fn (data) (println "|reloaded 8:" data)
               println |reload
           :examples $ []
+          :schema $ :: 'Dynamic
       :ns $ %{} :NsEntry (:doc |)
         :code $ quote
           ns ws-edn.app.page $ :require
@@ -64,16 +67,17 @@
                       :time $ -> js/Date new (.!toISOString)
                 , 2000
           :examples $ []
-          :schema $ :: :fn
-            {} (:return :dynamic)
+          :schema $ :: 'Fn
+            {} (:return 'Dynamic)
               :args $ []
               :features $ #{} :js-ffi
-        |reload! $ %{} :CodeEntry (:doc |) (:schema :dynamic)
+        |reload! $ %{} :CodeEntry (:doc |)
           :code $ quote
             defn reload! ()
               wss-set-on-data! $ fn (sid data) (js/console.log "|reloaded 8:" sid data)
               println |reload!
           :examples $ []
+          :schema $ :: 'Dynamic
       :ns $ %{} :NsEntry (:doc |)
         :code $ quote
           ns ws-edn.app.server $ :require
@@ -81,9 +85,10 @@
             ws-edn.schema :refer $ Track
     |ws-edn.client $ %{} :FileEntry
       :defs $ {}
-        |*global-ws $ %{} :CodeEntry (:doc "|Global atom that stores the WebSocket instance. Used internally to track the current connection.") (:schema :dynamic)
+        |*global-ws $ %{} :CodeEntry (:doc "|Global atom that stores the WebSocket instance. Used internally to track the current connection.")
           :code $ quote (defatom *global-ws nil)
           :examples $ []
+          :schema $ :: 'Dynamic
         |ws-connect! $ %{} :CodeEntry (:doc "|Establishes a WebSocket connection to the specified URL. Accepts options map with :on-open, :on-close, :on-data, :on-error, and :class-mapper callbacks.")
           :code $ quote
             defn ws-connect! (ws-url options)
@@ -93,39 +98,50 @@
                 reset! *global-ws ws
                 when-let
                   on-open $ :on-open options
-                  set! (.-onopen ws)
-                    fn (event) (on-open event)
+                  let
+                      callback $ unsafe-coerce on-open 'Fn
+                    set! (.-onopen ws)
+                      fn (event) (callback event)
                 set! (.-onclose ws)
                   fn (event) (reset! *global-ws nil)
                     when-let
                       on-close $ :on-close options
-                      on-close event
+                      let
+                          callback $ unsafe-coerce on-close 'Fn
+                        callback event
                 when-let
                   on-data $ :on-data options
-                  set! (.-onmessage ws)
-                    fn (event)
-                      on-data $ parse-cirru-edn (.-data event) (&map:get options :class-mapper)
+                  let
+                      callback $ unsafe-coerce on-data 'Fn
+                    set! (.-onmessage ws)
+                      fn (event)
+                        callback $ parse-cirru-edn
+                          unsafe-coerce (.-data event) 'String
+                          &map:get options :class-mapper
                 set! (.-onerror ws)
                   fn (error) (js/console.error "|Failed to establish connection" error)
                     when-let
                       on-error $ :on-error options
-                      on-error error
+                      let
+                          callback $ unsafe-coerce on-error 'Fn
+                        callback error
           :examples $ []
             quote $ ws-connect! |ws://localhost:8080
               {}
                 :on-open $ fn (event) (println |connected)
                 :on-close $ fn (event) (println |closed)
                 :on-data $ fn (data) (println |received: data)
-          :schema $ :: :fn
-            {} (:return :dynamic)
-              :args $ [] :dynamic :dynamic
+          :schema $ :: 'Fn
+            {} (:return 'Dynamic)
+              :args $ [] 'Dynamic 'Dynamic
               :features $ #{} :js-ffi
-        |ws-connected? $ %{} :CodeEntry (:doc "|Returns true if WebSocket is currently connected, false otherwise.") (:schema :dynamic)
+        |ws-connected? $ %{} :CodeEntry (:doc "|Returns true if WebSocket is currently connected, false otherwise.")
           :code $ quote
             defn ws-connected? () $ some? @*global-ws
           :examples $ []
             quote $ ws-connected?
-        |ws-send! $ %{} :CodeEntry (:doc "|Sends data through the WebSocket connection. Data will be formatted as Cirru EDN before sending.") (:schema :dynamic)
+          :schema $ :: 'Dynamic
+        |ws-send! $ %{} :CodeEntry (:doc "|Sends data through the WebSocket connection. Data will be formatted as Cirru EDN before sending.")
           :code $ quote
             defn ws-send! (data)
               let
@@ -137,22 +153,26 @@
             quote $ ws-send!
               {} (:type |ping)
                 :timestamp $ unix-time!
+          :schema $ :: 'Dynamic
         |ws-set-on-data! $ %{} :CodeEntry (:doc "|Sets the message handler for incoming WebSocket data. Handler receives parsed Cirru EDN data.")
           :code $ quote
             defn ws-set-on-data! (on-data)
               let
                   ws @*global-ws
                 if (some? ws)
-                  set! (.-onmessage ws)
-                    fn (event)
-                      on-data $ parse-cirru-edn (.-data event)
+                  let
+                      callback $ unsafe-coerce on-data 'Fn
+                    set! (.-onmessage ws)
+                      fn (event)
+                        callback $ parse-cirru-edn
+                          unsafe-coerce (.-data event) 'String
                   js/console.warn "|missing running ws instance"
           :examples $ []
             quote $ ws-set-on-data!
               fn (data) (println "|New message:" data)
-          :schema $ :: :fn
-            {} (:return :dynamic)
-              :args $ [] :dynamic
+          :schema $ :: 'Fn
+            {} (:return 'Dynamic)
+              :args $ [] 'Dynamic
               :features $ #{} :js-ffi
       :ns $ %{} :NsEntry (:doc |)
         :code $ quote
@@ -160,22 +180,25 @@
             [] ws-edn.util :refer $ [] when-let parse-data stringify-data
     |ws-edn.schema $ %{} :FileEntry
       :defs $ {}
-        |Track $ %{} :CodeEntry (:doc |) (:schema :dynamic)
+        |Track $ %{} :CodeEntry (:doc |)
           :code $ quote
             defstruct Track (:message :string) (:time :string)
           :examples $ []
+          :schema $ :: 'Dynamic
       :ns $ %{} :NsEntry (:doc |)
         :code $ quote (ns ws-edn.schema)
     |ws-edn.server $ %{} :FileEntry
       :defs $ {}
-        |*global-connections $ %{} :CodeEntry (:doc "|Global atom that stores active WebSocket connections as a map of session-id to socket.") (:schema :dynamic)
+        |*global-connections $ %{} :CodeEntry (:doc "|Global atom that stores active WebSocket connections as a map of session-id to socket.")
           :code $ quote
             defatom *global-connections $ {}
           :examples $ []
-        |*proxied-data-listener $ %{} :CodeEntry (:doc "|Global atom that stores the data listener callback function. Used internally for message handling.") (:schema :dynamic)
+          :schema $ :: 'Dynamic
+        |*proxied-data-listener $ %{} :CodeEntry (:doc "|Global atom that stores the data listener callback function. Used internally for message handling.")
           :code $ quote (defatom *proxied-data-listener nil)
           :examples $ []
-        |maintain-socket! $ %{} :CodeEntry (:doc "|Registers and maintains a WebSocket connection. Sets up event handlers for message, close, and error events. Accepts options map with :on-open, :on-close, :on-data, :on-error, and :class-mapper callbacks.") (:schema :dynamic)
+          :schema $ :: 'Dynamic
+        |maintain-socket! $ %{} :CodeEntry (:doc "|Registers and maintains a WebSocket connection. Sets up event handlers for message, close, and error events. Accepts options map with :on-open, :on-close, :on-data, :on-error, and :class-mapper callbacks.")
           :code $ quote
             defn maintain-socket! (socket options)
               let
@@ -183,21 +206,32 @@
                 swap! *global-connections assoc sid socket
                 when-let
                   on-open $ :on-open options
-                  on-open sid socket
+                  let
+                      callback $ unsafe-coerce on-open 'Fn
+                    callback sid socket
                 reset! *proxied-data-listener $ :on-data options
                 .!on socket |message $ fn (raw-data binary?)
                   when-let (on-data @*proxied-data-listener)
-                    on-data sid $ parse-cirru-edn (.!toString raw-data) (&map:get options :class-mapper)
+                    let
+                        callback $ unsafe-coerce on-data 'Fn
+                      callback sid $ parse-cirru-edn
+                        unsafe-coerce (.!toString raw-data) 'String
+                        &map:get options :class-mapper
                 .!on socket |close $ fn (event binary?) (swap! *global-connections dissoc sid)
                   when-let
                     on-close $ :on-close options
-                    on-close sid event
+                    let
+                        callback $ unsafe-coerce on-close 'Fn
+                      callback sid event
                 .!on socket |error $ fn (error) (swap! *global-connections dissoc sid)
-                  &let
+                  when-let
                     on-error $ :on-error options
-                    if (some? on-error) (on-error error) (js/console.error error)
+                    let
+                        callback $ unsafe-coerce on-error 'Fn
+                      callback error
           :examples $ []
-        |wss-each! $ %{} :CodeEntry (:doc "|Iterates over all active WebSocket connections. Handler function receives session-id and socket as arguments.") (:schema :dynamic)
+          :schema $ :: 'Dynamic
+        |wss-each! $ %{} :CodeEntry (:doc "|Iterates over all active WebSocket connections. Handler function receives session-id and socket as arguments.")
           :code $ quote
             defn wss-each! (handler)
               &doseq
@@ -206,7 +240,8 @@
           :examples $ []
             quote $ wss-each!
               fn (sid socket) (println |Session: sid)
-        |wss-send! $ %{} :CodeEntry (:doc "|Sends data to a specific WebSocket connection identified by session-id. Data will be formatted as Cirru EDN before sending.") (:schema :dynamic)
+          :schema $ :: 'Dynamic
+        |wss-send! $ %{} :CodeEntry (:doc "|Sends data to a specific WebSocket connection identified by session-id. Data will be formatted as Cirru EDN before sending.")
           :code $ quote
             defn wss-send! (sid data)
               let
@@ -217,6 +252,7 @@
           :examples $ []
             quote $ wss-send! |session-123
               {} (:type |notification) (:message "|Hello client")
+          :schema $ :: 'Dynamic
         |wss-serve! $ %{} :CodeEntry (:doc "|Starts a WebSocket server on the specified port. Accepts options map with :cert, :key (for SSL), :on-listening, :on-open, :on-close, :on-data, :on-error, and :class-mapper callbacks.")
           :code $ quote
             defn wss-serve! (port options)
@@ -250,16 +286,17 @@
               {}
                 :on-listening $ fn () (println "|Server listening on 8080")
                 :on-data $ fn (sid data) (println "|Received from" sid : data)
-          :schema $ :: :fn
-            {} (:return :dynamic)
-              :args $ [] :dynamic :dynamic
+          :schema $ :: 'Fn
+            {} (:return 'Dynamic)
+              :args $ [] 'Dynamic 'Dynamic
               :features $ #{} :js-ffi
-        |wss-set-on-data! $ %{} :CodeEntry (:doc "|Sets the message handler for incoming WebSocket data across all connections. Handler receives session-id and parsed Cirru EDN data.") (:schema :dynamic)
+        |wss-set-on-data! $ %{} :CodeEntry (:doc "|Sets the message handler for incoming WebSocket data across all connections. Handler receives session-id and parsed Cirru EDN data.")
           :code $ quote
             defn wss-set-on-data! (on-data) (reset! *proxied-data-listener on-data)
           :examples $ []
             quote $ wss-set-on-data!
               fn (sid data) (println "|New message from" sid : data)
+          :schema $ :: 'Dynamic
       :ns $ %{} :NsEntry (:doc |)
         :code $ quote
           ns ws-edn.server $ :require
@@ -270,7 +307,7 @@
             |fs :as fs
     |ws-edn.util $ %{} :FileEntry
       :defs $ {}
-        |when-let $ %{} :CodeEntry (:doc |) (:schema :dynamic)
+        |when-let $ %{} :CodeEntry (:doc |)
           :code $ quote
             defmacro when-let (pair & body)
               assert "|expected 2 tokens" $ and (list? pair)
@@ -280,5 +317,6 @@
                   some? $ ~ (first pair)
                   , ~@body
           :examples $ []
+          :schema $ :: 'Dynamic
       :ns $ %{} :NsEntry (:doc |)
         :code $ quote (ns ws-edn.util)
