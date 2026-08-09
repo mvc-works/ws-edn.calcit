@@ -97,7 +97,7 @@
                   ws $ new js/WebSocket ws-url
                 reset! *global-ws ws
                 when-let
-                  on-open $ :on-open options
+                  on-open $ get options :on-open
                   let
                       callback $ unsafe-coerce on-open 'Fn
                     set! (.-onopen ws)
@@ -105,12 +105,12 @@
                 set! (.-onclose ws)
                   fn (event) (reset! *global-ws nil)
                     when-let
-                      on-close $ :on-close options
+                      on-close $ get options :on-close
                       let
                           callback $ unsafe-coerce on-close 'Fn
                         callback event
                 when-let
-                  on-data $ :on-data options
+                  on-data $ get options :on-data
                   let
                       callback $ unsafe-coerce on-data 'Fn
                     set! (.-onmessage ws)
@@ -121,7 +121,7 @@
                 set! (.-onerror ws)
                   fn (error) (js/console.error "|Failed to establish connection" error)
                     when-let
-                      on-error $ :on-error options
+                      on-error $ get options :on-error
                       let
                           callback $ unsafe-coerce on-error 'Fn
                         callback error
@@ -205,11 +205,11 @@
                   sid $ nanoid
                 swap! *global-connections assoc sid socket
                 when-let
-                  on-open $ :on-open options
+                  on-open $ get options :on-open
                   let
                       callback $ unsafe-coerce on-open 'Fn
                     callback sid socket
-                reset! *proxied-data-listener $ :on-data options
+                reset! *proxied-data-listener $ get options :on-data
                 .!on socket |message $ fn (raw-data binary?)
                   when-let (on-data @*proxied-data-listener)
                     let
@@ -219,13 +219,13 @@
                         &map:get options :class-mapper
                 .!on socket |close $ fn (event binary?) (swap! *global-connections dissoc sid)
                   when-let
-                    on-close $ :on-close options
+                    on-close $ get options :on-close
                     let
                         callback $ unsafe-coerce on-close 'Fn
                       callback sid event
                 .!on socket |error $ fn (error) (swap! *global-connections dissoc sid)
                   when-let
-                    on-error $ :on-error options
+                    on-error $ get options :on-error
                     let
                         callback $ unsafe-coerce on-error 'Fn
                       callback error
@@ -259,11 +259,13 @@
               assert "|first argument is port" $ number? port
               let
                   wss $ if
-                    some? $ :cert options
+                    option:some? $ get options :cert
                     new WebSocketServer $ let
                         ssl-options $ js-object
-                          :key $ fs/readFileSync (:key options)
-                          :cert $ fs/readFileSync (:cert options)
+                          :key $ fs/readFileSync
+                            option:unwrap $ get options :key
+                          :cert $ fs/readFileSync
+                            option:unwrap $ get options :cert
                         server $ https/createServer ssl-options
                           fn (req res) (.!writeHead res 200) (.!end res "|WSS Server")
                       .!addListener server |upgrade $ fn (req res head)
@@ -274,13 +276,18 @@
                     new WebSocketServer $ js-object (:port port)
                 .!on wss |connection $ fn (socket ? req) (maintain-socket! socket options)
                 .!on wss |listening $ fn ()
-                  let
-                      on-listening $ :on-listening options
-                    if (some? on-listening) (on-listening)
+                  when-let
+                    on-listening $ get options :on-listening
+                    let
+                        callback $ unsafe-coerce on-listening 'Fn
+                      callback
                 .!on wss |error $ fn (error)
-                  let
-                      on-error $ :on-error options
-                    if (some? on-error) (on-error error) (js/console.error error)
+                  if-let
+                    on-error $ get options :on-error
+                    let
+                        callback $ unsafe-coerce on-error 'Fn
+                      callback error
+                    js/console.error error
           :examples $ []
             quote $ wss-serve! 8080
               {}
