@@ -257,6 +257,9 @@
           :code $ quote
             defn wss-serve! (port options)
               assert "|first argument is port" $ number? port
+              assert "|SSL requires both :cert and :key options" $ =
+                option:some? $ get options :cert
+                option:some? $ get options :key
               let
                   wss $ if
                     option:some? $ get options :cert
