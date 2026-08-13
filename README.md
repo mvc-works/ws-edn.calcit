@@ -56,7 +56,21 @@ ws-edn.client/ws-set-on-data! $ fn (data)
   println data
 ```
 
-Class mapper for deserializing with class in Record:
+Typed decoding for application data:
+
+`ws-edn.schema/Track` is a nominal Struct. Use the built-in `decode-map-as`
+boundary when a received map has a known shape; missing required fields and
+wrong field types fail before application code consumes the value.
+
+```cirru
+ws-edn.schema/decode-track $ {} (:message |hello) (:time |now)
+```
+
+Keep open protocol payloads as `Dynamic` only at the WebSocket/JS boundary and
+decode them into a named Struct or Enum as soon as their shape is known. Do not
+reintroduce the removed `calcit-test`, `lilac`, or `memof` modules.
+
+Legacy class mapper (for compatibility with older payloads):
 
 ```cirru
   :class-mapper $ {}

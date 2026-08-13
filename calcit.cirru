@@ -140,20 +140,26 @@
             defn ws-connected? () $ some? @*global-ws
           :examples $ []
             quote $ ws-connected?
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Fn
+            {} (:return 'Bool)
+              :args $ []
         |ws-send! $ %{} 'CodeEntry (:doc "|Sends data through the WebSocket connection. Data will be formatted as Cirru EDN before sending.")
           :code $ quote
             defn ws-send! (data)
-              let
+              do $ let
                   ws @*global-ws
                 if (some? ws)
                   .!send ws $ format-cirru-edn data
                   js/console.warn "|WebSocket at close state!"
+                , nil
           :examples $ []
             quote $ ws-send!
               {} (:type |ping)
                 :timestamp $ unix-time!
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Fn
+            {} (:return 'Unit)
+              :args $ [] 'Dynamic
+              :features $ #{} :js-ffi
         |ws-set-on-data! $ %{} 'CodeEntry (:doc "|Sets the message handler for incoming WebSocket data. Handler receives parsed Cirru EDN data.")
           :code $ quote
             defn ws-set-on-data! (on-data)
@@ -184,9 +190,30 @@
           :code $ quote
             defstruct Track (:message 'String) (:time 'String)
           :examples $ []
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Struct
+        |decode-track $ %{} 'CodeEntry (:doc |)
+          :code $ quote
+            defn decode-track (value) (decode-map-as value Track)
+          :examples $ []
+          :schema $ :: 'Fn
+            {} (:return 'Track)
+              :args $ [] 'Dynamic
+          :tests $ []
+            %{} 'TestEntry (:name |decodes-track-map)
+              :code $ quote
+                assert=
+                  %{} Track (:message |hello) (:time |now)
+                  decode-track $ {} (:message |hello) (:time |now)
+              :tags $ #{} :unit
+            %{} 'TestEntry (:name |rejects-missing-time)
+              :code $ quote
+                is-throws $ decode-track
+                  {} $ :message |hello
+              :tags $ #{} :unit
       :ns $ %{} 'NsEntry (:doc |)
-        :code $ quote (ns ws-edn.schema)
+        :code $ quote
+          ns ws-edn.schema $ :require
+            calcit.test :refer $ assert= is-throws
     |ws-edn.server $ %{} 'FileEntry
       :defs $ {}
         |*global-connections $ %{} 'CodeEntry (:doc "|Global atom that stores active WebSocket connections as a map of session-id to socket.")
@@ -244,15 +271,19 @@
         |wss-send! $ %{} 'CodeEntry (:doc "|Sends data to a specific WebSocket connection identified by session-id. Data will be formatted as Cirru EDN before sending.")
           :code $ quote
             defn wss-send! (sid data)
-              let
+              do $ let
                   socket $ get @*global-connections sid
                 if (some? socket)
                   .!send socket $ format-cirru-edn data
                   js/console.warn "|socket not found for" sid
+                , nil
           :examples $ []
             quote $ wss-send! |session-123
               {} (:type |notification) (:message "|Hello client")
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Fn
+            {} (:return 'Unit)
+              :args $ [] 'String 'Dynamic
+              :features $ #{} :js-ffi
         |wss-serve! $ %{} 'CodeEntry (:doc "|Starts a WebSocket server on the specified port. Accepts options map with :cert, :key (for SSL), :on-listening, :on-open, :on-close, :on-data, :on-error, and :class-mapper callbacks.")
           :code $ quote
             defn wss-serve! (port options)

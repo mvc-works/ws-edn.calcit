@@ -18,7 +18,7 @@ jobs:
 
       - uses: calcit-lang/setup-cr@0.0.9
         with:
-          version: 0.13.13
+          version: 0.13.15
 
       - name: Enable Corepack
         run: |
@@ -29,7 +29,19 @@ jobs:
       - name: Install deps
         run: caps --ci && yarn install --immutable
 
-      - name: "compiles to js"
+      - name: "validate snapshots"
+        run: |
+          cr calcit.cirru edit format
+          git diff --exit-code -- calcit.cirru
+          cr calcit.cirru --check-only
+          cr calcit.cirru --entry server --check-only
+
+      - name: "run tests and deprecated API check"
+        run: |
+          yarn check:unit
+          yarn check:deprecated
+
+      - name: "compile to js"
         run: |
           yarn compile-page
           yarn compile-server

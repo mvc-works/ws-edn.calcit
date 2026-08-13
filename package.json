@@ -1,7 +1,7 @@
 {
   "packageManager": "yarn@4.12.0",
   "dependencies": {
-    "@calcit/procs": "^0.13.13",
+    "@calcit/procs": "^0.13.15",
     "nanoid": "^5.1.5"
   },
   "scripts": {
@@ -9,7 +9,9 @@
     "compile-server": "cr --entry server js",
     "compile-page": "cr --emit-path out-page/ js",
     "build-page": "vite build --base=./",
-    "watch-page": "cr --emit-path out-page/ js -w"
+    "watch-page": "cr --emit-path out-page/ js -w",
+    "check:unit": "cr test --tag unit --require-match --summary-only --format json",
+    "check:deprecated": "cr analyze deprecated --summary-only --format json"
   },
   "devDependencies": {
     "vite": "^8.0.2",
