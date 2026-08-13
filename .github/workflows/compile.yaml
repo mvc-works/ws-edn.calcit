@@ -29,7 +29,19 @@ jobs:
       - name: Install deps
         run: caps --ci && yarn install --immutable
 
-      - name: "compiles to js"
+      - name: "validate snapshots"
+        run: |
+          cr calcit.cirru edit format
+          git diff --exit-code -- calcit.cirru
+          cr calcit.cirru --check-only
+          cr calcit.cirru --entry server --check-only
+
+      - name: "run tests and deprecated API check"
+        run: |
+          yarn check:unit
+          yarn check:deprecated
+
+      - name: "compile to js"
         run: |
           yarn compile-page
           yarn compile-server
