@@ -70,6 +70,15 @@ Keep open protocol payloads as `Dynamic` only at the WebSocket/JS boundary and
 decode them into a named Struct or Enum as soon as their shape is known. Do not
 reintroduce the removed `calcit-test`, `lilac`, or `memof` modules.
 
+The module snapshot is compatible with Calcit 0.13.52 and later: its local
+`when-let` macro declares an explicit syntax/expansion contract. `ws-send!`
+always returns `Unit`; JavaScript `WebSocket.send` results do not leak through
+the public API.
+
+模块 Snapshot 已迁移到 Calcit 0.13.52 及后续版本要求的严格宏契约；本地
+`when-let` 明确声明 syntax 与 expansion。`ws-send!` 始终返回 `Unit`，不会把
+JavaScript `WebSocket.send` 的返回值泄漏到公开 API。
+
 Legacy class mapper (for compatibility with older payloads):
 
 ```cirru

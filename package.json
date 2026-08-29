@@ -1,7 +1,7 @@
 {
   "packageManager": "yarn@4.12.0",
   "dependencies": {
-    "@calcit/procs": "^0.13.27",
+    "@calcit/procs": "^0.13.63",
     "nanoid": "^5.1.5"
   },
   "scripts": {
@@ -17,5 +17,5 @@
     "vite": "^8.0.2",
     "ws": "^8.18.2"
   },
-  "version": "0.0.15"
+  "version": "0.0.17"
 }
