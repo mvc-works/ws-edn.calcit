@@ -5,13 +5,13 @@
     "nanoid": "^5.1.5"
   },
   "scripts": {
-    "watch-server": "cr --entry server js -w",
-    "compile-server": "cr --entry server js",
-    "compile-page": "cr --emit-path out-page/ js",
+    "watch-server": "calcit --entry server js -w",
+    "compile-server": "calcit --entry server js",
+    "compile-page": "calcit --emit-path out-page/ js",
     "build-page": "vite build --base=./",
-    "watch-page": "cr --emit-path out-page/ js -w",
-    "check:unit": "cr test --tag unit --require-match --summary-only --format json",
-    "check:deprecated": "cr analyze deprecated --summary-only --format json"
+    "watch-page": "calcit --emit-path out-page/ js -w",
+    "check:unit": "calcit test --tag unit --require-match --summary-only --format json",
+    "check:deprecated": "calcit analyze deprecated --summary-only --format json"
   },
   "devDependencies": {
     "vite": "^8.0.2",
