@@ -16,9 +16,9 @@ jobs:
         with:
           node-version: 24
 
-      - uses: calcit-lang/setup-cr@0.0.9
+      - uses: calcit-lang/setup-calcit@v1
         with:
-          version: 0.13.27
+          tools: calcit,caps
 
       - name: Enable Corepack
         run: |
@@ -31,10 +31,10 @@ jobs:
 
       - name: "validate snapshots"
         run: |
-          cr calcit.cirru edit format
+          calcit calcit.cirru edit format
           git diff --exit-code -- calcit.cirru
-          cr calcit.cirru --check-only
-          cr calcit.cirru --entry server --check-only
+          calcit calcit.cirru --check-only
+          calcit calcit.cirru --entry server --check-only
 
       - name: "run tests and deprecated API check"
         run: |

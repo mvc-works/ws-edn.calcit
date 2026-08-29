@@ -4,30 +4,30 @@ This file defines the safe workflow for editing this repository with Calcit CLI.
 
 ## Mandatory First Step
 
-Before any `cr edit` or `cr tree` change, run:
+Before any `calcit edit` or `calcit tree` change, run:
 
 ```bash
-cr docs agents --full
+calcit docs agents --full
 ```
 
 Do not start structural edits before reloading the latest agent guidance.
 
 ## Documentation Source of Truth
 
-Use `cr docs` as the documentation entrypoint.
+Use `calcit docs` as the documentation entrypoint.
 
-- Use `cr docs search <keyword>` for lookup.
-- Use `cr docs read <filename>` for reading details.
+- Use `calcit docs search <keyword>` for lookup.
+- Use `calcit docs read <filename>` for reading details.
 - Do not depend on local guidebook files as the primary source.
 
 ## File Editing Rules
 
 - Do not directly edit `compact.cirru` or `calcit.cirru` with text replacement.
 - Use structured commands first:
-  - `cr edit ...`
-  - `cr tree ...`
+  - `calcit edit ...`
+  - `calcit tree ...`
 - If `compact.cirru` was manually changed, run formatting before commit:
-  - `cr edit format`
+  - `calcit edit format`
 
 ## Runtime Model
 
@@ -36,14 +36,14 @@ This project has two entries:
 - default page entry: `ws-edn.app.page/main!`
 - server entry: `server` (`ws-edn.app.server/main!`)
 
-Current `cr` behavior is once-by-default. Use `-w` to watch.
+Current `calcit` behavior is once-by-default. Use `-w` to watch.
 
 ## Project Commands
 
 ### Dependency and toolchain
 
 ```bash
-cr --version
+calcit --version
 caps outdated --yes
 caps
 corepack enable
@@ -54,7 +54,7 @@ yarn install --immutable
 ### Build commands
 
 ```bash
-cr js
+calcit js
 yarn compile-page
 yarn compile-server
 yarn vite build --base=./
@@ -100,4 +100,4 @@ nodeLinker: node-modules
 
 - Record/struct shape mismatch can crash runtime deserialization, for example field-count mismatch errors.
 - If schema fields changed, update all `%{} <Type>` constructors on both page and server paths.
-- If `cr js` reports warnings, codegen is blocked. Resolve all warnings before build.
+- If `calcit js` reports warnings, codegen is blocked. Resolve all warnings before build.
