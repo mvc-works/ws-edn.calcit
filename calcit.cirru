@@ -110,6 +110,8 @@
                   :return 'JsObject
                   :features $ #{} :js-ffi
               :lifecycle-cleanup $ :: 'Ref (:: 'Option 'Fn)
+              :retry-state $ :: 'Ref 'cumulo-util.realtime/RetryBackoff
+              :reconnect-timer $ :: 'Ref (:: 'Option 'Number)
           :examples $ []
           :schema $ :: 'StructDef
         'WsClientOps $ %{} 'CodeEntry (:doc "|Method contract for browser WebSocket clients.")
@@ -150,7 +152,7 @@
           :schema $ :: 'StructDef
         'WsConnectionPhase $ %{} 'CodeEntry (:doc "|Explicit browser WebSocket lifecycle phase.")
           :code $ quote
-            defenum WsConnectionPhase (:connecting) (:open) (:closing) (:closed)
+            defenum WsConnectionPhase (:connecting) (:open) (:backoff) (:closing) (:closed)
           :examples $ []
           :schema $ :: 'EnumDef
         'WsSendOutcome $ %{} 'CodeEntry (:doc "|Typed outcome from attempting a browser WebSocket send.")
@@ -158,6 +160,22 @@
             defenum WsSendOutcome (:sent) (:not-open 'WsConnectionPhase)
           :examples $ []
           :schema $ :: 'EnumDef
+        'cancel-client-reconnect! $ %{} 'CodeEntry (:doc "|Cancels and clears the single pending reconnect timer.")
+          :code $ quote
+            defn cancel-client-reconnect! (client)
+              let
+                  timer-ref $ :reconnect-timer client
+                match @timer-ref
+                  (:some timer)
+                    do (js/clearTimeout timer)
+                      reset! timer-ref $ %none
+                      , &unit
+                  (:none) &unit
+          :examples $ []
+          :schema $ :: 'Fn
+            {} (:return 'Unit)
+              :args $ [] 'WsClient0
+              :features $ #{} :js-ffi
         'cleanup-client-lifecycle! $ %{} 'CodeEntry (:doc "|Runs and clears the optional browser lifecycle cleanup capability.")
           :code $ quote
             defn cleanup-client-lifecycle! (client)
@@ -175,7 +193,7 @@
               :args $ [] 'WsClient0
         'client-close! $ %{} 'CodeEntry (:doc "|Method implementation for explicitly closing a client.")
           :code $ quote
-            defn client-close! (client) (cleanup-client-lifecycle! client)
+            defn client-close! (client) (cancel-client-reconnect! client) (cleanup-client-lifecycle! client)
               let
                   state-ref $ :state client
                   state @state-ref
@@ -208,21 +226,23 @@
               :args $ [] 'WsClient0
         'client-reconnect! $ %{} 'CodeEntry (:doc "|Method implementation for replacing the active generation.")
           :code $ quote
-            defn client-reconnect! (client) (connect-client! client)
+            defn client-reconnect! (client) (cancel-client-reconnect! client) (connect-client! client)
           :examples $ []
           :schema $ :: 'Fn
             {} (:return 'Unit)
               :args $ [] 'WsClient0
               :features $ #{} :js-ffi
-        'client-recover! $ %{} 'CodeEntry (:doc "|Reconnects only from the closed phase, preserving single-flight attempts.")
+        'client-recover! $ %{} 'CodeEntry (:doc "|Reconnects from closed or backoff after cancelling a pending timer, preserving single-flight attempts.")
           :code $ quote
             defn client-recover! (client)
               let
                   state $ deref (:state client)
                 assert-type state WsClientState
                 if
-                  = (%:: WsConnectionPhase :closed) (:phase state)
-                  connect-client! client
+                  or
+                    = (%:: WsConnectionPhase :closed) (:phase state)
+                    = (%:: WsConnectionPhase :backoff) (:phase state)
+                  do (cancel-client-reconnect! client) (connect-client! client) &unit
                   , &unit
           :examples $ []
           :schema $ :: 'Fn
@@ -271,7 +291,12 @@
                     reset! state-ref $ WsClientState :generation generation :phase (%:: WsConnectionPhase :connecting) :socket (%some socket)
                     set! (.-onopen socket)
                       fn (event)
-                        when (generation-current? @state-ref generation)
+                        when (generation-current? @state-ref generation) (cancel-client-reconnect! client)
+                          let
+                              retry-state $ assert-type
+                                deref $ :retry-state client
+                                , 'cumulo-util.realtime/RetryBackoff
+                            reset! (:retry-state client) (retry-state .reset)
                           reset! state-ref $ assoc @state-ref :phase (%:: WsConnectionPhase :open)
                           when-let
                             on-open $ get (:options client) :on-open
@@ -293,12 +318,16 @@
                     set! (.-onclose socket)
                       fn (event)
                         when (generation-current? @state-ref generation)
-                          reset! state-ref $ WsClientState :generation generation :phase (%:: WsConnectionPhase :closed) :socket (%none)
-                          when-let
-                            on-close $ get (:options client) :on-close
-                            let
-                                callback $ unsafe-coerce on-close 'Fn
-                              callback event
+                          let
+                              current-state $ assert-type (deref state-ref) WsClientState
+                              explicit-close? $ = (%:: WsConnectionPhase :closing) (:phase current-state)
+                            reset! state-ref $ WsClientState :generation generation :phase (%:: WsConnectionPhase :closed) :socket (%none)
+                            when-let
+                              on-close $ get (:options client) :on-close
+                              let
+                                  callback $ unsafe-coerce on-close 'Fn
+                                callback event
+                            when (not explicit-close?) (schedule-client-reconnect! client)
                         , &unit
                     set! (.-onerror socket)
                       fn (error)
@@ -323,7 +352,18 @@
                     WsClientState :generation 0 :phase (%:: WsConnectionPhase :closed) :socket $ %none
                   on-data-ref $ atom (%none)
                   lifecycle-cleanup-ref $ atom (%none)
-                  client $ %{} WsClient (:state state-ref) (:url url) (:options options) (:on-data on-data-ref) (:socket-factory socket-factory) (:lifecycle-cleanup lifecycle-cleanup-ref)
+                  retry-base-ms $ match (get options :retry-base-ms)
+                    (:some value) (unsafe-coerce value 'Number)
+                    (:none) 500
+                  retry-max-ms $ match (get options :retry-max-ms)
+                    (:some value) (unsafe-coerce value 'Number)
+                    (:none) 30000
+                  retry-jitter $ match (get options :retry-jitter)
+                    (:some value) (unsafe-coerce value 'Number)
+                    (:none) 0.2
+                  retry-state-ref $ atom (retry-backoff retry-base-ms retry-max-ms retry-jitter)
+                  reconnect-timer-ref $ atom (%none)
+                  client $ %{} WsClient (:state state-ref) (:url url) (:options options) (:on-data on-data-ref) (:socket-factory socket-factory) (:lifecycle-cleanup lifecycle-cleanup-ref) (:retry-state retry-state-ref) (:reconnect-timer reconnect-timer-ref)
                 when-let
                   on-data $ get options :on-data
                   reset! on-data-ref $ %some (unsafe-coerce on-data 'DynFn)
@@ -365,6 +405,41 @@
                     %none
                 reset! (:lifecycle-cleanup client) (%some cleanup)
                 , &unit
+          :examples $ []
+          :schema $ :: 'Fn
+            {} (:return 'Unit)
+              :args $ [] 'WsClient0
+              :features $ #{} :js-ffi
+        'schedule-client-reconnect! $ %{} 'CodeEntry (:doc "|Schedules one bounded backoff retry unless one is already pending.")
+          :code $ quote
+            defn schedule-client-reconnect! (client)
+              let
+                  timer-ref $ :reconnect-timer client
+                match @timer-ref
+                  (:some timer) &unit
+                  (:none)
+                    let
+                        retry-ref $ :retry-state client
+                        state-ref $ :state client
+                        retry-state $ assert-type (deref retry-ref) 'cumulo-util.realtime/RetryBackoff
+                        step $ assert-type
+                          retry-state .next $ unsafe-coerce (js/Math.random) 'Number
+                          , 'cumulo-util.realtime/RetryStep
+                        delay-ms $ :delay-ms step
+                        timer $ flipped js/setTimeout delay-ms
+                          fn ()
+                            reset! timer-ref $ %none
+                            let
+                                state $ assert-type (deref state-ref) WsClientState
+                              when
+                                = (%:: WsConnectionPhase :backoff) (:phase state)
+                                connect-client! client
+                      reset! retry-ref $ :next step
+                      let
+                          state $ assert-type (deref state-ref) WsClientState
+                        reset! state-ref $ assoc state :phase (%:: WsConnectionPhase :backoff)
+                      reset! timer-ref $ %some timer
+                      , &unit
           :examples $ []
           :schema $ :: 'Fn
             {} (:return 'Unit)
@@ -467,6 +542,7 @@
           ns ws-edn.client $ :require
             [] ws-edn.util :refer $ [] when-let parse-data stringify-data
             cumulo-util.activity :refer $ watch-browser-lifecycle!
+            cumulo-util.realtime :refer $ retry-backoff
     'ws-edn.schema $ %{} 'FileEntry
       :defs $ {}
         'Track $ %{} 'CodeEntry (:doc |)

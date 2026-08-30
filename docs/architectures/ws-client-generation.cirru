@@ -9,7 +9,7 @@
       :kind :data
       :doc "|Explicit browser WebSocket lifecycle phase."
       :schema $ :: 'EnumDef
-      :code $ quote $ defenum WsConnectionPhase (:connecting) (:open) (:closing) (:closed)
+      :code $ quote $ defenum WsConnectionPhase (:connecting) (:open) (:backoff) (:closing) (:closed)
     'ws-edn.client/WsSendOutcome $ {}
       :mode :ensure
       :kind :data
@@ -33,6 +33,9 @@
         :options 'Dynamic
         :on-data $ :: 'Ref (:: 'Option 'DynFn)
         :socket-factory $ :: 'Fn $ {} (:args $ [] 'String) (:return 'JsObject) (:features $ #{} :js-ffi)
+        :lifecycle-cleanup $ :: 'Ref (:: 'Option 'Fn)
+        :retry-state $ :: 'Ref 'cumulo-util.realtime/RetryBackoff
+        :reconnect-timer $ :: 'Ref (:: 'Option 'Number)
     'ws-edn.client/WsClientOps $ {}
       :mode :ensure
       :kind :data

@@ -7,7 +7,9 @@ import {
 
 const listeners = new Map();
 const intervals = new Map();
+const timeouts = new Map();
 let nextTimer = 1;
+Math.random = () => 0.5;
 globalThis.document = { visibilityState: "visible" };
 Object.defineProperty(globalThis, "navigator", {
   configurable: true,
@@ -25,7 +27,21 @@ globalThis.setInterval = (callback, interval) => {
   return id;
 };
 globalThis.clearInterval = (id) => intervals.delete(id);
-globalThis.clearTimeout = () => {};
+globalThis.setTimeout = (callback, delay) => {
+  const id = nextTimer++;
+  timeouts.set(id, { callback, delay });
+  return id;
+};
+globalThis.clearTimeout = (id) => timeouts.delete(id);
+
+const runNextTimeout = () => {
+  const entry = timeouts.entries().next().value;
+  assert.notEqual(entry, undefined);
+  const [id, timer] = entry;
+  timeouts.delete(id);
+  timer.callback();
+  return timer.delay;
+};
 
 class FakeSocket {
   constructor(url) {
@@ -102,8 +118,11 @@ assert.equal(listeners.size, 4);
 assert.equal(intervals.size, 1);
 
 lifecycleSockets[0].onclose({ closed: true });
+assert.equal(timeouts.size, 1);
+assert.equal([...timeouts.values()][0].delay, 500);
 listeners.get("online")({});
 assert.equal(lifecycleSockets.length, 2);
+assert.equal(timeouts.size, 0);
 listeners.get("visibilitychange")({});
 assert.equal(lifecycleSockets.length, 2);
 
@@ -111,5 +130,27 @@ invoke_method("close", lifecycleClient);
 assert.equal(lifecycleSockets[1].closeCalls, 1);
 assert.equal(listeners.size, 0);
 assert.equal(intervals.size, 0);
+
+const retrySockets = [];
+const retryClient = create_client_with_$x_(
+  "ws://retry.test",
+  new CalcitMap(),
+  (url) => {
+    const socket = new FakeSocket(url);
+    retrySockets.push(socket);
+    return socket;
+  },
+);
+retrySockets[0].onclose({ retry: 1 });
+assert.equal(runNextTimeout(), 500);
+assert.equal(retrySockets.length, 2);
+retrySockets[1].onclose({ retry: 2 });
+assert.equal(runNextTimeout(), 1000);
+assert.equal(retrySockets.length, 3);
+retrySockets[2].onopen({ recovered: true });
+retrySockets[2].onclose({ retryAfterReset: true });
+assert.equal([...timeouts.values()][0].delay, 500);
+invoke_method("close", retryClient);
+assert.equal(timeouts.size, 0);
 
 console.log("ws client generation smoke passed");

@@ -18,7 +18,7 @@
     'ws-edn.client/client-recover! $ {}
       :mode :ensure
       :kind :fn
-      :doc "|Reconnects only from the closed phase, preserving single-flight attempts."
+      :doc "|Reconnects from closed or backoff after cancelling a pending timer, preserving single-flight attempts."
       :params $ [] 'client
       :schema $ :: 'Fn $ {}
         :args $ [] 'WsClient0

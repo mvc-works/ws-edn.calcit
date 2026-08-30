@@ -85,7 +85,21 @@ timeouts, and protocol resync hooks still belong to the caller.
 `open/message/close/error` 事件不会污染当前连接。浏览器端现复用
 `Cumulo/cumulo-util.calcit` `0.0.14`：可见性和 online 恢复信号只会在 client
 已经进入 `:closed` 后触发连接，保持 single-flight；`.close` 会清理 lifecycle
-listener 与 timer。退避、心跳超时和协议 resync hook 仍属于调用方。
+listener 与 timer。
+
+Unexpected close now enters an explicit `:backoff` phase and schedules one retry.
+The immutable Cumulo backoff state is configurable through `:retry-base-ms`
+(default `500`), `:retry-max-ms` (default `30000`), and `:retry-jitter` (default
+`0.2`). A successful open resets the attempt counter. Manual reconnect and
+visible/online recovery cancel a pending timer before connecting immediately;
+explicit close cancels it without reconnecting. Heartbeat timeout and protocol
+resync hooks remain follow-up work.
+
+意外 close 现在进入显式 `:backoff`，并且最多只保留一个重连 timer。可通过
+`:retry-base-ms`（默认 `500`）、`:retry-max-ms`（默认 `30000`）和
+`:retry-jitter`（默认 `0.2`）配置 Cumulo 的不可变 backoff 状态。连接成功会
+重置 attempt；手动重连和 visible/online 恢复会先取消 timer 再立即连接；显式
+close 只清理而不会再次连接。心跳超时与协议 resync hook 留在后续阶段。
 
 Typed decoding for application data:
 
