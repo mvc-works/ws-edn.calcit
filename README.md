@@ -73,15 +73,19 @@ let
 Each reconnect advances an internal generation before replacing the host
 socket. Late `open`, `message`, `close`, and `error` events from an older socket
 are ignored, so a stale callback cannot close or feed data into the active
-connection. The current first stage deliberately leaves retry policy, backoff,
-heartbeat, and browser visibility handling to the caller; those policies will
-be added above this deterministic state machine.
+connection. Browser clients now reuse `Cumulo/cumulo-util.calcit` `0.0.14`:
+visibility and online recovery signals reconnect only after the active client has
+reached `:closed`. This preserves single-flight connection attempts, and `.close`
+removes the lifecycle listeners and timers. Retry policy, backoff, heartbeat
+timeouts, and protocol resync hooks still belong to the caller.
 
 `ws-connect!` 现在返回名义类型 `WsClient`。连接所有者可优先使用
 `.connected?`、`.send`、`.reconnect` 与 `.close` 方法；旧的单例函数继续兼容。
 每次重连会先提升 generation，再替换宿主 WebSocket，因此旧连接迟到的
-`open/message/close/error` 事件不会污染当前连接。退避、心跳与页面可见性策略
-暂时留给上层，后续会构建在这层确定性状态机之上。
+`open/message/close/error` 事件不会污染当前连接。浏览器端现复用
+`Cumulo/cumulo-util.calcit` `0.0.14`：可见性和 online 恢复信号只会在 client
+已经进入 `:closed` 后触发连接，保持 single-flight；`.close` 会清理 lifecycle
+listener 与 timer。退避、心跳超时和协议 resync hook 仍属于调用方。
 
 Typed decoding for application data:
 
