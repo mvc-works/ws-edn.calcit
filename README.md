@@ -76,8 +76,8 @@ are ignored, so a stale callback cannot close or feed data into the active
 connection. Browser clients now reuse `Cumulo/cumulo-util.calcit` `0.0.14`:
 visibility and online recovery signals reconnect only after the active client has
 reached `:closed`. This preserves single-flight connection attempts, and `.close`
-removes the lifecycle listeners and timers. Retry policy, backoff, heartbeat
-timeouts, and protocol resync hooks still belong to the caller.
+removes the lifecycle listeners and timers. Protocol-specific heartbeat messages
+and resync hooks still belong to the caller.
 
 `ws-connect!` 现在返回名义类型 `WsClient`。连接所有者可优先使用
 `.connected?`、`.send`、`.reconnect` 与 `.close` 方法；旧的单例函数继续兼容。
@@ -92,14 +92,29 @@ The immutable Cumulo backoff state is configurable through `:retry-base-ms`
 (default `500`), `:retry-max-ms` (default `30000`), and `:retry-jitter` (default
 `0.2`). A successful open resets the attempt counter. Manual reconnect and
 visible/online recovery cancel a pending timer before connecting immediately;
-explicit close cancels it without reconnecting. Heartbeat timeout and protocol
-resync hooks remain follow-up work.
+explicit close cancels it without reconnecting. Protocol resync hooks remain
+follow-up work.
 
 意外 close 现在进入显式 `:backoff`，并且最多只保留一个重连 timer。可通过
 `:retry-base-ms`（默认 `500`）、`:retry-max-ms`（默认 `30000`）和
 `:retry-jitter`（默认 `0.2`）配置 Cumulo 的不可变 backoff 状态。连接成功会
 重置 attempt；手动重连和 visible/online 恢复会先取消 timer 再立即连接；显式
-close 只清理而不会再次连接。心跳超时与协议 resync hook 留在后续阶段。
+close 只清理而不会再次连接。协议 resync hook 留在后续阶段。
+
+Browser clients may opt into a generation-safe heartbeat deadline with
+`:heartbeat-timeout-ms`. The deadline starts after `open` and is renewed by every
+inbound message. When it expires, ws-edn closes only the active socket and lets
+the normal bounded-backoff path reconnect it. The option is disabled by default,
+so protocols that legitimately stay silent retain their existing behavior.
+Explicit close and generation replacement both cancel the pending heartbeat
+timer and lease.
+
+浏览器 client 可通过 `:heartbeat-timeout-ms` 选择启用 generation-safe 的心跳
+deadline。连接 `open` 后开始计时，每条入站消息都会续租；超时后 ws-edn 只关闭
+当前 generation 的 socket，再由已有的有界 backoff 流程重连。该选项默认关闭，
+因此允许长时间静默的旧协议不会改变行为。显式 close 与 generation 替换都会清理
+待执行的 heartbeat timer 和 lease；协议层的 ping/pong 与 resync hook 仍由调用方
+定义。
 
 Typed decoding for application data:
 

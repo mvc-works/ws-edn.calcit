@@ -36,6 +36,9 @@
         :lifecycle-cleanup $ :: 'Ref (:: 'Option 'Fn)
         :retry-state $ :: 'Ref 'cumulo-util.realtime/RetryBackoff
         :reconnect-timer $ :: 'Ref (:: 'Option 'Number)
+        :heartbeat-timeout-ms $ :: 'Option 'Number
+        :heartbeat-lease $ :: 'Ref (:: 'Option 'cumulo-util.realtime/HeartbeatLease)
+        :heartbeat-timer $ :: 'Ref (:: 'Option 'Number)
     'ws-edn.client/WsClientOps $ {}
       :mode :ensure
       :kind :data

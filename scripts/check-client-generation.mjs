@@ -59,7 +59,7 @@ class FakeSocket {
   }
 }
 
-const tags = init_tags(["on-data"]);
+const tags = init_tags(["heartbeat-timeout-ms", "on-data"]);
 const sockets = [];
 const received = [];
 const options = new CalcitMap().assoc(tags["on-data"], (data) => {
@@ -76,6 +76,7 @@ assert.equal(sockets.length, 1);
 assert.equal(connected(), false);
 sockets[0].onopen({ generation: 1 });
 assert.equal(connected(), true);
+assert.equal(timeouts.size, 0);
 
 invoke_method("reconnect", client);
 assert.equal(sockets[0].closeCalls, 1);
@@ -151,6 +152,60 @@ retrySockets[2].onopen({ recovered: true });
 retrySockets[2].onclose({ retryAfterReset: true });
 assert.equal([...timeouts.values()][0].delay, 500);
 invoke_method("close", retryClient);
+assert.equal(timeouts.size, 0);
+
+let nowMs = 1000;
+Date.now = () => nowMs;
+const heartbeatOptions = new CalcitMap().assoc(
+  tags["heartbeat-timeout-ms"],
+  2000,
+);
+const heartbeatSockets = [];
+const heartbeatClient = create_client_with_$x_(
+  "ws://heartbeat.test",
+  heartbeatOptions,
+  (url) => {
+    const socket = new FakeSocket(url);
+    heartbeatSockets.push(socket);
+    return socket;
+  },
+);
+heartbeatSockets[0].onopen({ heartbeat: true });
+assert.equal(timeouts.size, 1);
+assert.equal([...timeouts.values()][0].delay, 2000);
+const firstHeartbeatTimer = [...timeouts.keys()][0];
+const staleHeartbeatCallback = timeouts.get(firstHeartbeatTimer).callback;
+nowMs = 1500;
+heartbeatSockets[0].onmessage({ data: "ignored-without-listener" });
+assert.equal(timeouts.size, 1);
+assert.equal(timeouts.has(firstHeartbeatTimer), false);
+staleHeartbeatCallback();
+assert.equal(timeouts.size, 1);
+assert.equal(heartbeatSockets[0].closeCalls, 0);
+nowMs = 3500;
+assert.equal(runNextTimeout(), 2000);
+assert.equal(heartbeatSockets[0].closeCalls, 1);
+heartbeatSockets[0].onclose({ heartbeatTimeout: true });
+assert.equal(timeouts.size, 1);
+invoke_method("close", heartbeatClient);
+assert.equal(timeouts.size, 0);
+
+const closeSockets = [];
+const closeClient = create_client_with_$x_(
+  "ws://heartbeat-close.test",
+  heartbeatOptions,
+  (url) => {
+    const socket = new FakeSocket(url);
+    closeSockets.push(socket);
+    return socket;
+  },
+);
+closeSockets[0].onopen({ heartbeat: true });
+assert.equal(timeouts.size, 1);
+invoke_method("close", closeClient);
+assert.equal(closeSockets[0].closeCalls, 1);
+assert.equal(timeouts.size, 0);
+closeSockets[0].onclose({ explicit: true });
 assert.equal(timeouts.size, 0);
 
 console.log("ws client generation smoke passed");
