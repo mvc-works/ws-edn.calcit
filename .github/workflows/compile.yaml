@@ -45,4 +45,5 @@ jobs:
         run: |
           yarn compile-page
           yarn compile-server
+          yarn check:client-generation
           yarn vite build --base=./
