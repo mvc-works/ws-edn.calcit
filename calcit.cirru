@@ -3,7 +3,7 @@
   :entries $ {}
     :default $ {} (:description |) (:init-fn 'ws-edn.app.page/main!) (:mode :native) (:reload-fn 'ws-edn.app.page/reload!)
       :feature-policy $ {}
-      :modules $ []
+      :modules $ [] |cumulo-util.calcit/
       :type-slots $ {}
     :server $ {} (:description |) (:init-fn 'ws-edn.app.server/main!) (:mode :native) (:reload-fn 'ws-edn.app.server/reload!)
       :feature-policy $ {}
@@ -109,6 +109,7 @@
                   :args $ [] 'String
                   :return 'JsObject
                   :features $ #{} :js-ffi
+              :lifecycle-cleanup $ :: 'Ref (:: 'Option 'Fn)
           :examples $ []
           :schema $ :: 'StructDef
         'WsClientOps $ %{} 'CodeEntry (:doc "|Method contract for browser WebSocket clients.")
@@ -157,9 +158,24 @@
             defenum WsSendOutcome (:sent) (:not-open 'WsConnectionPhase)
           :examples $ []
           :schema $ :: 'EnumDef
+        'cleanup-client-lifecycle! $ %{} 'CodeEntry (:doc "|Runs and clears the optional browser lifecycle cleanup capability.")
+          :code $ quote
+            defn cleanup-client-lifecycle! (client)
+              let
+                  cleanup-ref $ :lifecycle-cleanup client
+                match @cleanup-ref
+                  (:some cleanup)
+                    do (cleanup)
+                      reset! cleanup-ref $ %none
+                      , &unit
+                  (:none) &unit
+          :examples $ []
+          :schema $ :: 'Fn
+            {} (:return 'Unit)
+              :args $ [] 'WsClient0
         'client-close! $ %{} 'CodeEntry (:doc "|Method implementation for explicitly closing a client.")
           :code $ quote
-            defn client-close! (client)
+            defn client-close! (client) (cleanup-client-lifecycle! client)
               let
                   state-ref $ :state client
                   state @state-ref
@@ -198,6 +214,20 @@
             {} (:return 'Unit)
               :args $ [] 'WsClient0
               :features $ #{} :js-ffi
+        'client-recover! $ %{} 'CodeEntry (:doc "|Reconnects only from the closed phase, preserving single-flight attempts.")
+          :code $ quote
+            defn client-recover! (client)
+              let
+                  state $ deref (:state client)
+                assert-type state WsClientState
+                if
+                  = (%:: WsConnectionPhase :closed) (:phase state)
+                  connect-client! client
+                  , &unit
+          :examples $ []
+          :schema $ :: 'Fn
+            {} (:return 'Unit)
+              :args $ [] 'WsClient0
         'client-send $ %{} 'CodeEntry (:doc "|Method implementation returning a typed send outcome.")
           :code $ quote
             defn client-send (client data)
@@ -292,7 +322,8 @@
                   state-ref $ atom
                     WsClientState :generation 0 :phase (%:: WsConnectionPhase :closed) :socket $ %none
                   on-data-ref $ atom (%none)
-                  client $ %{} WsClient (:state state-ref) (:url url) (:options options) (:on-data on-data-ref) (:socket-factory socket-factory)
+                  lifecycle-cleanup-ref $ atom (%none)
+                  client $ %{} WsClient (:state state-ref) (:url url) (:options options) (:on-data on-data-ref) (:socket-factory socket-factory) (:lifecycle-cleanup lifecycle-cleanup-ref)
                 when-let
                   on-data $ get options :on-data
                   reset! on-data-ref $ %some (unsafe-coerce on-data 'DynFn)
@@ -322,6 +353,23 @@
                   assert= true $ generation-current? state 2
                   assert= false $ generation-current? state 1
               :tags $ #{} :unit
+        'install-browser-lifecycle! $ %{} 'CodeEntry (:doc "|Installs visibility and online recovery signals for a browser client.")
+          :code $ quote
+            defn install-browser-lifecycle! (client) (cleanup-client-lifecycle! client)
+              let
+                  cleanup $ watch-browser-lifecycle!
+                    fn (signal)
+                      when
+                        or (= signal :visible) (= signal :online)
+                        client-recover! client
+                    %none
+                reset! (:lifecycle-cleanup client) (%some cleanup)
+                , &unit
+          :examples $ []
+          :schema $ :: 'Fn
+            {} (:return 'Unit)
+              :args $ [] 'WsClient0
+              :features $ #{} :js-ffi
         'transition-phase $ %{} 'CodeEntry (:doc "|Applies a phase transition only for the active generation.")
           :code $ quote
             defn transition-phase (state generation phase)
@@ -354,6 +402,7 @@
               let
                   client $ create-client-with! ws-url options
                     fn (url) (new js/WebSocket url)
+                install-browser-lifecycle! client
                 reset! *global-client $ %some client
                 , client
           :examples $ []
@@ -417,6 +466,7 @@
         :code $ quote
           ns ws-edn.client $ :require
             [] ws-edn.util :refer $ [] when-let parse-data stringify-data
+            cumulo-util.activity :refer $ watch-browser-lifecycle!
     'ws-edn.schema $ %{} 'FileEntry
       :defs $ {}
         'Track $ %{} 'CodeEntry (:doc |)
