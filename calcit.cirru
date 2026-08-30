@@ -112,6 +112,9 @@
               :lifecycle-cleanup $ :: 'Ref (:: 'Option 'Fn)
               :retry-state $ :: 'Ref 'cumulo-util.realtime/RetryBackoff
               :reconnect-timer $ :: 'Ref (:: 'Option 'Number)
+              :heartbeat-timeout-ms $ :: 'Option 'Number
+              :heartbeat-lease $ :: 'Ref (:: 'Option 'cumulo-util.realtime/HeartbeatLease)
+              :heartbeat-timer $ :: 'Ref (:: 'Option 'Number)
           :examples $ []
           :schema $ :: 'StructDef
         'WsClientOps $ %{} 'CodeEntry (:doc "|Method contract for browser WebSocket clients.")
@@ -160,6 +163,22 @@
             defenum WsSendOutcome (:sent) (:not-open 'WsConnectionPhase)
           :examples $ []
           :schema $ :: 'EnumDef
+        'cancel-client-heartbeat! $ %{} 'CodeEntry (:doc "|Cancels and clears the heartbeat deadline timer and lease.")
+          :code $ quote
+            defn cancel-client-heartbeat! (client)
+              let
+                  timer-ref $ :heartbeat-timer client
+                match @timer-ref
+                  (:some timer) (js/clearTimeout timer)
+                  (:none) &unit
+                reset! timer-ref $ %none
+                reset! (:heartbeat-lease client) (%none)
+                , &unit
+          :examples $ []
+          :schema $ :: 'Fn
+            {} (:return 'Unit)
+              :args $ [] 'WsClient0
+              :features $ #{} :js-ffi
         'cancel-client-reconnect! $ %{} 'CodeEntry (:doc "|Cancels and clears the single pending reconnect timer.")
           :code $ quote
             defn cancel-client-reconnect! (client)
@@ -193,7 +212,7 @@
               :args $ [] 'WsClient0
         'client-close! $ %{} 'CodeEntry (:doc "|Method implementation for explicitly closing a client.")
           :code $ quote
-            defn client-close! (client) (cancel-client-reconnect! client) (cleanup-client-lifecycle! client)
+            defn client-close! (client) (cancel-client-reconnect! client) (cancel-client-heartbeat! client) (cleanup-client-lifecycle! client)
               let
                   state-ref $ :state client
                   state @state-ref
@@ -271,7 +290,7 @@
               :features $ #{} :js-ffi
         'connect-client! $ %{} 'CodeEntry (:doc "|Starts a new generation and installs stale-event-safe host callbacks.")
           :code $ quote
-            defn connect-client! (client)
+            defn connect-client! (client) (cancel-client-heartbeat! client)
               let
                   state-ref $ :state client
                   previous @state-ref
@@ -298,6 +317,7 @@
                                 , 'cumulo-util.realtime/RetryBackoff
                             reset! (:retry-state client) (retry-state .reset)
                           reset! state-ref $ assoc @state-ref :phase (%:: WsConnectionPhase :open)
+                          renew-client-heartbeat! client generation
                           when-let
                             on-open $ get (:options client) :on-open
                             let
@@ -306,7 +326,7 @@
                         , &unit
                     set! (.-onmessage socket)
                       fn (event)
-                        when (generation-current? @state-ref generation)
+                        when (generation-current? @state-ref generation) (renew-client-heartbeat! client generation)
                           when-let
                             on-data $ deref (:on-data client)
                             let
@@ -317,7 +337,7 @@
                         , &unit
                     set! (.-onclose socket)
                       fn (event)
-                        when (generation-current? @state-ref generation)
+                        when (generation-current? @state-ref generation) (cancel-client-heartbeat! client)
                           let
                               current-state $ assert-type (deref state-ref) WsClientState
                               explicit-close? $ = (%:: WsConnectionPhase :closing) (:phase current-state)
@@ -363,7 +383,13 @@
                     (:none) 0.2
                   retry-state-ref $ atom (retry-backoff retry-base-ms retry-max-ms retry-jitter)
                   reconnect-timer-ref $ atom (%none)
-                  client $ %{} WsClient (:state state-ref) (:url url) (:options options) (:on-data on-data-ref) (:socket-factory socket-factory) (:lifecycle-cleanup lifecycle-cleanup-ref) (:retry-state retry-state-ref) (:reconnect-timer reconnect-timer-ref)
+                  heartbeat-timeout-ms $ match (get options :heartbeat-timeout-ms)
+                    (:some value)
+                      %some $ unsafe-coerce value 'Number
+                    (:none) (%none)
+                  heartbeat-lease-ref $ atom (%none)
+                  heartbeat-timer-ref $ atom (%none)
+                  client $ %{} WsClient (:state state-ref) (:url url) (:options options) (:on-data on-data-ref) (:socket-factory socket-factory) (:lifecycle-cleanup lifecycle-cleanup-ref) (:retry-state retry-state-ref) (:reconnect-timer reconnect-timer-ref) (:heartbeat-timeout-ms heartbeat-timeout-ms) (:heartbeat-lease heartbeat-lease-ref) (:heartbeat-timer heartbeat-timer-ref)
                 when-let
                   on-data $ get options :on-data
                   reset! on-data-ref $ %some (unsafe-coerce on-data 'DynFn)
@@ -409,6 +435,48 @@
           :schema $ :: 'Fn
             {} (:return 'Unit)
               :args $ [] 'WsClient0
+              :features $ #{} :js-ffi
+        'renew-client-heartbeat! $ %{} 'CodeEntry (:doc "|Renews an enabled heartbeat lease and closes the current generation after its deadline.")
+          :code $ quote
+            defn renew-client-heartbeat! (client generation)
+              match (:heartbeat-timeout-ms client)
+                (:none) &unit
+                (:some timeout-ms)
+                  do (cancel-client-heartbeat! client)
+                    let
+                        lease-ref $ :heartbeat-lease client
+                        timer-ref $ :heartbeat-timer client
+                        state-ref $ :state client
+                        now-ms $ unsafe-coerce (js/Date.now) 'Number
+                        lease $ heartbeat-lease now-ms timeout-ms
+                        timer $ flipped js/setTimeout timeout-ms
+                          fn () $ match @timer-ref
+                            (:some active-timer)
+                              when (= active-timer timer)
+                                reset! timer-ref $ %none
+                                let
+                                    state $ assert-type (deref state-ref) WsClientState
+                                    current-now $ unsafe-coerce (js/Date.now) 'Number
+                                  when
+                                    and (generation-current? state generation)
+                                      = (%:: WsConnectionPhase :open) (:phase state)
+                                    match @lease-ref
+                                      (:some current-lease)
+                                        let
+                                            current-lease $ assert-type current-lease 'cumulo-util.realtime/HeartbeatLease
+                                          when (current-lease .expired? current-now)
+                                            match (:socket state)
+                                              (:some socket) (.!close socket)
+                                              (:none) &unit
+                                      (:none) &unit
+                            (:none) &unit
+                      reset! lease-ref $ %some lease
+                      reset! timer-ref $ %some timer
+                      , &unit
+          :examples $ []
+          :schema $ :: 'Fn
+            {} (:return 'Unit)
+              :args $ [] 'WsClient0 'Number
               :features $ #{} :js-ffi
         'schedule-client-reconnect! $ %{} 'CodeEntry (:doc "|Schedules one bounded backoff retry unless one is already pending.")
           :code $ quote
@@ -542,7 +610,7 @@
           ns ws-edn.client $ :require
             [] ws-edn.util :refer $ [] when-let parse-data stringify-data
             cumulo-util.activity :refer $ watch-browser-lifecycle!
-            cumulo-util.realtime :refer $ retry-backoff
+            cumulo-util.realtime :refer $ retry-backoff heartbeat-lease
     'ws-edn.schema $ %{} 'FileEntry
       :defs $ {}
         'Track $ %{} 'CodeEntry (:doc |)
