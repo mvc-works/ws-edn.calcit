@@ -87,46 +87,275 @@
             ws-edn.schema :refer $ Track
     'ws-edn.client $ %{} 'FileEntry
       :defs $ {}
-        '*global-ws $ %{} 'CodeEntry (:doc "|Global atom that stores the WebSocket instance. Used internally to track the current connection.")
-          :code $ quote (defatom *global-ws nil)
+        '*global-client $ %{} 'CodeEntry (:doc "|Global atom that stores the WebSocket instance. Used internally to track the current connection.")
+          :code $ quote
+            defatom *global-client $ %none
           :examples $ []
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Ref (:: 'Option 'WsClient)
+        'WsClient $ %{} 'CodeEntry (:doc "|Browser WebSocket client with nominal lifecycle methods.")
+          :code $ quote
+            def WsClient $ impl-traits WsClient0 WsClientOpsImpl
+          :examples $ []
+          :schema $ :: 'StructDef
+        'WsClient0 $ %{} 'CodeEntry (:doc "|Raw browser client handle before attaching lifecycle methods.")
+          :code $ quote
+            defstruct WsClient0
+              :state $ :: 'Ref 'WsClientState
+              :url 'String
+              :options 'Dynamic
+              :on-data $ :: 'Ref (:: 'Option 'DynFn)
+              :socket-factory $ :: 'Fn
+                {}
+                  :args $ [] 'String
+                  :return 'JsObject
+                  :features $ #{} :js-ffi
+          :examples $ []
+          :schema $ :: 'StructDef
+        'WsClientOps $ %{} 'CodeEntry (:doc "|Method contract for browser WebSocket clients.")
+          :code $ quote
+            deftrait WsClientOps
+              .connected? $ :: 'Fn
+                {}
+                  :generics $ [] 'T
+                  :args $ [] 'T
+                  :return 'Bool
+              .send $ :: 'Fn
+                {}
+                  :generics $ [] 'T
+                  :args $ [] 'T 'Dynamic
+                  :return 'WsSendOutcome
+              .close $ :: 'Fn
+                {}
+                  :generics $ [] 'T
+                  :args $ [] 'T
+                  :return 'Unit
+              .reconnect $ :: 'Fn
+                {}
+                  :generics $ [] 'T
+                  :args $ [] 'T
+                  :return 'Unit
+          :examples $ []
+          :schema $ :: 'Trait
+        'WsClientOpsImpl $ %{} 'CodeEntry (:doc "|Lifecycle method implementation for WsClient.")
+          :code $ quote
+            defimpl WsClientOpsImpl WsClientOps (.connected? client-connected?) (.send client-send) (.close client-close!) (.reconnect client-reconnect!)
+          :examples $ []
+          :schema $ :: 'Impl
+        'WsClientState $ %{} 'CodeEntry (:doc "|Generation, phase, and current host socket for one browser client.")
+          :code $ quote
+            defstruct WsClientState (:generation 'Number) (:phase 'WsConnectionPhase)
+              :socket $ :: 'Option 'JsObject
+          :examples $ []
+          :schema $ :: 'StructDef
+        'WsConnectionPhase $ %{} 'CodeEntry (:doc "|Explicit browser WebSocket lifecycle phase.")
+          :code $ quote
+            defenum WsConnectionPhase (:connecting) (:open) (:closing) (:closed)
+          :examples $ []
+          :schema $ :: 'EnumDef
+        'WsSendOutcome $ %{} 'CodeEntry (:doc "|Typed outcome from attempting a browser WebSocket send.")
+          :code $ quote
+            defenum WsSendOutcome (:sent) (:not-open 'WsConnectionPhase)
+          :examples $ []
+          :schema $ :: 'EnumDef
+        'client-close! $ %{} 'CodeEntry (:doc "|Method implementation for explicitly closing a client.")
+          :code $ quote
+            defn client-close! (client)
+              let
+                  state-ref $ :state client
+                  state @state-ref
+                assert-type state WsClientState
+                match (:socket state)
+                  (:some socket)
+                    do
+                      reset! state-ref $ assoc state :phase (%:: WsConnectionPhase :closing)
+                      .!close socket
+                      , &unit
+                  (:none)
+                    do
+                      reset! state-ref $ assoc state :phase (%:: WsConnectionPhase :closed)
+                      , &unit
+          :examples $ []
+          :schema $ :: 'Fn
+            {} (:return 'Unit)
+              :args $ [] 'WsClient0
+              :features $ #{} :js-ffi
+        'client-connected? $ %{} 'CodeEntry (:doc "|Method implementation for checking the open phase.")
+          :code $ quote
+            defn client-connected? (client)
+              let
+                  state $ deref (:state client)
+                assert-type state WsClientState
+                = (%:: WsConnectionPhase :open) (:phase state)
+          :examples $ []
+          :schema $ :: 'Fn
+            {} (:return 'Bool)
+              :args $ [] 'WsClient0
+        'client-reconnect! $ %{} 'CodeEntry (:doc "|Method implementation for replacing the active generation.")
+          :code $ quote
+            defn client-reconnect! (client) (connect-client! client)
+          :examples $ []
+          :schema $ :: 'Fn
+            {} (:return 'Unit)
+              :args $ [] 'WsClient0
+              :features $ #{} :js-ffi
+        'client-send $ %{} 'CodeEntry (:doc "|Method implementation returning a typed send outcome.")
+          :code $ quote
+            defn client-send (client data)
+              let
+                  state $ deref (:state client)
+                assert-type state WsClientState
+                if
+                  = (%:: WsConnectionPhase :open) (:phase state)
+                  match (:socket state)
+                    (:some socket)
+                      do
+                        .!send socket $ format-cirru-edn data
+                        %:: WsSendOutcome :sent
+                    (:none)
+                      %:: WsSendOutcome :not-open $ :phase state
+                  %:: WsSendOutcome :not-open $ :phase state
+          :examples $ []
+          :schema $ :: 'Fn
+            {} (:return 'WsSendOutcome)
+              :args $ [] 'WsClient0 'Dynamic
+              :features $ #{} :js-ffi
+        'connect-client! $ %{} 'CodeEntry (:doc "|Starts a new generation and installs stale-event-safe host callbacks.")
+          :code $ quote
+            defn connect-client! (client)
+              let
+                  state-ref $ :state client
+                  previous @state-ref
+                assert-type previous WsClientState
+                let
+                    generation $ inc (:generation previous)
+                    connecting-state $ WsClientState :generation generation :phase (%:: WsConnectionPhase :connecting) :socket (%none)
+                  reset! state-ref connecting-state
+                  match (:socket previous)
+                    (:some socket)
+                      do (.!close socket) &unit
+                    (:none) &unit
+                  let
+                      socket $
+                        :socket-factory client
+                        :url client
+                    reset! state-ref $ WsClientState :generation generation :phase (%:: WsConnectionPhase :connecting) :socket (%some socket)
+                    set! (.-onopen socket)
+                      fn (event)
+                        when (generation-current? @state-ref generation)
+                          reset! state-ref $ assoc @state-ref :phase (%:: WsConnectionPhase :open)
+                          when-let
+                            on-open $ get (:options client) :on-open
+                            let
+                                callback $ unsafe-coerce on-open 'Fn
+                              callback event
+                        , &unit
+                    set! (.-onmessage socket)
+                      fn (event)
+                        when (generation-current? @state-ref generation)
+                          when-let
+                            on-data $ deref (:on-data client)
+                            let
+                                callback $ unsafe-coerce on-data 'Fn
+                              callback $ parse-cirru-edn
+                                unsafe-coerce (.-data event) 'String
+                                &map:get (:options client) :class-mapper
+                        , &unit
+                    set! (.-onclose socket)
+                      fn (event)
+                        when (generation-current? @state-ref generation)
+                          reset! state-ref $ WsClientState :generation generation :phase (%:: WsConnectionPhase :closed) :socket (%none)
+                          when-let
+                            on-close $ get (:options client) :on-close
+                            let
+                                callback $ unsafe-coerce on-close 'Fn
+                              callback event
+                        , &unit
+                    set! (.-onerror socket)
+                      fn (error)
+                        when (generation-current? @state-ref generation) (js/console.error |Failed-to-establish-WebSocket-connection error)
+                          when-let
+                            on-error $ get (:options client) :on-error
+                            let
+                                callback $ unsafe-coerce on-error 'Fn
+                              callback error
+                        , &unit
+                    , &unit
+          :examples $ []
+          :schema $ :: 'Fn
+            {} (:return 'Unit)
+              :args $ [] 'WsClient0
+              :features $ #{} :js-ffi
+        'create-client-with! $ %{} 'CodeEntry (:doc "|Creates a client with an injected socket factory, primarily for tests and adapters.")
+          :code $ quote
+            defn create-client-with! (url options socket-factory)
+              let
+                  state-ref $ atom
+                    WsClientState :generation 0 :phase (%:: WsConnectionPhase :closed) :socket $ %none
+                  on-data-ref $ atom (%none)
+                  client $ %{} WsClient (:state state-ref) (:url url) (:options options) (:on-data on-data-ref) (:socket-factory socket-factory)
+                when-let
+                  on-data $ get options :on-data
+                  reset! on-data-ref $ %some (unsafe-coerce on-data 'DynFn)
+                assert-type client 'WsClient
+                connect-client! client
+                , client
+          :examples $ []
+          :schema $ :: 'Fn
+            {} (:return 'WsClient)
+              :args $ [] 'String 'Dynamic
+                :: 'Fn $ {} (:return 'JsObject)
+                  :args $ [] 'String
+              :features $ #{} :js-ffi
+        'generation-current? $ %{} 'CodeEntry (:doc "|Returns whether an event belongs to the active socket generation.")
+          :code $ quote
+            defn generation-current? (state generation)
+              = (:generation state) generation
+          :examples $ []
+          :schema $ :: 'Fn
+            {} (:return 'Bool)
+              :args $ [] 'WsClientState 'Number
+          :tests $ []
+            %{} 'TestEntry (:name |accepts-only-current-generation)
+              :code $ quote
+                let
+                    state $ WsClientState :generation 2 :phase (%:: WsConnectionPhase :connecting) :socket (%none)
+                  assert= true $ generation-current? state 2
+                  assert= false $ generation-current? state 1
+              :tags $ #{} :unit
+        'transition-phase $ %{} 'CodeEntry (:doc "|Applies a phase transition only for the active generation.")
+          :code $ quote
+            defn transition-phase (state generation phase)
+              if (generation-current? state generation)
+                %some $ assoc state :phase phase
+                %none
+          :examples $ []
+          :schema $ :: 'Fn
+            {}
+              :args $ [] 'WsClientState 'Number 'WsConnectionPhase
+              :return $ :: 'Option 'WsClientState
+          :tests $ []
+            %{} 'TestEntry (:name |ignores-stale-transition)
+              :code $ quote
+                let
+                    state $ WsClientState :generation 2 :phase (%:: WsConnectionPhase :connecting) :socket (%none)
+                    open-state $ assoc state :phase (%:: WsConnectionPhase :open)
+                  assert= (%some open-state)
+                    transition-phase state 2 $ %:: WsConnectionPhase :open
+                  assert= (%none)
+                    transition-phase state 1 $ %:: WsConnectionPhase :open
+              :tags $ #{} :unit
         'ws-connect! $ %{} 'CodeEntry (:doc "|Establishes a WebSocket connection to the specified URL. Accepts options map with :on-open, :on-close, :on-data, :on-error, and :class-mapper callbacks.")
           :code $ quote
             defn ws-connect! (ws-url options)
-              assert "|reqiured an url for ws server" $ string? ws-url
+              assert |required-an-url-for-WebSocket-server $ string? ws-url
+              match @*global-client
+                (:some client) (client-close! client)
+                (:none) &unit
               let
-                  ws $ new js/WebSocket ws-url
-                reset! *global-ws ws
-                when-let
-                  on-open $ get options :on-open
-                  let
-                      callback $ unsafe-coerce on-open 'Fn
-                    set! (.-onopen ws)
-                      fn (event) (callback event)
-                set! (.-onclose ws)
-                  fn (event) (reset! *global-ws nil)
-                    when-let
-                      on-close $ get options :on-close
-                      let
-                          callback $ unsafe-coerce on-close 'Fn
-                        callback event
-                when-let
-                  on-data $ get options :on-data
-                  let
-                      callback $ unsafe-coerce on-data 'Fn
-                    set! (.-onmessage ws)
-                      fn (event)
-                        callback $ parse-cirru-edn
-                          unsafe-coerce (.-data event) 'String
-                          &map:get options :class-mapper
-                set! (.-onerror ws)
-                  fn (error) (js/console.error "|Failed to establish connection" error)
-                    when-let
-                      on-error $ get options :on-error
-                      let
-                          callback $ unsafe-coerce on-error 'Fn
-                        callback error
+                  client $ create-client-with! ws-url options
+                    fn (url) (new js/WebSocket url)
+                reset! *global-client $ %some client
+                , client
           :examples $ []
             quote $ ws-connect! |ws://localhost:8080
               {}
@@ -134,12 +363,14 @@
                 :on-close $ fn (event) (println |closed)
                 :on-data $ fn (data) (println |received: data)
           :schema $ :: 'Fn
-            {} (:return 'Dynamic)
-              :args $ [] 'Dynamic 'Dynamic
+            {} (:return 'WsClient)
+              :args $ [] 'String 'Dynamic
               :features $ #{} :js-ffi
         'ws-connected? $ %{} 'CodeEntry (:doc "|Returns true if WebSocket is currently connected, false otherwise.")
           :code $ quote
-            defn ws-connected? () $ some? @*global-ws
+            defn ws-connected? () $ match @*global-client
+              (:some client) (client-connected? client)
+              (:none) false
           :examples $ []
             quote $ ws-connected?
           :schema $ :: 'Fn
@@ -148,11 +379,13 @@
         'ws-send! $ %{} 'CodeEntry (:doc "|Sends data through the WebSocket connection. Data will be formatted as Cirru EDN before sending.")
           :code $ quote
             defn ws-send! (data)
-              do $ let
-                  ws @*global-ws
-                if (some? ws)
-                  .!send ws $ format-cirru-edn data
-                  js/console.warn "|WebSocket at close state!"
+              do
+                match @*global-client
+                  (:some client)
+                    match (client-send client data)
+                      (:sent) &unit
+                      (:not-open phase) (js/console.warn |WebSocket-not-open phase)
+                  (:none) (js/console.warn |Missing-WebSocket-client)
                 , &unit
           :examples $ []
             quote $ ws-send!
@@ -165,22 +398,20 @@
         'ws-set-on-data! $ %{} 'CodeEntry (:doc "|Sets the message handler for incoming WebSocket data. Handler receives parsed Cirru EDN data.")
           :code $ quote
             defn ws-set-on-data! (on-data)
-              let
-                  ws @*global-ws
-                if (some? ws)
-                  let
-                      callback $ unsafe-coerce on-data 'Fn
-                    set! (.-onmessage ws)
-                      fn (event)
-                        callback $ parse-cirru-edn
-                          unsafe-coerce (.-data event) 'String
-                  js/console.warn "|missing running ws instance"
+              do
+                match @*global-client
+                  (:some client)
+                    do (assert-type client WsClient0)
+                      reset! (:on-data client)
+                        %some $ unsafe-coerce on-data 'DynFn
+                  (:none) (js/console.warn |Missing-WebSocket-client)
+                , &unit
           :examples $ []
             quote $ ws-set-on-data!
               fn (data) (println "|New message:" data)
           :schema $ :: 'Fn
-            {} (:return 'Dynamic)
-              :args $ [] 'Dynamic
+            {} (:return 'Unit)
+              :args $ [] 'Fn
               :features $ #{} :js-ffi
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote

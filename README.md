@@ -32,9 +32,9 @@ ws-edn.server/wss-set-on-data! $ fn (sid data)
   println "|received data" sid data
 ```
 
-Client side:
+Client side (legacy singleton helpers remain compatible):
 
-```clojure
+```cirru
 ws-edn.client/ws-connect! "|ws://localhost:5001"
   {}
     :on-open $ fn (event)
@@ -56,6 +56,33 @@ ws-edn.client/ws-set-on-data! $ fn (data)
   println data
 ```
 
+`ws-connect!` now returns a nominal `WsClient`. Prefer lifecycle methods when
+the caller owns the connection:
+
+```cirru
+let
+    client $ ws-edn.client/ws-connect! |ws://localhost:5001 $ {}
+  client .connected?
+  match (client .send $ {} (:kind :ping))
+    (:sent) nil
+    (:not-open phase) (println |send-skipped phase)
+  client .reconnect
+  client .close
+```
+
+Each reconnect advances an internal generation before replacing the host
+socket. Late `open`, `message`, `close`, and `error` events from an older socket
+are ignored, so a stale callback cannot close or feed data into the active
+connection. The current first stage deliberately leaves retry policy, backoff,
+heartbeat, and browser visibility handling to the caller; those policies will
+be added above this deterministic state machine.
+
+`ws-connect!` 现在返回名义类型 `WsClient`。连接所有者可优先使用
+`.connected?`、`.send`、`.reconnect` 与 `.close` 方法；旧的单例函数继续兼容。
+每次重连会先提升 generation，再替换宿主 WebSocket，因此旧连接迟到的
+`open/message/close/error` 事件不会污染当前连接。退避、心跳与页面可见性策略
+暂时留给上层，后续会构建在这层确定性状态机之上。
+
 Typed decoding for application data:
 
 `ws-edn.schema/Track` is a nominal Struct. Use the built-in `decode-map-as`
@@ -70,14 +97,14 @@ Keep open protocol payloads as `Dynamic` only at the WebSocket/JS boundary and
 decode them into a named Struct or Enum as soon as their shape is known. Do not
 reintroduce the removed `calcit-test`, `lilac`, or `memof` modules.
 
-The module snapshot is compatible with Calcit 0.13.52 and later: its local
-`when-let` macro declares an explicit syntax/expansion contract. `ws-send!`
-always returns `Unit`; JavaScript `WebSocket.send` results do not leak through
-the public API.
+The module snapshot targets Calcit 0.13.66. Its local `when-let` macro declares
+an explicit syntax/expansion contract. `ws-send!` always returns `Unit`; the
+method-oriented `.send` returns `WsSendOutcome` instead of leaking JavaScript
+`WebSocket.send` results.
 
-模块 Snapshot 已迁移到 Calcit 0.13.52 及后续版本要求的严格宏契约；本地
-`when-let` 明确声明 syntax 与 expansion。`ws-send!` 始终返回 `Unit`，不会把
-JavaScript `WebSocket.send` 的返回值泄漏到公开 API。
+模块 Snapshot 已迁移到 Calcit 0.13.66；本地 `when-let` 明确声明 syntax 与
+expansion。`ws-send!` 始终返回 `Unit`，方法形式 `.send` 返回
+`WsSendOutcome`，不会把 JavaScript `WebSocket.send` 的返回值泄漏到公开 API。
 
 Legacy class mapper (for compatibility with older payloads):
 
