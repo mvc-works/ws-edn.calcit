@@ -540,14 +540,14 @@
             defn ws-connect! (ws-url options)
               assert |required-an-url-for-WebSocket-server $ string? ws-url
               match @*global-client
-                (:some client) (client-close! client)
+                (:some client) (client .close)
                 (:none) &unit
               let
                   client $ create-client-with! ws-url options
                     fn (url) (new js/WebSocket url)
-                install-browser-lifecycle! client
+                install-browser-lifecycle! $ assert-type client 'WsClient0
                 reset! *global-client $ %some client
-                , client
+                assert-type client 'WsClient
           :examples $ []
             quote $ ws-connect! |ws://localhost:8080
               {}
@@ -561,7 +561,7 @@
         'ws-connected? $ %{} 'CodeEntry (:doc "|Returns true if WebSocket is currently connected, false otherwise.")
           :code $ quote
             defn ws-connected? () $ match @*global-client
-              (:some client) (client-connected? client)
+              (:some client) (client .connected?)
               (:none) false
           :examples $ []
             quote $ ws-connected?
@@ -574,7 +574,7 @@
               do
                 match @*global-client
                   (:some client)
-                    match (client-send client data)
+                    match (client .send data)
                       (:sent) &unit
                       (:not-open phase) (js/console.warn |WebSocket-not-open phase)
                   (:none) (js/console.warn |Missing-WebSocket-client)
@@ -649,9 +649,10 @@
           :examples $ []
           :schema $ :: 'Dynamic
         '*proxied-data-listener $ %{} 'CodeEntry (:doc "|Global atom that stores the data listener callback function. Used internally for message handling.")
-          :code $ quote (defatom *proxied-data-listener nil)
+          :code $ quote
+            defatom *proxied-data-listener $ %none
           :examples $ []
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Ref (:: 'Option 'Dynamic)
         'maintain-socket! $ %{} 'CodeEntry (:doc "|Registers and maintains a WebSocket connection. Sets up event handlers for message, close, and error events. Accepts options map with :on-open, :on-close, :on-data, :on-error, and :class-mapper callbacks.")
           :code $ quote
             defn maintain-socket! (socket options)
@@ -700,9 +701,10 @@
             defn wss-send! (sid data)
               do $ let
                   socket $ get @*global-connections sid
-                if (some? socket)
-                  .!send socket $ format-cirru-edn data
-                  js/console.warn "|socket not found for" sid
+                match socket
+                  (:some socket)
+                    .!send socket $ format-cirru-edn data
+                  (:none) (js/console.warn "|socket not found for" sid)
                 , &unit
           :examples $ []
             quote $ wss-send! |session-123
@@ -760,7 +762,8 @@
               :features $ #{} :js-ffi
         'wss-set-on-data! $ %{} 'CodeEntry (:doc "|Sets the message handler for incoming WebSocket data across all connections. Handler receives session-id and parsed Cirru EDN data.")
           :code $ quote
-            defn wss-set-on-data! (on-data) (reset! *proxied-data-listener on-data)
+            defn wss-set-on-data! (on-data)
+              reset! *proxied-data-listener $ %some on-data
           :examples $ []
             quote $ wss-set-on-data!
               fn (sid data) (println "|New message from" sid : data)
