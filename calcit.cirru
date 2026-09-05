@@ -127,8 +127,8 @@
                   :return 'Bool
               .send $ :: 'Fn
                 {}
-                  :generics $ [] 'T
-                  :args $ [] 'T 'Dynamic
+                  :generics $ [] 'T 'D
+                  :args $ [] 'T 'D
                   :return 'WsSendOutcome
               .close $ :: 'Fn
                 {}
@@ -286,8 +286,9 @@
           :examples $ []
           :schema $ :: 'Fn
             {} (:return 'WsSendOutcome)
-              :args $ [] 'WsClient0 'Dynamic
+              :args $ [] 'WsClient0 'D
               :features $ #{} :js-ffi
+              :generics $ [] 'D
         'connect-client! $ %{} 'CodeEntry (:doc "|Starts a new generation and installs stale-event-safe host callbacks.")
           :code $ quote
             defn connect-client! (client) (cancel-client-heartbeat! client)

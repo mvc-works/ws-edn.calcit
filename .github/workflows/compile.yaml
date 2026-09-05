@@ -30,7 +30,10 @@ jobs:
           yarn --version
 
       - name: Install deps
-        run: caps --ci && yarn install --immutable
+        run: |
+          caps --strict --ci
+          yarn install --immutable
+          caps verify --toolchain
 
       - name: "validate snapshots"
         run: |
@@ -39,12 +42,14 @@ jobs:
           calcit calcit.cirru --check-only
           calcit calcit.cirru --entry server --check-only
           calcit calcit.cirru analyze dynamic-methods --max 0
+          calcit calcit.cirru --entry server analyze dynamic-methods --max 0
           calcit calcit.cirru analyze quality --baseline config/calcit-quality.cirru
 
       - name: "run tests and deprecated API check"
         run: |
           yarn check:unit
           yarn check:deprecated
+          calcit calcit.cirru docs check-md README.md --dep ./ --failures-only
 
       - name: "compile to js"
         run: |
