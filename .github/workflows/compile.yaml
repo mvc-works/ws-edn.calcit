@@ -13,13 +13,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 24
 
-      - uses: calcit-lang/setup-calcit@v1
+      - uses: calcit-lang/setup-calcit@704b3f5cd6f9ce3bd1e0c926dbdd1d181adb8180 # v1
         with:
           tools: calcit,caps
 
@@ -30,7 +30,10 @@ jobs:
           yarn --version
 
       - name: Install deps
-        run: caps --ci && yarn install --immutable
+        run: |
+          caps --strict --ci
+          yarn install --immutable
+          caps verify --toolchain
 
       - name: "validate snapshots"
         run: |
@@ -39,12 +42,14 @@ jobs:
           calcit calcit.cirru --check-only
           calcit calcit.cirru --entry server --check-only
           calcit calcit.cirru analyze dynamic-methods --max 0
+          calcit calcit.cirru --entry server analyze dynamic-methods --max 0
           calcit calcit.cirru analyze quality --baseline config/calcit-quality.cirru
 
       - name: "run tests and deprecated API check"
         run: |
           yarn check:unit
           yarn check:deprecated
+          calcit calcit.cirru docs check-md README.md --dep ./ --failures-only
 
       - name: "compile to js"
         run: |

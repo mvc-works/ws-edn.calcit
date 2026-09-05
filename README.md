@@ -4,28 +4,33 @@ ws-edn in calcit-js
 
 ### Usages
 
+The server and browser connection snippets require their Node/WebSocket hosts, so
+they are marked `cirru.no-check`. CI validates both generated entries and runs the
+executable client generation/lifecycle smoke; host-independent data snippets below
+remain checked by `calcit docs check-md`.
+
 Server side:
 
-```cirru
+```cirru.no-check
 ws-edn.server/wss-serve! 5001
   {}
     :on-open $ fn (sid socket)
       println |opened sid
     :on-data $ fn (sid data)
-      println "data" sid data)
+      println |data sid data
     :on-close $ fn (sid event)
-      println "close" sid
+      println |close sid
     :on-listening $ fn ()
-      println "listening"
+      println |listening
     :on-error $ fn (error)
       println error
 
-ws-edn.server/wss-send! sid data
+ws-edn.server/wss-send! |demo-sid $ {} (:data "|some data")
 
 ws-edn.server/wss-each! $ fn (sid socket)
   println sid
   ; "or send"
-  wss-send! sid $ {} (:data "|some data")
+  ws-edn.server/wss-send! sid $ {} (:data "|some data")
 
 ; "use in onreload! to bind a new listener"
 ws-edn.server/wss-set-on-data! $ fn (sid data)
@@ -34,19 +39,19 @@ ws-edn.server/wss-set-on-data! $ fn (sid data)
 
 Client side (legacy singleton helpers remain compatible):
 
-```cirru
+```cirru.no-check
 ws-edn.client/ws-connect! "|ws://localhost:5001"
   {}
     :on-open $ fn (event)
-      println "open"
+      println |open
     :on-data $ fn (data)
-      println "data" data
+      println |data data
     :on-close $ fn (event)
-      println "close"
+      println |close
     :on-error $ fn (error)
       println error
 
-ws-edn.client/ws-send! data
+ws-edn.client/ws-send! |demo-data
 
 ws-edn.client/ws-connected?
 ; => true or false
@@ -59,7 +64,7 @@ ws-edn.client/ws-set-on-data! $ fn (data)
 `ws-connect!` now returns a nominal `WsClient`. Prefer lifecycle methods when
 the caller owns the connection:
 
-```cirru
+```cirru.no-check
 let
     client $ ws-edn.client/ws-connect! |ws://localhost:5001 $ {}
   client .connected?
@@ -73,7 +78,7 @@ let
 Each reconnect advances an internal generation before replacing the host
 socket. Late `open`, `message`, `close`, and `error` events from an older socket
 are ignored, so a stale callback cannot close or feed data into the active
-connection. Browser clients now reuse `Cumulo/cumulo-util.calcit` `0.0.14`:
+connection. Browser clients now reuse `Cumulo/cumulo-util.calcit` `0.0.17`:
 visibility and online recovery signals reconnect only after the active client has
 reached `:closed`. This preserves single-flight connection attempts, and `.close`
 removes the lifecycle listeners and timers. Protocol-specific heartbeat messages
@@ -83,7 +88,7 @@ and resync hooks still belong to the caller.
 `.connected?`、`.send`、`.reconnect` 与 `.close` 方法；旧的单例函数继续兼容。
 每次重连会先提升 generation，再替换宿主 WebSocket，因此旧连接迟到的
 `open/message/close/error` 事件不会污染当前连接。浏览器端现复用
-`Cumulo/cumulo-util.calcit` `0.0.14`：可见性和 online 恢复信号只会在 client
+`Cumulo/cumulo-util.calcit` `0.0.17`：可见性和 online 恢复信号只会在 client
 已经进入 `:closed` 后触发连接，保持 single-flight；`.close` 会清理 lifecycle
 listener 与 timer。
 
@@ -130,18 +135,18 @@ Keep open protocol payloads as `Dynamic` only at the WebSocket/JS boundary and
 decode them into a named Struct or Enum as soon as their shape is known. Do not
 reintroduce the removed `calcit-test`, `lilac`, or `memof` modules.
 
-The module snapshot targets Calcit 0.13.66. Its local `when-let` macro declares
+The module snapshot targets Calcit 0.13.77. Its local `when-let` macro declares
 an explicit syntax/expansion contract. `ws-send!` always returns `Unit`; the
 method-oriented `.send` returns `WsSendOutcome` instead of leaking JavaScript
 `WebSocket.send` results.
 
-模块 Snapshot 已迁移到 Calcit 0.13.66；本地 `when-let` 明确声明 syntax 与
+模块 Snapshot 已迁移到 Calcit 0.13.77；本地 `when-let` 明确声明 syntax 与
 expansion。`ws-send!` 始终返回 `Unit`，方法形式 `.send` 返回
 `WsSendOutcome`，不会把 JavaScript `WebSocket.send` 的返回值泄漏到公开 API。
 
 Legacy class mapper (for compatibility with older payloads):
 
-```cirru
+```cirru.no-check
   :class-mapper $ {}
     :Person Person
 ```
