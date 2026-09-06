@@ -3,6 +3,8 @@ import { CalcitMap, init_tags, invoke_method } from "@calcit/procs";
 import {
   create_client_with_$x_,
   install_browser_lifecycle_$x_,
+  ws_connect_$x_,
+  ws_connected_$q_,
 } from "../out-page/ws-edn.client.mjs";
 
 const listeners = new Map();
@@ -208,4 +210,33 @@ assert.equal(timeouts.size, 0);
 closeSockets[0].onclose({ explicit: true });
 assert.equal(timeouts.size, 0);
 
-console.log("ws client generation smoke passed");
+// Exercise the singleton path as well as the injected factory path: lifecycle
+// adaptation must not lose the nominal client stored in the global Option Ref.
+const singletonSockets = [];
+const originalWebSocket = Object.getOwnPropertyDescriptor(globalThis, "WebSocket");
+globalThis.WebSocket = class extends FakeSocket {
+  constructor(url) {
+    super(url);
+    singletonSockets.push(this);
+  }
+};
+try {
+  const first = ws_connect_$x_("ws://singleton-first.test", new CalcitMap());
+  assert.equal(invoke_method("connected?", first), false);
+  singletonSockets[0].onopen({ singleton: true });
+  assert.equal(ws_connected_$q_(), true);
+  const second = ws_connect_$x_("ws://singleton-second.test", new CalcitMap());
+  assert.equal(singletonSockets[0].closeCalls, 1);
+  assert.equal(ws_connected_$q_(), false);
+  singletonSockets[1].onopen({ singleton: true });
+  assert.equal(invoke_method("connected?", second), true);
+  assert.equal(ws_connected_$q_(), true);
+  invoke_method("close", second);
+  assert.equal(ws_connected_$q_(), false);
+  assert.equal(singletonSockets[1].closeCalls, 1);
+} finally {
+  if (originalWebSocket) Object.defineProperty(globalThis, "WebSocket", originalWebSocket);
+  else delete globalThis.WebSocket;
+}
+
+console.log("ws client generation and singleton nominal Ref smoke passed");
