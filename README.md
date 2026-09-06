@@ -78,7 +78,7 @@ let
 Each reconnect advances an internal generation before replacing the host
 socket. Late `open`, `message`, `close`, and `error` events from an older socket
 are ignored, so a stale callback cannot close or feed data into the active
-connection. Browser clients now reuse `Cumulo/cumulo-util.calcit` `0.0.17`:
+connection. Browser clients now reuse `Cumulo/cumulo-util.calcit` `0.0.18`:
 visibility and online recovery signals reconnect only after the active client has
 reached `:closed`. This preserves single-flight connection attempts, and `.close`
 removes the lifecycle listeners and timers. Protocol-specific heartbeat messages
@@ -88,7 +88,7 @@ and resync hooks still belong to the caller.
 `.connected?`、`.send`、`.reconnect` 与 `.close` 方法；旧的单例函数继续兼容。
 每次重连会先提升 generation，再替换宿主 WebSocket，因此旧连接迟到的
 `open/message/close/error` 事件不会污染当前连接。浏览器端现复用
-`Cumulo/cumulo-util.calcit` `0.0.17`：可见性和 online 恢复信号只会在 client
+`Cumulo/cumulo-util.calcit` `0.0.18`：可见性和 online 恢复信号只会在 client
 已经进入 `:closed` 后触发连接，保持 single-flight；`.close` 会清理 lifecycle
 listener 与 timer。
 

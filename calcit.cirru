@@ -3,7 +3,7 @@
   :entries $ {}
     :default $ {} (:description |) (:init-fn 'ws-edn.app.page/main!) (:mode :native) (:reload-fn 'ws-edn.app.page/reload!)
       :feature-policy $ {}
-      :modules $ [] |cumulo-util.calcit/
+      :modules $ [] |cumulo-util.calcit/ |js-ffi/
       :type-slots $ {}
     :server $ {} (:description |) (:init-fn 'ws-edn.app.server/main!) (:mode :native) (:reload-fn 'ws-edn.app.server/reload!)
       :feature-policy $ {}
@@ -91,7 +91,7 @@
           :code $ quote
             defatom *global-client $ %none
           :examples $ []
-          :schema $ :: 'Ref (:: 'Option 'WsClient)
+          :schema $ :: 'Ref (:: 'Option 'ws-edn.client/WsClient)
         'WsClient $ %{} 'CodeEntry (:doc "|Browser WebSocket client with nominal lifecycle methods.")
           :code $ quote
             def WsClient $ impl-traits WsClient0 WsClientOpsImpl
@@ -450,27 +450,29 @@
                         state-ref $ :state client
                         now-ms $ unsafe-coerce (js/Date.now) 'Number
                         lease $ heartbeat-lease now-ms timeout-ms
-                        timer $ flipped js/setTimeout timeout-ms
-                          fn () $ match @timer-ref
-                            (:some active-timer)
-                              when (= active-timer timer)
-                                reset! timer-ref $ %none
-                                let
-                                    state $ assert-type (deref state-ref) WsClientState
-                                    current-now $ unsafe-coerce (js/Date.now) 'Number
-                                  when
-                                    and (generation-current? state generation)
-                                      = (%:: WsConnectionPhase :open) (:phase state)
-                                    match @lease-ref
-                                      (:some current-lease)
-                                        let
-                                            current-lease $ assert-type current-lease 'cumulo-util.realtime/HeartbeatLease
-                                          when (current-lease .expired? current-now)
-                                            match (:socket state)
-                                              (:some socket) (.!close socket)
-                                              (:none) &unit
-                                      (:none) &unit
-                            (:none) &unit
+                        timer $ flipped set-timeout! timeout-ms
+                          fn ()
+                            match @timer-ref
+                              (:some active-timer)
+                                when (= active-timer timer)
+                                  reset! timer-ref $ %none
+                                  let
+                                      state $ assert-type (deref state-ref) WsClientState
+                                      current-now $ unsafe-coerce (js/Date.now) 'Number
+                                    when
+                                      and (generation-current? state generation)
+                                        = (%:: WsConnectionPhase :open) (:phase state)
+                                      match @lease-ref
+                                        (:some current-lease)
+                                          let
+                                              current-lease $ assert-type current-lease 'cumulo-util.realtime/HeartbeatLease
+                                            when (current-lease .expired? current-now)
+                                              match (:socket state)
+                                                (:some socket) (.!close socket)
+                                                (:none) &unit
+                                        (:none) &unit
+                              (:none) &unit
+                            , &unit
                       reset! lease-ref $ %some lease
                       reset! timer-ref $ %some timer
                       , &unit
@@ -495,7 +497,7 @@
                           retry-state .next $ unsafe-coerce (js/Math.random) 'Number
                           , 'cumulo-util.realtime/RetryStep
                         delay-ms $ :delay-ms step
-                        timer $ flipped js/setTimeout delay-ms
+                        timer $ flipped set-timeout! delay-ms
                           fn ()
                             reset! timer-ref $ %none
                             let
@@ -503,6 +505,7 @@
                               when
                                 = (%:: WsConnectionPhase :backoff) (:phase state)
                                 connect-client! client
+                            , &unit
                       reset! retry-ref $ :next step
                       let
                           state $ assert-type (deref state-ref) WsClientState
@@ -546,9 +549,10 @@
               let
                   client $ create-client-with! ws-url options
                     fn (url) (new js/WebSocket url)
-                install-browser-lifecycle! $ assert-type client 'WsClient0
+                install-browser-lifecycle! $ assert-type client WsClient0
+                assert-type client WsClient
                 reset! *global-client $ %some client
-                assert-type client 'WsClient
+                , client
           :examples $ []
             quote $ ws-connect! |ws://localhost:8080
               {}
@@ -612,6 +616,7 @@
             [] ws-edn.util :refer $ [] when-let parse-data stringify-data
             cumulo-util.activity :refer $ watch-browser-lifecycle!
             cumulo-util.realtime :refer $ retry-backoff heartbeat-lease
+            js-ffi.browser :refer $ set-timeout!
     'ws-edn.schema $ %{} 'FileEntry
       :defs $ {}
         'Track $ %{} 'CodeEntry (:doc |)
