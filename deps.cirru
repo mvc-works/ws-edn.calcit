@@ -1,5 +1,5 @@
 
-{} (:calcit-version |0.13.77)
+{} (:calcit-version |0.14.4)
   :version |0.0.26
-  :dependencies $ {} (|Cumulo/cumulo-util.calcit |0.0.18)
-    |calcit-lang/js-ffi |0.1.12
+  :dependencies $ {} (|Cumulo/cumulo-util.calcit |0.0.19)
+    |calcit-lang/js-ffi |0.1.16
