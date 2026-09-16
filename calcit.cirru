@@ -980,7 +980,8 @@
                 connections $ assert-type @*global-connections $ :: 'Map 'String 'ws-edn.server/NodeWebSocketHost
               &doseq
                 sid $ &map:keys connections
-                match (get connections sid)
+                match
+                  get connections $ assert-type sid 'String
                   (:some socket) (handler sid socket)
                   (:none) &unit
               , &unit
