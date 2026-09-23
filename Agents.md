@@ -47,7 +47,7 @@ calcit --version
 caps outdated --yes
 caps
 corepack enable
-corepack prepare yarn@4.12.0 --activate
+corepack prepare yarn@4.18.0 --activate
 yarn install --immutable
 ```
 
@@ -93,7 +93,7 @@ nodeLinker: node-modules
 - Ensure `.gitignore` contains:
 
 ```gitignore
-.yarn/*.gz
+.yarn/
 ```
 
 ## Common Pitfalls
