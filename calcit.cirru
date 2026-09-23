@@ -28,8 +28,7 @@
                 println "|connected try send" $ ws-connected?
                 ws-send! $ {} $ :data "|just message"
                 ws-send! $ : message |in |string
-                ws-send! $ %{} Track (:message "|from client")
-                  :time $ current-iso-time!
+                ws-send! $ Track :message "|from client" :time $ current-iso-time!
               , 2000
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Dynamic)
@@ -65,8 +64,7 @@
               fn () (println |heartbeat)
                 wss-each! $ fn (sid socket) (js/console.log sid)
                   wss-send! sid $ : message "|event 2s"
-                  wss-send! sid $ %{} Track (:message "|from server")
-                    :time $ current-iso-time!
+                  wss-send! sid $ Track :message "|from server" :time $ current-iso-time!
               , 2000
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Dynamic)
@@ -92,7 +90,7 @@
           :doc "|Global atom that stores the WebSocket instance. Used internally to track the current connection."
           :code $ quote $ defatom *global-client (%none)
           :examples $ []
-          :schema $ :: 'Ref $ :: 'Option 'ws-edn.client/WsClient
+          :schema $ :: 'Ref $ :: 'calcit.core/Option 'ws-edn.client/WsClient
         'BrowserMessageEventHost $ %{} 'CodeEntry
           :doc "|Typed message-event payload exposed by browser WebSocket callbacks."
           :code $ quote $ deftrait BrowserMessageEventHost (:data 'String)
@@ -229,12 +227,12 @@
               match (:socket state)
                 (:some socket)
                   do
-                    reset! state-ref $ assoc state :phase $ %:: WsConnectionPhase :closing
+                    reset! state-ref $ assoc state :phase $ WsConnectionPhase :closing
                     .!close socket
                     , &unit
                 (:none)
                   do
-                    reset! state-ref $ assoc state :phase $ %:: WsConnectionPhase :closed
+                    reset! state-ref $ assoc state :phase $ WsConnectionPhase :closed
                     , &unit
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Unit)
@@ -246,7 +244,7 @@
             let
                 state $ deref $ :state client
               assert-type state WsClientState
-              = (%:: WsConnectionPhase :open) (:phase state)
+              = (WsConnectionPhase :open) (:phase state)
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Bool)
             :args $ [] 'WsClient0
@@ -261,7 +259,7 @@
           :schema $ :: 'Fn $ {}
             :args $ [] 'Dynamic 'Tag
             :features $ #{} :js-ffi
-            :return $ :: 'Option 'DynFn
+            :return $ :: 'calcit.core/Option 'DynFn
         'client-option-number $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn client-option-number (options key)
             let
@@ -271,7 +269,7 @@
           :schema $ :: 'Fn $ {}
             :args $ [] 'Dynamic 'Tag
             :features $ #{} :js-ffi
-            :return $ :: 'Option 'Number
+            :return $ :: 'calcit.core/Option 'Number
         'client-reconnect! $ %{} 'CodeEntry
           :doc "|Method implementation for replacing the active generation."
           :code $ quote $ defn client-reconnect! (client) (cancel-client-reconnect! client) (connect-client! client)
@@ -287,8 +285,8 @@
               assert-type state WsClientState
               if
                 or
-                  = (%:: WsConnectionPhase :closed) (:phase state)
-                  = (%:: WsConnectionPhase :backoff) (:phase state)
+                  = (WsConnectionPhase :closed) (:phase state)
+                  = (WsConnectionPhase :backoff) (:phase state)
                 do (cancel-client-reconnect! client) (connect-client! client) &unit
                 , &unit
           :examples $ []
@@ -301,15 +299,15 @@
                 state $ deref $ :state client
               assert-type state WsClientState
               if
-                = (%:: WsConnectionPhase :open) (:phase state)
+                = (WsConnectionPhase :open) (:phase state)
                 match (:socket state)
                   (:some socket)
                     do
                       .!send socket $ format-cirru-edn data
-                      %:: WsSendOutcome :sent
+                      WsSendOutcome :sent
                   (:none)
-                    %:: WsSendOutcome :not-open $ :phase state
-                %:: WsSendOutcome :not-open $ :phase state
+                    WsSendOutcome :not-open $ :phase state
+                WsSendOutcome :not-open $ :phase state
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'WsSendOutcome)
             :args $ [] 'WsClient0 'D
@@ -324,7 +322,7 @@
               assert-type previous WsClientState
               let
                   generation $ inc $ :generation previous
-                  connecting-state $ WsClientState :generation generation :phase (%:: WsConnectionPhase :connecting) :socket $ %none
+                  connecting-state $ WsClientState :generation generation :phase (WsConnectionPhase :connecting) :socket $ %none
                 reset! state-ref connecting-state
                 match (:socket previous)
                   (:some socket)
@@ -334,7 +332,7 @@
                     socket $
                       :socket-factory client
                       :url client
-                  reset! state-ref $ WsClientState :generation generation :phase (%:: WsConnectionPhase :connecting) :socket $ %some socket
+                  reset! state-ref $ WsClientState :generation generation :phase (WsConnectionPhase :connecting) :socket $ %some socket
                   set! (.-onopen socket)
                     fn (event)
                       when (generation-current? @state-ref generation) (cancel-client-reconnect! client)
@@ -343,7 +341,7 @@
                               deref $ :retry-state client
                               , 'cumulo-util.realtime/RetryBackoff
                           reset! (:retry-state client) (retry-state .reset)
-                        reset! state-ref $ assoc @state-ref :phase $ %:: WsConnectionPhase :open
+                        reset! state-ref $ assoc @state-ref :phase $ WsConnectionPhase :open
                         renew-client-heartbeat! client generation
                         match
                           client-option-callback (:options client) :on-open
@@ -377,8 +375,8 @@
                       when (generation-current? @state-ref generation) (cancel-client-heartbeat! client)
                         let
                             current-state $ assert-type (deref state-ref) WsClientState
-                            explicit-close? $ = (%:: WsConnectionPhase :closing) (:phase current-state)
-                          reset! state-ref $ WsClientState :generation generation :phase (%:: WsConnectionPhase :closed) :socket $ %none
+                            explicit-close? $ = (WsConnectionPhase :closing) (:phase current-state)
+                          reset! state-ref $ WsClientState :generation generation :phase (WsConnectionPhase :closed) :socket $ %none
                           match
                             client-option-callback (:options client) :on-close
                             (:some callback)
@@ -499,7 +497,7 @@
                                   current-now $ unsafe-coerce (js/Date.now) 'Number
                                 when
                                   and (generation-current? state generation)
-                                    = (%:: WsConnectionPhase :open) (:phase state)
+                                    = (WsConnectionPhase :open) (:phase state)
                                   match @lease-ref
                                     (:some current-lease)
                                       let
@@ -539,13 +537,13 @@
                         let
                             state $ assert-type (deref state-ref) WsClientState
                           when
-                            = (%:: WsConnectionPhase :backoff) (:phase state)
+                            = (WsConnectionPhase :backoff) (:phase state)
                             connect-client! client
                         , &unit
                     reset! retry-ref $ :next step
                     let
                         state $ assert-type (deref state-ref) WsClientState
-                      reset! state-ref $ assoc state :phase $ %:: WsConnectionPhase :backoff
+                      reset! state-ref $ assoc state :phase $ WsConnectionPhase :backoff
                     reset! timer-ref $ %some timer
                     , &unit
           :examples $ []
@@ -561,7 +559,7 @@
           :examples $ []
           :schema $ :: 'Fn $ {}
             :args $ [] 'WsClientState 'Number 'WsConnectionPhase
-            :return $ :: 'Option 'WsClientState
+            :return $ :: 'calcit.core/Option 'WsClientState
           :tests $ [] $ %{} 'TestEntry (:name |ignores-stale-transition)
             :code $ quote $ let
                 state $ WsClientState :generation 2 :phase (%:: WsConnectionPhase :connecting) :socket $ %none
@@ -610,14 +608,13 @@
         'ws-send! $ %{} 'CodeEntry
           :doc "|Sends data through the WebSocket connection. Data will be formatted as Cirru EDN before sending."
           :code $ quote $ defn ws-send! (data)
-            do
-              match @*global-client
-                (:some client)
-                  match (client .send data)
-                    (:sent) &unit
-                    (:not-open phase) (js/console.warn |WebSocket-not-open phase)
-                (:none) (js/console.warn |Missing-WebSocket-client)
-              , &unit
+            match @*global-client
+              (:some client)
+                match (client .send data)
+                  (:sent) &unit
+                  (:not-open phase) (js/console.warn |WebSocket-not-open phase)
+              (:none) (js/console.warn |Missing-WebSocket-client)
+            , &unit
           :examples $ [] $ quote
             ws-send! $ {} (:type |ping)
               :timestamp $ unix-time!
@@ -627,14 +624,13 @@
         'ws-set-on-data! $ %{} 'CodeEntry
           :doc "|Sets the message handler for incoming WebSocket data. Handler receives parsed Cirru EDN data."
           :code $ quote $ defn ws-set-on-data! (on-data)
-            do
-              match @*global-client
-                (:some client)
-                  do (assert-type client WsClient0)
-                    reset! (:on-data client)
-                      %some $ unsafe-coerce on-data 'DynFn
-                (:none) (js/console.warn |Missing-WebSocket-client)
-              , &unit
+            match @*global-client
+              (:some client)
+                do (assert-type client WsClient0)
+                  reset! (:on-data client)
+                    %some $ unsafe-coerce on-data 'DynFn
+              (:none) (js/console.warn |Missing-WebSocket-client)
+            , &unit
           :examples $ [] $ quote
             ws-set-on-data! $ fn (data) (println "|New message:" data)
           :schema $ :: 'Fn $ {} (:return 'Unit)
@@ -683,7 +679,7 @@
           :doc "|Global atom that stores the data listener callback function. Used internally for message handling."
           :code $ quote $ defatom *proxied-data-listener (%none)
           :examples $ []
-          :schema $ :: 'Ref $ :: 'Option
+          :schema $ :: 'Ref $ :: 'calcit.core/Option
             :: 'Fn $ {} (:return 'Unit)
               :args $ [] 'String 'Dynamic
         'NodeDataHost $ %{} 'CodeEntry
@@ -853,7 +849,7 @@
           :schema $ :: 'Fn $ {}
             :args $ [] 'Dynamic 'Tag
             :features $ #{} :js-ffi
-            :return $ :: 'Option 'DynFn
+            :return $ :: 'calcit.core/Option 'DynFn
         'server-option-string $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn server-option-string (options key)
             let
@@ -863,7 +859,7 @@
           :schema $ :: 'Fn $ {}
             :args $ [] 'Dynamic 'Tag
             :features $ #{} :js-ffi
-            :return $ :: 'Option 'String
+            :return $ :: 'calcit.core/Option 'String
         'write-health-response! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn write-health-response! (raw-response)
             let
@@ -896,7 +892,7 @@
         'wss-send! $ %{} 'CodeEntry
           :doc "|Sends data to a specific WebSocket connection identified by session-id. Data will be formatted as Cirru EDN before sending."
           :code $ quote $ defn wss-send! (sid data)
-            do $ let
+            let
                 socket $ get @*global-connections sid
               match socket
                 (:some socket)
