@@ -833,7 +833,7 @@
           :code $ quote $ defn node-data-string (raw-data)
             let
                 data $ unsafe-coerce raw-data 'NodeDataHost
-              unsafe-coerce (.!to-string data) 'String
+              unsafe-coerce (.!toString data) 'String
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'String)
             :args $ [] 'Dynamic
@@ -999,7 +999,7 @@
           :code $ quote $ defn current-iso-time! ()
             let
                 date $ unsafe-coerce (new js/Date) 'DateHost
-              unsafe-coerce (.!to-iso-string date) 'String
+              unsafe-coerce (.!toISOString date) 'String
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'String)
             :args $ []
