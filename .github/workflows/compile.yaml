@@ -55,5 +55,6 @@ jobs:
         run: |
           yarn compile-page
           yarn compile-server
+          node --test scripts/node-host-methods.test.mjs
           yarn check:client-generation
           yarn vite build --base=./
