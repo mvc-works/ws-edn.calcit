@@ -99,7 +99,7 @@
           :schema $ :: 'Trait
         'BrowserWebSocketHost $ %{} 'CodeEntry
           :doc "|Typed browser WebSocket surface used by the client lifecycle adapter."
-          :code $ quote $ deftrait BrowserWebSocketHost (:onopen 'DynFn) (:onmessage 'DynFn) (:onclose 'DynFn) (:onerror 'DynFn)
+          :code $ quote $ deftrait BrowserWebSocketHost (:onopen 'Fn) (:onmessage 'Fn) (:onclose 'Fn) (:onerror 'Fn)
             .send $ :: 'Fn $ {}
               :args $ [] 'BrowserWebSocketHost 'String
               :return 'Unit
@@ -121,10 +121,10 @@
             :state $ :: 'Ref 'WsClientState
             :url 'String
             :options 'Dynamic
-            :on-data $ :: 'Ref $ :: 'Option 'DynFn
+            :on-data $ :: 'Ref $ :: 'Option 'Fn
             :socket-factory $ :: 'Fn $ {}
               :args $ [] 'String
-              :return 'BrowserWebSocketHost
+              :return 'ws-edn.client/BrowserWebSocketHost
               :features $ #{} :js-ffi
             :lifecycle-cleanup $ :: 'Ref $ :: 'Option 'Fn
             :retry-state $ :: 'Ref 'cumulo-util.realtime/RetryBackoff
@@ -253,13 +253,13 @@
             let
                 value $ &map:get options key
               if (fn? value)
-                %some $ unsafe-coerce value 'DynFn
+                %some $ unsafe-coerce value 'Fn
                 %none
           :examples $ []
           :schema $ :: 'Fn $ {}
             :args $ [] 'Dynamic 'Tag
             :features $ #{} :js-ffi
-            :return $ :: 'calcit.core/Option 'DynFn
+            :return $ :: 'Option 'Fn
         'client-option-number $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn client-option-number (options key)
             let
@@ -313,6 +313,27 @@
             :args $ [] 'WsClient0 'D
             :features $ #{} :js-ffi
             :generics $ [] 'D
+        'client-state-handle $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn client-state-handle (value)
+            if
+              and (struct? value) (&struct:matches? value WsClient0)
+              assert-type value 'WsClient0
+              raise "|[ws-edn] expected a WsClient state handle"
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'WsClient0)
+            :args $ [] 'ClientInput
+            :generics $ [] 'ClientInput
+          :tests $ [] $ %{} 'TestEntry (:name |rejects-invalid-handles)
+            :code $ quote $ each
+              [] nil 0 false ({}) ([])
+                WsClientState :generation 0 :phase (WsConnectionPhase :closed) :socket $ %none
+              fn (value)
+                let
+                    rejected? $ atom false
+                  try (client-state-handle value)
+                    fn (error) (assert= "|[ws-edn] expected a WsClient state handle" error) (reset! rejected? true)
+                  assert |invalid-handle-rejected $ deref rejected?
+            :tags $ #{} :regression :unit
         'connect-client! $ %{} 'CodeEntry
           :doc "|Starts a new generation and installs stale-event-safe host callbacks."
           :code $ quote $ defn connect-client! (client) (cancel-client-heartbeat! client)
@@ -413,8 +434,8 @@
           :code $ quote $ defn create-client-with! (url options socket-factory)
             let
                 state-ref $ atom $ WsClientState :generation 0 :phase (%:: WsConnectionPhase :closed) :socket (%none)
-                on-data-ref $ atom $ %none
-                lifecycle-cleanup-ref $ atom $ %none
+                on-data-ref $ atom $ assert-type (%none) (:: 'Option 'Fn)
+                lifecycle-cleanup-ref $ atom $ assert-type (%none) (:: 'Option 'Fn)
                 retry-base-ms $ match (client-option-number options :retry-base-ms)
                   (:some value) value
                   (:none) 500
@@ -425,10 +446,10 @@
                   (:some value) value
                   (:none) 0.2
                 retry-state-ref $ atom $ retry-backoff retry-base-ms retry-max-ms retry-jitter
-                reconnect-timer-ref $ atom $ %none
+                reconnect-timer-ref $ atom $ assert-type (%none) (:: 'Option 'Number)
                 heartbeat-timeout-ms $ client-option-number options :heartbeat-timeout-ms
-                heartbeat-lease-ref $ atom $ %none
-                heartbeat-timer-ref $ atom $ %none
+                heartbeat-lease-ref $ atom $ assert-type (%none) (:: 'Option 'cumulo-util.realtime/HeartbeatLease)
+                heartbeat-timer-ref $ atom $ assert-type (%none) (:: 'Option 'Number)
                 client $ %{} WsClient (:state state-ref) (:url url) (:options options) (:on-data on-data-ref) (:socket-factory socket-factory) (:lifecycle-cleanup lifecycle-cleanup-ref) (:retry-state retry-state-ref) (:reconnect-timer reconnect-timer-ref) (:heartbeat-timeout-ms heartbeat-timeout-ms) (:heartbeat-lease heartbeat-lease-ref) (:heartbeat-timer heartbeat-timer-ref)
               match (client-option-callback options :on-data)
                 (:some callback)
@@ -458,21 +479,25 @@
             :tags $ #{} :unit
         'install-browser-lifecycle! $ %{} 'CodeEntry
           :doc "|Installs visibility and online recovery signals for a browser client."
-          :code $ quote $ defn install-browser-lifecycle! (client) (cleanup-client-lifecycle! client)
+          :code $ quote $ defn install-browser-lifecycle! (input)
             let
-                cleanup $ watch-browser-lifecycle!
-                  fn (signal)
-                    when
-                      or (= signal :visible) (= signal :online)
-                      client-recover! client
-                    , &unit
-                  %none
-              reset! (:lifecycle-cleanup client) (%some cleanup)
-              , &unit
+                client $ client-state-handle input
+              cleanup-client-lifecycle! client
+              let
+                  cleanup $ watch-browser-lifecycle!
+                    fn (signal)
+                      when
+                        or (= signal :visible) (= signal :online)
+                        client-recover! client
+                      , &unit
+                    %none
+                reset! (:lifecycle-cleanup client) (%some cleanup)
+                , &unit
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Unit)
-            :args $ [] 'WsClient0
+            :args $ [] 'ClientInput
             :features $ #{} :js-ffi
+            :generics $ [] 'ClientInput
         'renew-client-heartbeat! $ %{} 'CodeEntry
           :doc "|Renews an enabled heartbeat lease and closes the current generation after its deadline."
           :code $ quote $ defn renew-client-heartbeat! (client generation)
@@ -584,7 +609,7 @@
             let
                 client $ create-client-with! ws-url options $ fn (url)
                   unsafe-coerce (new js/WebSocket url) 'BrowserWebSocketHost
-              install-browser-lifecycle! $ assert-type client WsClient0
+              install-browser-lifecycle! client
               assert-type client WsClient
               reset! *global-client $ %some client
               , client
@@ -626,9 +651,10 @@
           :code $ quote $ defn ws-set-on-data! (on-data)
             match @*global-client
               (:some client)
-                do (assert-type client WsClient0)
-                  reset! (:on-data client)
-                    %some $ unsafe-coerce on-data 'DynFn
+                let
+                    state-handle $ client-state-handle client
+                  reset! (:on-data state-handle)
+                    %some $ unsafe-coerce on-data 'Fn
               (:none) (js/console.warn |Missing-WebSocket-client)
             , &unit
           :examples $ [] $ quote
