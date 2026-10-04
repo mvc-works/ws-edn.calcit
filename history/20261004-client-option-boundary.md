@@ -27,3 +27,16 @@
 验证链接固定到发布缓存：JS-FFI alpha.11 (`799e707`，要求 Calcit 0.28 alpha.3) 和 cumulo-util 0.0.23 (`bf21934`)；正式 Calcit 0.28 满足此工具链下限。未使用刚同步到 alpha.2 的 JS-FFI main，也未改写共享缓存。测试输出、生成 JS 和临时 JSON 都没有入库。
 
 这些源码回归没有替代 Caps 严格依赖解析、TLS 或真实浏览器页面验证。下游消费的发布版本还需要合并、发布并更新清单；不据本地成功关闭 milestone。
+
+## 严格依赖解析修复与发布准备
+
+cumulo-util `0.0.24` 已发布，依赖清单改用该版本，与直接依赖的
+JS-FFI `0.2.1-alpha.11` 一致。通过实际 `caps --strict --ci` 下载和
+`caps verify --toolchain` 校验，不再使用原先的本地依赖链接。
+
+使用正式 Calcit / procs `0.28.0`、Node 24，重新执行现有 CI 的全部源码门禁、
+12 项原生测试、README 示例、两入口生成、Node host 测试、真实 WebSocket 往返、
+客户端 generation/singleton 回归与 Vite 构建，均通过。原质量预算保持不变。
+
+模块与 package 版本准备为 `0.0.33`，用于替代仍含旧客户端类型错误的已发布
+`0.0.32`。当前没有创建 `0.0.33` 标签，下游应在发布后再更新版本。
