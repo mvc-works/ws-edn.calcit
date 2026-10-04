@@ -152,12 +152,20 @@ Calcit CLI 与 `@calcit/procs` 对齐到 0.28.0，JS-FFI 声明升级到
 开放 callable。这个事件接口允许不同 arity 的函数，不承诺每个事件的 payload 已验证。
 可选 callback 仍在运行时用 `fn?` 检查，Number、Tag 和缺失值都不会被注册。
 
-正式 0.28 与候选编译器均通过服务端 main!/reload! 严格检查及 7 个附带测试；
-临时编译负例证实 `.on` 接受函数并拒绝 Number。重新生成的正式服务端 JS 通过
-两项 Node Buffer/Date 回归。客户端生成仍有 `reset! Option<Fn>` 合同诊断，
-尚未完成新产物的 generation/lifecycle 回归，不能据旧生成文件的测试认定完成。
-当前验证的 JS-FFI 链接指向本地 main，含已合并但未发 tag 的改动；完整发布依赖
-解析、客户端、浏览器与真实 WebSocket 验收仍待完成。
+旧 `%some/%none` 构造曾在 `reset! Option<Fn>` 写入处触发两条合同告警。
+迁移为具名 Option 构造后，正式 0.28 的客户端新生成 JS 已通过
+generation/lifecycle 回归，覆盖旧 generation 回调隔离、重试、heartbeat、
+cleanup 与 singleton Ref。已有 `fn?` 证明及 Fn 参数合同消除了两处强制转换；
+callback 保留开放 arity，没有缩窄为单一回调签名。
+
+当前正式工具链通过 12 项附属测试、两个入口严格检查、客户端/共享公开定义
+34/34、服务端/共享公开定义 23/23，以及两项 Node Buffer/Date 回归。
+随机本地端口的真实双客户端网络回归确认 EDN 往返、不同 String session ID 和连接清理。
+服务端调用 nanoid 后校验 String，不再把函数对象当作 session ID；四处缺省 callback
+返回具名 None，避免事件处理把函数值当作 Enum。
+质量基线通过，unsafeCoerce 从 30 降至 27，废弃调用为 0，预算未放宽。
+本地链接现已固定到发布的 JS-FFI alpha.11 与 cumulo-util 0.0.23，未修改缓存。
+完整 Caps 严格依赖解析仍应以远端 CI 为准；本地网络回归不覆盖 TLS 或真实浏览器页面。
 
 Legacy class mapper (for compatibility with older payloads):
 

@@ -12,7 +12,8 @@
     "watch-page": "calcit --emit-path out-page/ js -w",
     "check:unit": "calcit test --tag unit --require-match --summary-only --format json",
     "check:deprecated": "calcit analyze deprecated --summary-only --format json",
-    "check:client-generation": "node scripts/check-client-generation.mjs"
+    "check:client-generation": "node scripts/check-client-generation.mjs",
+    "check:network": "node --test scripts/client-server-roundtrip.test.mjs"
   },
   "devDependencies": {
     "vite": "^8.0.2",

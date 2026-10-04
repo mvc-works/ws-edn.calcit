@@ -41,6 +41,10 @@ jobs:
           git diff --exit-code -- calcit.cirru
           calcit calcit.cirru --check-only
           calcit calcit.cirru --entry server --check-only
+          calcit calcit.cirru analyze check-public --ns ws-edn.client --ns ws-edn.schema --summary-only --format json \
+            | jq -e '.data.summary.complete and .data.summary.passed and (.data.summary.definitions_checked == .data.summary.definitions_selected)'
+          calcit calcit.cirru --entry server analyze check-public --ns ws-edn.server --ns ws-edn.schema --summary-only --format json \
+            | jq -e '.data.summary.complete and .data.summary.passed and (.data.summary.definitions_checked == .data.summary.definitions_selected)'
           calcit calcit.cirru analyze dynamic-methods --format json | jq -e '.data.summary.findings == 0'
           calcit calcit.cirru --entry server analyze dynamic-methods --format json | jq -e '.data.summary.findings == 0'
           calcit calcit.cirru analyze quality --baseline config/calcit-quality.cirru
@@ -56,5 +60,6 @@ jobs:
           yarn compile-page
           yarn compile-server
           node --test scripts/node-host-methods.test.mjs
+          node --test scripts/client-server-roundtrip.test.mjs
           yarn check:client-generation
           yarn vite build --base=./
