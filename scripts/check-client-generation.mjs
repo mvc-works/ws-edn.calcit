@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { CalcitMap, init_tags, invoke_method } from "@calcit/procs";
 import {
+  client_state_handle,
   create_client_with_$x_,
   install_browser_lifecycle_$x_,
   ws_connect_$x_,
@@ -73,6 +74,14 @@ const client = create_client_with_$x_("ws://example.test", options, (url) => {
   return socket;
 });
 const connected = () => invoke_method("connected?", client);
+
+assert.strictEqual(client_state_handle(client), client);
+for (const invalid of [null, 0, false, new CalcitMap()]) {
+  assert.throws(() => install_browser_lifecycle_$x_(invalid),
+    /\[ws-edn\] expected a WsClient state handle/);
+}
+assert.equal(listeners.size, 0);
+assert.equal(intervals.size, 0);
 
 assert.equal(sockets.length, 1);
 assert.equal(connected(), false);

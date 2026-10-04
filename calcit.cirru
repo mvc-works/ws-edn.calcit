@@ -3,11 +3,11 @@
   :about "|Machine-generated snapshot. Do not edit directly — changes will be overwritten. Use `calcit query` to inspect and `calcit edit`/`calcit tree` to modify. Run `calcit docs agents --contract` before mutations; use `--full` for first orientation or changed contract digest. Manual edits must follow format and schema conventions, then run `calcit edit format`."
   :package |ws-edn
   :entries $ {}
-    :default $ {} (:description |) (:init-fn 'ws-edn.app.page/main!) (:mode :native) (:reload-fn 'ws-edn.app.page/reload!)
+    :default $ {} (:description |) (:init-fn 'ws-edn.app.page/main!) (:mode :native) (:reload-fn 'ws-edn.app.page/reload!) (:target :browser)
       :feature-policy $ {}
       :modules $ [] |cumulo-util.calcit/ |js-ffi/
       :type-slots $ {}
-    :server $ {} (:description |) (:init-fn 'ws-edn.app.server/main!) (:mode :native) (:reload-fn 'ws-edn.app.server/reload!)
+    :server $ {} (:description |) (:init-fn 'ws-edn.app.server/main!) (:mode :native) (:reload-fn 'ws-edn.app.server/reload!) (:target :node)
       :feature-policy $ {}
       :modules $ []
       :type-slots $ {}
@@ -88,7 +88,7 @@
       :defs $ {}
         '*global-client $ %{} 'CodeEntry
           :doc "|Global atom that stores the WebSocket instance. Used internally to track the current connection."
-          :code $ quote $ defatom *global-client (%none)
+          :code $ quote $ defatom *global-client (Option :none)
           :examples $ []
           :schema $ :: 'Ref $ :: 'calcit.core/Option 'ws-edn.client/WsClient
         'BrowserMessageEventHost $ %{} 'CodeEntry
@@ -99,7 +99,7 @@
           :schema $ :: 'Trait
         'BrowserWebSocketHost $ %{} 'CodeEntry
           :doc "|Typed browser WebSocket surface used by the client lifecycle adapter."
-          :code $ quote $ deftrait BrowserWebSocketHost (:onopen 'DynFn) (:onmessage 'DynFn) (:onclose 'DynFn) (:onerror 'DynFn)
+          :code $ quote $ deftrait BrowserWebSocketHost (:onopen 'Fn) (:onmessage 'Fn) (:onclose 'Fn) (:onerror 'Fn)
             .send $ :: 'Fn $ {}
               :args $ [] 'BrowserWebSocketHost 'String
               :return 'Unit
@@ -121,10 +121,10 @@
             :state $ :: 'Ref 'WsClientState
             :url 'String
             :options 'Dynamic
-            :on-data $ :: 'Ref $ :: 'Option 'DynFn
+            :on-data $ :: 'Ref $ :: 'Option 'Fn
             :socket-factory $ :: 'Fn $ {}
               :args $ [] 'String
-              :return 'BrowserWebSocketHost
+              :return 'ws-edn.client/BrowserWebSocketHost
               :features $ #{} :js-ffi
             :lifecycle-cleanup $ :: 'Ref $ :: 'Option 'Fn
             :retry-state $ :: 'Ref 'cumulo-util.realtime/RetryBackoff
@@ -181,8 +181,8 @@
               match @timer-ref
                 (:some timer) (js/clearTimeout timer)
                 (:none) &unit
-              reset! timer-ref $ %none
-              reset! (:heartbeat-lease client) (%none)
+              reset! timer-ref $ Option :none
+              reset! (:heartbeat-lease client) (Option :none)
               , &unit
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Unit)
@@ -196,7 +196,7 @@
               match @timer-ref
                 (:some timer)
                   do (js/clearTimeout timer)
-                    reset! timer-ref $ %none
+                    reset! timer-ref $ Option :none
                     , &unit
                 (:none) &unit
           :examples $ []
@@ -211,7 +211,7 @@
               match @cleanup-ref
                 (:some cleanup)
                   do (cleanup)
-                    reset! cleanup-ref $ %none
+                    reset! cleanup-ref $ Option :none
                     , &unit
                 (:none) &unit
           :examples $ []
@@ -252,19 +252,50 @@
           :code $ quote $ defn client-option-callback (options key)
             let
                 value $ &map:get options key
-              if (fn? value)
-                %some $ unsafe-coerce value 'DynFn
-                %none
+              if (fn? value) (Option :some value) (Option :none)
           :examples $ []
           :schema $ :: 'Fn $ {}
             :args $ [] 'Dynamic 'Tag
             :features $ #{} :js-ffi
-            :return $ :: 'calcit.core/Option 'DynFn
+            :return $ :: 'Option 'Fn
+          :tests $ []
+            %{} 'TestEntry (:name |rejects-missing-callback)
+              :code $ quote $ assert= (Option :none)
+                client-option-callback ({}) :on-data
+              :tags $ #{} :unit
+            %{} 'TestEntry (:name |rejects-number-callback)
+              :code $ quote $ assert= (Option :none)
+                client-option-callback
+                  {} $ :on-data 42
+                  , :on-data
+              :tags $ #{} :unit
+            %{} 'TestEntry (:name |rejects-tag-callback)
+              :code $ quote $ assert= (Option :none)
+                client-option-callback
+                  {} $ :on-data :event
+                  , :on-data
+              :tags $ #{} :unit
+            %{} 'TestEntry (:name |preserves-zero-arity-callback)
+              :code $ quote $ let
+                  callback $ fn () &unit
+                assert= (Option :some callback)
+                  client-option-callback
+                    {} $ :on-data callback
+                    , :on-data
+              :tags $ #{} :unit
+            %{} 'TestEntry (:name |preserves-one-arity-callback)
+              :code $ quote $ let
+                  callback $ fn (data) &unit
+                assert= (Option :some callback)
+                  client-option-callback
+                    {} $ :on-data callback
+                    , :on-data
+              :tags $ #{} :unit
         'client-option-number $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn client-option-number (options key)
             let
                 value $ &map:get options key
-              if (number? value) (%some value) (%none)
+              if (number? value) (Option :some value) (Option :none)
           :examples $ []
           :schema $ :: 'Fn $ {}
             :args $ [] 'Dynamic 'Tag
@@ -313,6 +344,27 @@
             :args $ [] 'WsClient0 'D
             :features $ #{} :js-ffi
             :generics $ [] 'D
+        'client-state-handle $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn client-state-handle (value)
+            if
+              and (struct? value) (&struct:matches? value WsClient0)
+              assert-type value 'WsClient0
+              raise "|[ws-edn] expected a WsClient state handle"
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'WsClient0)
+            :args $ [] 'ClientInput
+            :generics $ [] 'ClientInput
+          :tests $ [] $ %{} 'TestEntry (:name |rejects-invalid-handles)
+            :code $ quote $ each
+              [] nil 0 false ({}) ([])
+                WsClientState :generation 0 :phase (WsConnectionPhase :closed) :socket $ Option :none
+              fn (value)
+                let
+                    rejected? $ atom false
+                  try (client-state-handle value)
+                    fn (error) (assert= "|[ws-edn] expected a WsClient state handle" error) (reset! rejected? true)
+                  assert |invalid-handle-rejected $ deref rejected?
+            :tags $ #{} :regression :unit
         'connect-client! $ %{} 'CodeEntry
           :doc "|Starts a new generation and installs stale-event-safe host callbacks."
           :code $ quote $ defn connect-client! (client) (cancel-client-heartbeat! client)
@@ -322,7 +374,7 @@
               assert-type previous WsClientState
               let
                   generation $ inc $ :generation previous
-                  connecting-state $ WsClientState :generation generation :phase (WsConnectionPhase :connecting) :socket $ %none
+                  connecting-state $ WsClientState :generation generation :phase (WsConnectionPhase :connecting) :socket $ Option :none
                 reset! state-ref connecting-state
                 match (:socket previous)
                   (:some socket)
@@ -332,7 +384,7 @@
                     socket $
                       :socket-factory client
                       :url client
-                  reset! state-ref $ WsClientState :generation generation :phase (WsConnectionPhase :connecting) :socket $ %some socket
+                  reset! state-ref $ WsClientState :generation generation :phase (WsConnectionPhase :connecting) :socket $ Option :some socket
                   set! (.-onopen socket)
                     fn (event)
                       when (generation-current? @state-ref generation) (cancel-client-reconnect! client)
@@ -376,7 +428,7 @@
                         let
                             current-state $ assert-type (deref state-ref) WsClientState
                             explicit-close? $ = (WsConnectionPhase :closing) (:phase current-state)
-                          reset! state-ref $ WsClientState :generation generation :phase (WsConnectionPhase :closed) :socket $ %none
+                          reset! state-ref $ WsClientState :generation generation :phase (WsConnectionPhase :closed) :socket $ Option :none
                           match
                             client-option-callback (:options client) :on-close
                             (:some callback)
@@ -412,9 +464,9 @@
           :doc "|Creates a client with an injected socket factory, primarily for tests and adapters."
           :code $ quote $ defn create-client-with! (url options socket-factory)
             let
-                state-ref $ atom $ WsClientState :generation 0 :phase (%:: WsConnectionPhase :closed) :socket (%none)
-                on-data-ref $ atom $ %none
-                lifecycle-cleanup-ref $ atom $ %none
+                state-ref $ atom $ WsClientState :generation 0 :phase (%:: WsConnectionPhase :closed) :socket (Option :none)
+                on-data-ref $ atom $ assert-type (Option :none) (:: 'Option 'Fn)
+                lifecycle-cleanup-ref $ atom $ assert-type (Option :none) (:: 'Option 'Fn)
                 retry-base-ms $ match (client-option-number options :retry-base-ms)
                   (:some value) value
                   (:none) 500
@@ -425,14 +477,14 @@
                   (:some value) value
                   (:none) 0.2
                 retry-state-ref $ atom $ retry-backoff retry-base-ms retry-max-ms retry-jitter
-                reconnect-timer-ref $ atom $ %none
+                reconnect-timer-ref $ atom $ assert-type (Option :none) (:: 'Option 'Number)
                 heartbeat-timeout-ms $ client-option-number options :heartbeat-timeout-ms
-                heartbeat-lease-ref $ atom $ %none
-                heartbeat-timer-ref $ atom $ %none
+                heartbeat-lease-ref $ atom $ assert-type (Option :none) (:: 'Option 'cumulo-util.realtime/HeartbeatLease)
+                heartbeat-timer-ref $ atom $ assert-type (Option :none) (:: 'Option 'Number)
                 client $ %{} WsClient (:state state-ref) (:url url) (:options options) (:on-data on-data-ref) (:socket-factory socket-factory) (:lifecycle-cleanup lifecycle-cleanup-ref) (:retry-state retry-state-ref) (:reconnect-timer reconnect-timer-ref) (:heartbeat-timeout-ms heartbeat-timeout-ms) (:heartbeat-lease heartbeat-lease-ref) (:heartbeat-timer heartbeat-timer-ref)
               match (client-option-callback options :on-data)
                 (:some callback)
-                  reset! on-data-ref $ %some callback
+                  reset! on-data-ref $ Option :some callback
                 (:none) &unit
               assert-type client 'WsClient
               connect-client! client
@@ -452,27 +504,31 @@
             :args $ [] 'WsClientState 'Number
           :tests $ [] $ %{} 'TestEntry (:name |accepts-only-current-generation)
             :code $ quote $ let
-                state $ WsClientState :generation 2 :phase (%:: WsConnectionPhase :connecting) :socket $ %none
+                state $ WsClientState :generation 2 :phase (%:: WsConnectionPhase :connecting) :socket $ Option :none
               assert "|current generation should match" $ = true $ generation-current? state 2
               assert "|stale generation should not match" $ = false $ generation-current? state 1
             :tags $ #{} :unit
         'install-browser-lifecycle! $ %{} 'CodeEntry
           :doc "|Installs visibility and online recovery signals for a browser client."
-          :code $ quote $ defn install-browser-lifecycle! (client) (cleanup-client-lifecycle! client)
+          :code $ quote $ defn install-browser-lifecycle! (input)
             let
-                cleanup $ watch-browser-lifecycle!
-                  fn (signal)
-                    when
-                      or (= signal :visible) (= signal :online)
-                      client-recover! client
-                    , &unit
-                  %none
-              reset! (:lifecycle-cleanup client) (%some cleanup)
-              , &unit
+                client $ client-state-handle input
+              cleanup-client-lifecycle! client
+              let
+                  cleanup $ watch-browser-lifecycle!
+                    fn (signal)
+                      when
+                        or (= signal :visible) (= signal :online)
+                        client-recover! client
+                      , &unit
+                    Option :none
+                reset! (:lifecycle-cleanup client) (Option :some cleanup)
+                , &unit
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Unit)
-            :args $ [] 'WsClient0
+            :args $ [] 'ClientInput
             :features $ #{} :js-ffi
+            :generics $ [] 'ClientInput
         'renew-client-heartbeat! $ %{} 'CodeEntry
           :doc "|Renews an enabled heartbeat lease and closes the current generation after its deadline."
           :code $ quote $ defn renew-client-heartbeat! (client generation)
@@ -491,7 +547,7 @@
                           (:some active-timer)
                             when
                               = (assert-type active-timer 'Number) (assert-type timer 'Number)
-                              reset! timer-ref $ %none
+                              reset! timer-ref $ Option :none
                               let
                                   state $ assert-type (deref state-ref) WsClientState
                                   current-now $ unsafe-coerce (js/Date.now) 'Number
@@ -509,8 +565,8 @@
                                     (:none) &unit
                           (:none) &unit
                         , &unit
-                    reset! lease-ref $ %some lease
-                    reset! timer-ref $ %some timer
+                    reset! lease-ref $ Option :some lease
+                    reset! timer-ref $ Option :some timer
                     , &unit
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Unit)
@@ -533,7 +589,7 @@
                         , 'cumulo-util.realtime/RetryStep
                       delay-ms $ :delay-ms step
                       timer $ flipped set-timeout! delay-ms $ fn ()
-                        reset! timer-ref $ %none
+                        reset! timer-ref $ Option :none
                         let
                             state $ assert-type (deref state-ref) WsClientState
                           when
@@ -544,7 +600,7 @@
                     let
                         state $ assert-type (deref state-ref) WsClientState
                       reset! state-ref $ assoc state :phase $ WsConnectionPhase :backoff
-                    reset! timer-ref $ %some timer
+                    reset! timer-ref $ Option :some timer
                     , &unit
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Unit)
@@ -554,15 +610,15 @@
           :doc "|Applies a phase transition only for the active generation."
           :code $ quote $ defn transition-phase (state generation phase)
             if (generation-current? state generation)
-              %some $ assoc state :phase phase
-              %none
+              Option :some $ assoc state :phase phase
+              Option :none
           :examples $ []
           :schema $ :: 'Fn $ {}
             :args $ [] 'WsClientState 'Number 'WsConnectionPhase
             :return $ :: 'calcit.core/Option 'WsClientState
           :tests $ [] $ %{} 'TestEntry (:name |ignores-stale-transition)
             :code $ quote $ let
-                state $ WsClientState :generation 2 :phase (%:: WsConnectionPhase :connecting) :socket $ %none
+                state $ WsClientState :generation 2 :phase (%:: WsConnectionPhase :connecting) :socket $ Option :none
                 open-state $ assoc state :phase $ %:: WsConnectionPhase :open
               match
                 transition-phase state 2 $ %:: WsConnectionPhase :open
@@ -584,9 +640,9 @@
             let
                 client $ create-client-with! ws-url options $ fn (url)
                   unsafe-coerce (new js/WebSocket url) 'BrowserWebSocketHost
-              install-browser-lifecycle! $ assert-type client WsClient0
+              install-browser-lifecycle! client
               assert-type client WsClient
-              reset! *global-client $ %some client
+              reset! *global-client $ Option :some client
               , client
           :examples $ [] $ quote
             ws-connect! |ws://localhost:8080 $ {}
@@ -626,9 +682,9 @@
           :code $ quote $ defn ws-set-on-data! (on-data)
             match @*global-client
               (:some client)
-                do (assert-type client WsClient0)
-                  reset! (:on-data client)
-                    %some $ unsafe-coerce on-data 'DynFn
+                let
+                    state-handle $ client-state-handle client
+                  reset! (:on-data state-handle) (Option :some on-data)
               (:none) (js/console.warn |Missing-WebSocket-client)
             , &unit
           :examples $ [] $ quote
@@ -677,7 +733,7 @@
           :schema $ :: 'Ref $ :: 'Map 'String 'ws-edn.server/NodeWebSocketHost
         '*proxied-data-listener $ %{} 'CodeEntry
           :doc "|Global atom that stores the data listener callback function. Used internally for message handling."
-          :code $ quote $ defatom *proxied-data-listener (%none)
+          :code $ quote $ defatom *proxied-data-listener (Option :none)
           :examples $ []
           :schema $ :: 'Ref $ :: 'calcit.core/Option
             :: 'Fn $ {} (:return 'Unit)
@@ -716,13 +772,13 @@
           :doc "|Typed HTTPS server event and listen surface used by secure WebSocket setup."
           :code $ quote $ deftrait NodeHttpServerHost
             .add-listener $ :: 'Fn $ {}
-              :args $ [] 'NodeHttpServerHost 'String 'DynFn
+              :args $ [] 'NodeHttpServerHost 'String 'Fn
               :return 'NodeHttpServerHost
             .on $ :: 'Fn $ {}
-              :args $ [] 'NodeHttpServerHost 'String 'DynFn
+              :args $ [] 'NodeHttpServerHost 'String 'Fn
               :return 'NodeHttpServerHost
             .listen $ :: 'Fn $ {}
-              :args $ [] 'NodeHttpServerHost 'Number 'DynFn
+              :args $ [] 'NodeHttpServerHost 'Number 'Fn
               :return 'NodeHttpServerHost
           :examples $ []
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :node)
@@ -732,7 +788,7 @@
           :doc "|Typed Node ws connection surface used by server lifecycle adapters."
           :code $ quote $ deftrait NodeWebSocketHost
             .on $ :: 'Fn $ {}
-              :args $ [] 'NodeWebSocketHost 'String 'DynFn
+              :args $ [] 'NodeWebSocketHost 'String 'Fn
               :return 'NodeWebSocketHost
             .send $ :: 'Fn $ {}
               :args $ [] 'NodeWebSocketHost 'String
@@ -743,7 +799,7 @@
         'NodeWebSocketServerHost $ %{} 'CodeEntry (:doc "|Typed Node ws server event surface.")
           :code $ quote $ deftrait NodeWebSocketServerHost
             .on $ :: 'Fn $ {}
-              :args $ [] 'NodeWebSocketServerHost 'String 'DynFn
+              :args $ [] 'NodeWebSocketServerHost 'String 'Fn
               :return 'NodeWebSocketServerHost
           :examples $ []
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :node)
@@ -775,21 +831,29 @@
           :doc "|Registers and maintains a WebSocket connection. Sets up event handlers for message, close, and error events. Accepts options map with :on-open, :on-close, :on-data, :on-error, and :class-mapper callbacks."
           :code $ quote $ defn maintain-socket! (socket options)
             let
-                sid $ unsafe-coerce nanoid 'String
+                sid $ new-session-id!
                 on-close $ match (server-option-callback options :on-close)
                   (:some callback)
-                    %some $ unsafe-coerce callback $ :: 'Fn
+                    Option :some $ unsafe-coerce callback $ :: 'Fn
                       {}
                         :args $ [] 'String 'JsObject
                         :return 'Unit
-                  (:none) %none
+                  (:none)
+                    assert-type (Option :none)
+                      :: 'Option $ :: 'Fn $ {}
+                        :args $ [] 'String 'JsObject
+                        :return 'Unit
                 on-error $ match (server-option-callback options :on-error)
                   (:some callback)
-                    %some $ unsafe-coerce callback $ :: 'Fn
+                    Option :some $ unsafe-coerce callback $ :: 'Fn
                       {}
                         :args $ [] 'JsObject
                         :return 'Unit
-                  (:none) %none
+                  (:none)
+                    assert-type (Option :none)
+                      :: 'Option $ :: 'Fn $ {}
+                        :args $ [] 'JsObject
+                        :return 'Unit
               swap! *global-connections assoc sid socket
               match (server-option-callback options :on-open)
                 (:some callback)
@@ -802,12 +866,12 @@
                 (:none) &unit
               match (server-option-callback options :on-data)
                 (:some callback)
-                  reset! *proxied-data-listener $ %some $ unsafe-coerce callback
+                  reset! *proxied-data-listener $ Option :some $ unsafe-coerce callback
                     :: 'Fn $ {}
                       :args $ [] 'String 'Dynamic
                       :return 'Unit
                 (:none)
-                  reset! *proxied-data-listener $ %none
+                  reset! *proxied-data-listener $ Option :none
               .!on socket |message $ fn (raw-data binary?)
                 match @*proxied-data-listener
                   (:some callback)
@@ -829,6 +893,15 @@
           :schema $ :: 'Fn $ {} (:return 'Unit)
             :args $ [] 'ws-edn.server/NodeWebSocketHost 'Dynamic
             :features $ #{} :js-ffi
+        'new-session-id! $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn new-session-id! ()
+            let
+                value $ nanoid
+              if (string? value) value $ raise |Expected-String-session-id-from-nanoid
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'String)
+            :args $ []
+            :features $ #{} :js-ffi
         'node-data-string $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn node-data-string (raw-data)
             let
@@ -843,18 +916,37 @@
             let
                 value $ &map:get options key
               if (fn? value)
-                %some $ unsafe-coerce value 'DynFn
-                %none
+                Option :some $ unsafe-coerce value 'Fn
+                Option :none
           :examples $ []
           :schema $ :: 'Fn $ {}
             :args $ [] 'Dynamic 'Tag
             :features $ #{} :js-ffi
-            :return $ :: 'calcit.core/Option 'DynFn
+            :return $ :: 'calcit.core/Option 'Fn
+          :tests $ []
+            %{} 'TestEntry (:name |accepts-function-option)
+              :code $ quote $ let
+                  callback $ fn (value) value
+                  options $ {} $ :on-data callback
+                assert= true $ match (server-option-callback options :on-data)
+                  (:some found) (fn? found)
+                  (:none) false
+              :tags $ #{} :server :unit
+            %{} 'TestEntry (:name |rejects-non-function-options)
+              :code $ quote $ do
+                assert= true $ .none? $ server-option-callback
+                  {} $ :on-data 42
+                  , :on-data
+                assert= true $ .none? $ server-option-callback
+                  {} $ :on-data :callable-tag
+                  , :on-data
+                assert= true $ .none? $ server-option-callback ({}) :on-data
+              :tags $ #{} :server :unit
         'server-option-string $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn server-option-string (options key)
             let
                 value $ &map:get options key
-              if (string? value) (%some value) (%none)
+              if (string? value) (Option :some value) (Option :none)
           :examples $ []
           :schema $ :: 'Fn $ {}
             :args $ [] 'Dynamic 'Tag
@@ -912,18 +1004,26 @@
                 key-path $ server-option-string options :key
                 on-listening $ match (server-option-callback options :on-listening)
                   (:some callback)
-                    %some $ unsafe-coerce callback $ :: 'Fn
+                    Option :some $ unsafe-coerce callback $ :: 'Fn
                       {}
                         :args $ []
                         :return 'Unit
-                  (:none) %none
+                  (:none)
+                    assert-type (Option :none)
+                      :: 'Option $ :: 'Fn $ {}
+                        :args $ []
+                        :return 'Unit
                 on-error $ match (server-option-callback options :on-error)
                   (:some callback)
-                    %some $ unsafe-coerce callback $ :: 'Fn
+                    Option :some $ unsafe-coerce callback $ :: 'Fn
                       {}
                         :args $ [] 'JsObject
                         :return 'Unit
-                  (:none) %none
+                  (:none)
+                    assert-type (Option :none)
+                      :: 'Option $ :: 'Fn $ {}
+                        :args $ [] 'JsObject
+                        :return 'Unit
               assert "|SSL requires both :cert and :key options" $ = (option:some? cert-path) (option:some? key-path)
               let
                   wss $ match cert-path
@@ -967,7 +1067,7 @@
         'wss-set-on-data! $ %{} 'CodeEntry
           :doc "|Sets the message handler for incoming WebSocket data across all connections. Handler receives session-id and parsed Cirru EDN data."
           :code $ quote $ defn wss-set-on-data! (on-data)
-            reset! *proxied-data-listener $ %some on-data
+            reset! *proxied-data-listener $ Option :some on-data
           :examples $ [] $ quote
             wss-set-on-data! $ fn (sid data) (println "|New message from" sid : data)
           :schema $ :: 'Fn $ {} (:return 'Unit)
