@@ -742,13 +742,13 @@
           :doc "|Typed HTTPS server event and listen surface used by secure WebSocket setup."
           :code $ quote $ deftrait NodeHttpServerHost
             .add-listener $ :: 'Fn $ {}
-              :args $ [] 'NodeHttpServerHost 'String 'DynFn
+              :args $ [] 'NodeHttpServerHost 'String 'Fn
               :return 'NodeHttpServerHost
             .on $ :: 'Fn $ {}
-              :args $ [] 'NodeHttpServerHost 'String 'DynFn
+              :args $ [] 'NodeHttpServerHost 'String 'Fn
               :return 'NodeHttpServerHost
             .listen $ :: 'Fn $ {}
-              :args $ [] 'NodeHttpServerHost 'Number 'DynFn
+              :args $ [] 'NodeHttpServerHost 'Number 'Fn
               :return 'NodeHttpServerHost
           :examples $ []
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :node)
@@ -758,7 +758,7 @@
           :doc "|Typed Node ws connection surface used by server lifecycle adapters."
           :code $ quote $ deftrait NodeWebSocketHost
             .on $ :: 'Fn $ {}
-              :args $ [] 'NodeWebSocketHost 'String 'DynFn
+              :args $ [] 'NodeWebSocketHost 'String 'Fn
               :return 'NodeWebSocketHost
             .send $ :: 'Fn $ {}
               :args $ [] 'NodeWebSocketHost 'String
@@ -769,7 +769,7 @@
         'NodeWebSocketServerHost $ %{} 'CodeEntry (:doc "|Typed Node ws server event surface.")
           :code $ quote $ deftrait NodeWebSocketServerHost
             .on $ :: 'Fn $ {}
-              :args $ [] 'NodeWebSocketServerHost 'String 'DynFn
+              :args $ [] 'NodeWebSocketServerHost 'String 'Fn
               :return 'NodeWebSocketServerHost
           :examples $ []
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :node)
@@ -869,13 +869,32 @@
             let
                 value $ &map:get options key
               if (fn? value)
-                %some $ unsafe-coerce value 'DynFn
+                %some $ unsafe-coerce value 'Fn
                 %none
           :examples $ []
           :schema $ :: 'Fn $ {}
             :args $ [] 'Dynamic 'Tag
             :features $ #{} :js-ffi
-            :return $ :: 'calcit.core/Option 'DynFn
+            :return $ :: 'calcit.core/Option 'Fn
+          :tests $ []
+            %{} 'TestEntry (:name |accepts-function-option)
+              :code $ quote $ let
+                  callback $ fn (value) value
+                  options $ {} $ :on-data callback
+                assert= true $ match (server-option-callback options :on-data)
+                  (:some found) (fn? found)
+                  (:none) false
+              :tags $ #{} :server :unit
+            %{} 'TestEntry (:name |rejects-non-function-options)
+              :code $ quote $ do
+                assert= true $ .none? $ server-option-callback
+                  {} $ :on-data 42
+                  , :on-data
+                assert= true $ .none? $ server-option-callback
+                  {} $ :on-data :callable-tag
+                  , :on-data
+                assert= true $ .none? $ server-option-callback ({}) :on-data
+              :tags $ #{} :server :unit
         'server-option-string $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn server-option-string (options key)
             let

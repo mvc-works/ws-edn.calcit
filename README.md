@@ -135,14 +135,29 @@ Keep open protocol payloads as `Dynamic` only at the WebSocket/JS boundary and
 decode them into a named Struct or Enum as soon as their shape is known. Do not
 reintroduce the removed `calcit-test`, `lilac`, or `memof` modules.
 
-The module snapshot targets Calcit 0.13.77. Its local `when-let` macro declares
+The module snapshot targets Calcit 0.28.0. Its local `when-let` macro declares
 an explicit syntax/expansion contract. `ws-send!` always returns `Unit`; the
 method-oriented `.send` returns `WsSendOutcome` instead of leaking JavaScript
 `WebSocket.send` results.
 
-模块 Snapshot 已迁移到 Calcit 0.13.77；本地 `when-let` 明确声明 syntax 与
+模块 Snapshot 已迁移到 Calcit 0.28.0；本地 `when-let` 明确声明 syntax 与
 expansion。`ws-send!` 始终返回 `Unit`，方法形式 `.send` 返回
 `WsSendOutcome`，不会把 JavaScript `WebSocket.send` 的返回值泄漏到公开 API。
+
+### 0.28 类型边界迁移（尚未发布）
+
+Calcit CLI 与 `@calcit/procs` 对齐到 0.28.0，JS-FFI 声明升级到
+0.2.1-alpha.11。Node HTTP/WebSocket 事件与可选 callback 使用源码类型 `Fn`；
+`DynFn` 是编译器内部名称，写成源码 symbol 会被当作未绑定的类型名称，不能代表
+开放 callable。这个事件接口允许不同 arity 的函数，不承诺每个事件的 payload 已验证。
+可选 callback 仍在运行时用 `fn?` 检查，Number、Tag 和缺失值都不会被注册。
+
+正式 0.28 与候选编译器均通过服务端 main!/reload! 严格检查及 7 个附带测试；
+临时编译负例证实 `.on` 接受函数并拒绝 Number。重新生成的正式服务端 JS 通过
+两项 Node Buffer/Date 回归。客户端生成仍有 `reset! Option<Fn>` 合同诊断，
+尚未完成新产物的 generation/lifecycle 回归，不能据旧生成文件的测试认定完成。
+当前验证的 JS-FFI 链接指向本地 main，含已合并但未发 tag 的改动；完整发布依赖
+解析、客户端、浏览器与真实 WebSocket 验收仍待完成。
 
 Legacy class mapper (for compatibility with older payloads):
 
