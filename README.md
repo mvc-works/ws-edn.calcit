@@ -144,7 +144,23 @@ method-oriented `.send` returns `WsSendOutcome` instead of leaking JavaScript
 expansion。`ws-send!` 始终返回 `Unit`，方法形式 `.send` 返回
 `WsSendOutcome`，不会把 JavaScript `WebSocket.send` 的返回值泄漏到公开 API。
 
-### 0.28 类型边界迁移（尚未发布）
+### 客户端 options 合同
+
+`ws-connect!`、`create-client-with!` 与客户端句柄中的 options 使用
+`Map<Tag, Dynamic>`：配置键是 Tag，值可以是不同 arity 的回调或 Number。
+两个读取 helper 保留 `fn?` / `number?` 检查，不把容器合同当作字段值验证。
+数值缺失、String、Bool 和 nil 返回 None；零、负数和小数按原 Number
+合同返回 Some，重试策略仍由原 backoff 实现负责，不在读取时猜默认值。
+
+开放输入应先在调用方验证为 Tag-keyed Map，再传入连接入口；不使用
+`assert-type` 或 unsafe 冒充转换。直接从 JavaScript 调用绕过静态合同
+时，非 Map 输入仍会在读取阶段失败，连接接口不承担任意宿主对象的深层解码。
+
+执行 `yarn check:unit` 验证附带契约，再生成页面 JS 并运行
+`yarn check:client-generation`：同一组数值/回调 `:tests` 会在临时 Snapshot
+中回放，保留原源码字节，并验证错误容器/键类型的静态拒绝以及原连接生命周期。
+
+### 0.28 类型边界迁移
 
 Calcit CLI 与 `@calcit/procs` 对齐到 0.28.0，JS-FFI 声明升级到
 0.2.1-alpha.11。Node HTTP/WebSocket 事件与可选 callback 使用源码类型 `Fn`；

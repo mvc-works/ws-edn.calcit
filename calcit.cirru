@@ -120,7 +120,7 @@
           :code $ quote $ defstruct WsClient0
             :state $ :: 'Ref 'WsClientState
             :url 'String
-            :options 'Dynamic
+            :options $ :: 'Map 'Tag 'Dynamic
             :on-data $ :: 'Ref $ :: 'Option 'Fn
             :socket-factory $ :: 'Fn $ {}
               :args $ [] 'String
@@ -255,7 +255,7 @@
               if (fn? value) (Option :some value) (Option :none)
           :examples $ []
           :schema $ :: 'Fn $ {}
-            :args $ [] 'Dynamic 'Tag
+            :args $ [] (:: 'Map 'Tag 'Dynamic) 'Tag
             :features $ #{} :js-ffi
             :return $ :: 'Option 'Fn
           :tests $ []
@@ -298,9 +298,47 @@
               if (number? value) (Option :some value) (Option :none)
           :examples $ []
           :schema $ :: 'Fn $ {}
-            :args $ [] 'Dynamic 'Tag
+            :args $ [] (:: 'Map 'Tag 'Dynamic) 'Tag
             :features $ #{} :js-ffi
             :return $ :: 'calcit.core/Option 'Number
+          :tests $ []
+            %{} 'TestEntry (:name |missing-number-option-is-none)
+              :code $ quote $ assert= (Option :none)
+                client-option-number ({}) :retry-base-ms
+              :tags $ #{} :options-contract :unit
+            %{} 'TestEntry (:name |wrong-number-option-is-none)
+              :code $ quote $ do
+                assert= (Option :none)
+                  client-option-number
+                    {} $ :retry-base-ms |500
+                    , :retry-base-ms
+                assert= (Option :none)
+                  client-option-number
+                    {} $ :retry-base-ms false
+                    , :retry-base-ms
+                assert= (Option :none)
+                  client-option-number
+                    {} $ :retry-base-ms nil
+                    , :retry-base-ms
+              :tags $ #{} :options-contract :unit
+            %{} 'TestEntry (:name |zero-number-option-is-preserved)
+              :code $ quote $ assert= (Option :some 0)
+                client-option-number
+                  {} $ :retry-base-ms 0
+                  , :retry-base-ms
+              :tags $ #{} :options-contract :unit
+            %{} 'TestEntry
+              :name |number-option-retains-negative-and-fractional-values
+              :code $ quote $ do
+                assert= (Option :some -1)
+                  client-option-number
+                    {} $ :retry-base-ms -1
+                    , :retry-base-ms
+                assert= (Option :some 0.25)
+                  client-option-number
+                    {} $ :retry-base-ms 0.25
+                    , :retry-base-ms
+              :tags $ #{} :options-contract :unit
         'client-reconnect! $ %{} 'CodeEntry
           :doc "|Method implementation for replacing the active generation."
           :code $ quote $ defn client-reconnect! (client) (cancel-client-reconnect! client) (connect-client! client)
@@ -491,8 +529,8 @@
               , client
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'WsClient)
-            :args $ [] 'String 'Dynamic $ :: 'Fn
-              {} (:return 'BrowserWebSocketHost)
+            :args $ [] 'String (:: 'Map 'Tag 'Dynamic)
+              :: 'Fn $ {} (:return 'BrowserWebSocketHost)
                 :args $ [] 'String
             :features $ #{} :js-ffi
         'generation-current? $ %{} 'CodeEntry
@@ -650,7 +688,7 @@
               :on-close $ fn (event) (println |closed)
               :on-data $ fn (data) (println |received: data)
           :schema $ :: 'Fn $ {} (:return 'WsClient)
-            :args $ [] 'String 'Dynamic
+            :args $ [] 'String $ :: 'Map 'Tag 'Dynamic
             :features $ #{} :js-ffi
         'ws-connected? $ %{} 'CodeEntry
           :doc "|Returns true if WebSocket is currently connected, false otherwise."
