@@ -1109,7 +1109,7 @@
             assert "|expected 2 tokens" $ and (list? pair)
               = 2 $ count pair
             quasiquote $ &let ~pair $ when
-              some? $ ~ $ first pair
+              non-nil? $ ~ $ first pair
               , ~@body
           :examples $ []
           :schema $ :: 'Macro $ {} (:rest 'Syntax)

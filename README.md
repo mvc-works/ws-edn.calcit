@@ -4,6 +4,12 @@ ws-edn in calcit-js
 
 ### Usages
 
+0.0.34 对齐 Calcit/procs `0.29.0-alpha.6`、已发布 cumulo-util `0.0.25`
+与 JS-FFI `0.2.1-alpha.13`，为 Calcium/Reel 消除传递版本冲突。
+`when-let` 的旧 `some?` 调用迁移为等价的 `non-nil?`；false、0 和空集合
+仍作为非 nil 值。公开接口、原测试和严格 Caps／质量门禁保持不变；完整 CI
+通过后再发版。
+
 The server and browser connection snippets require their Node/WebSocket hosts, so
 they are marked `cirru.no-check`. CI validates both generated entries and runs the
 executable client generation/lifecycle smoke; host-independent data snippets below

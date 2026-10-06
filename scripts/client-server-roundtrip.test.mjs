@@ -60,5 +60,5 @@ test("real clients preserve EDN payloads and distinct String session IDs", { tim
   assert.ok(incoming.every(([sid]) => typeof sid === "string" && ids.includes(sid)));
   assert.equal(new Set(incoming.map(([sid]) => sid)).size, 2);
   for (const connection of clients) client.client_close_$x_(connection);
-  await waitFor(() => c.count(c.deref(server._$s_global_connections)) === 0, "session cleanup");
+  await waitFor(() => c._$n_map_$o_count(c.deref(server._$s_global_connections)) === 0, "session cleanup");
 });
