@@ -1,12 +1,79 @@
 import assert from "node:assert/strict";
+import { execFileSync, spawnSync } from "node:child_process";
+import { copyFile, mkdir, mkdtemp, readFile, rm, symlink } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { CalcitMap, init_tags, invoke_method } from "@calcit/procs";
 import {
+  client_option_callback,
+  client_option_number,
   client_state_handle,
   create_client_with_$x_,
   install_browser_lifecycle_$x_,
   ws_connect_$x_,
   ws_connected_$q_,
 } from "../out-page/ws-edn.client.mjs";
+
+// Replay the owning Calcit contracts, not a second JS implementation. Use a
+// guarded Snapshot copy and the same published toolchain as normal compilation.
+const originalSnapshot = await readFile("calcit.cirru");
+const optionsFixture = await mkdtemp(join(tmpdir(), "ws-edn-options-contract-"));
+try {
+  const snapshot = join(optionsFixture, "calcit.cirru");
+  await copyFile("calcit.cirru", snapshot);
+  await copyFile("deps.cirru", join(optionsFixture, "deps.cirru"));
+  await mkdir(join(optionsFixture, ".calcit"));
+  await symlink(resolve(".calcit/modules"), join(optionsFixture, ".calcit/modules"), "dir");
+  await symlink(resolve("node_modules"), join(optionsFixture, "node_modules"), "dir");
+  const commandOptions = { encoding: "utf8", timeout: 60000, maxBuffer: 16 * 1024 * 1024 };
+  const run = (...args) => execFileSync("calcit", [snapshot, ...args], commandOptions);
+  const tests = ["client-option-number", "client-option-callback"].flatMap(name => {
+    const response = JSON.parse(run("query", "def", `ws-edn.client/${name}`, "--format", "json"));
+    assert.deepEqual(response.diagnostics, []);
+    assert.equal(response.data.tests.length, name === "client-option-number" ? 4 : 5);
+    return response.data.tests;
+  });
+  const revision = JSON.parse(run("query", "config", "--format", "json")).revision;
+  const operations = [
+    ["edit", "def", "ws-edn.client/replay-options-contract!", "--input-format", "json-ast", "--code",
+      JSON.stringify(["defn", "replay-options-contract!", [], ...tests.map(test => test.code), "&unit"])],
+    ["edit", "schema", "ws-edn.client/replay-options-contract!", "--input-format", "json-ast", "--code",
+      JSON.stringify(["::", "'Fn", ["{}", [":args", ["[]"]], [":return", "'Unit"], [":features", ["#{}", ":js-ffi"]]]])],
+    ["config", "set", "init-fn", "ws-edn.client/replay-options-contract!"],
+    ["config", "set", "reload-fn", "ws-edn.client/replay-options-contract!"],
+  ];
+  run("docs", "agents", "--contract");
+  const transaction = ["edit", "transaction", "--code", JSON.stringify(operations), "--expect-revision", revision, "--format", "edn"];
+  run(...transaction, "--dry-run");
+  run(...transaction);
+  run("--check-only");
+  const output = join(optionsFixture, "js-out");
+  run("--emit-path", output, "js");
+  (await import(pathToFileURL(join(output, "ws-edn.client.mjs")).href)).replay_options_contract_$x_();
+
+  // Keep a concrete container contract: statically invalid options must fail
+  // before any browser socket or lifecycle operation can execute.
+  for (const name of ["client-option-number", "client-option-callback"]) {
+    for (const input of ["42", "nil", "[]", "{} (|wrong-key 1)"]) {
+      const argument = input === "42" || input === "nil" ? input : `(${input})`;
+      const snippet = `ns app.proof $ :require (ws-edn.client :refer (${name}))\n\n${name} ${argument} :retry-base-ms`;
+      const rejected = spawnSync("calcit", ["eval", "--dep", "./", snippet], commandOptions);
+      if (rejected.error) throw rejected.error;
+      assert.notEqual(rejected.status, 0, `${name}: invalid options ${input}`);
+      assert.match(`${rejected.stdout}\n${rejected.stderr}`, /W_FN_ARG_TYPE_MISMATCH|E_CALL_ARGUMENT_MISMATCH/);
+    }
+  }
+  assert.deepEqual(await readFile("calcit.cirru"), originalSnapshot);
+  console.log("Nine original options AST contracts pass on generated JS; invalid containers are rejected statically.");
+} finally {
+  await rm(optionsFixture, { recursive: true, force: true });
+  assert.deepEqual(await readFile("calcit.cirru"), originalSnapshot);
+}
+for (const invalid of [null, 42, false, "not-a-map", []]) {
+  assert.throws(() => client_option_number(invalid, init_tags(["retry-base-ms"])["retry-base-ms"]));
+  assert.throws(() => client_option_callback(invalid, init_tags(["on-data"])["on-data"]));
+}
 
 const listeners = new Map();
 const intervals = new Map();
