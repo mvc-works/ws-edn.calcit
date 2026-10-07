@@ -208,8 +208,9 @@
             if (string? data) data $ raise "|ws-edn expected a text WebSocket message"
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'String)
-            :args $ [] 'Dynamic
+            :args $ [] 'T
             :features $ #{} :js-ffi
+            :generics $ [] 'T
         'checked-now-ms $ %{} 'CodeEntry (:doc "|读取浏览器当前毫秒时间，并在 JS 边界检查其为 Number。")
           :code $ quote $ defn checked-now-ms ()
             &let
@@ -601,7 +602,7 @@
                       lease-ref $ :heartbeat-lease client
                       timer-ref $ :heartbeat-timer client
                       state-ref $ :state client
-                      now-ms (checked-now-ms)
+                      now-ms $ checked-now-ms
                       lease $ heartbeat-lease now-ms timeout-ms
                       timer $ flipped set-timeout! timeout-ms $ fn ()
                         match @timer-ref
@@ -610,7 +611,7 @@
                               reset! timer-ref $ Option :none
                               let
                                   state $ assert-type (deref state-ref) WsClientState
-                                  current-now (checked-now-ms)
+                                  current-now $ checked-now-ms
                                 when
                                   and (generation-current? state generation)
                                     = (WsConnectionPhase :open) (:phase state)
@@ -701,7 +702,7 @@
                 client $ create-client-with! ws-url options $ fn (url)
                   hint-fn $ {} (:return 'ws-edn.client/BrowserWebSocketHost)
                     :args $ [] 'String
-                  js-cast (new js/WebSocket url) 'ws-edn.client/BrowserWebSocketHost
+                  unsafe-coerce (new js/WebSocket url) 'ws-edn.client/BrowserWebSocketHost
               install-browser-lifecycle! client
               assert-type client WsClient
               reset! *global-client $ Option :some client
@@ -1130,7 +1131,9 @@
         'wss-set-on-data! $ %{} 'CodeEntry
           :doc "|Sets the message handler for incoming WebSocket data across all connections. Handler receives session-id and parsed Cirru EDN data."
           :code $ quote $ defn wss-set-on-data! (on-data)
-            reset! *proxied-data-listener $ Option :some on-data
+            &let
+              _listener $ reset! *proxied-data-listener $ Option :some on-data
+              , &unit
           :examples $ [] $ quote
             wss-set-on-data! $ fn (sid data) (println "|New message from" sid : data)
           :schema $ :: 'Fn $ {} (:return 'Unit)
