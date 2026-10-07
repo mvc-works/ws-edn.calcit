@@ -463,7 +463,7 @@
                             let
                                 callback $ unsafe-coerce callback $ :: 'Fn
                                   {}
-                                    :args $ [] 'JsObject
+                                    :args $ [] 'Dynamic
                                     :return 'Unit
                               callback event
                           (:none) &unit
@@ -497,7 +497,7 @@
                               let
                                   callback $ unsafe-coerce callback $ :: 'Fn
                                     {}
-                                      :args $ [] 'JsObject
+                                      :args $ [] 'Dynamic
                                       :return 'Unit
                                 callback event
                             (:none) &unit
@@ -512,7 +512,7 @@
                             let
                                 callback $ unsafe-coerce callback $ :: 'Fn
                                   {}
-                                    :args $ [] 'JsObject
+                                    :args $ [] 'Dynamic
                                     :return 'Unit
                               callback error
                           (:none) &unit
@@ -601,8 +601,7 @@
                       lease-ref $ :heartbeat-lease client
                       timer-ref $ :heartbeat-timer client
                       state-ref $ :state client
-                      now-ms $
-                        checked-now-ms
+                      now-ms (checked-now-ms)
                       lease $ heartbeat-lease now-ms timeout-ms
                       timer $ flipped set-timeout! timeout-ms $ fn ()
                         match @timer-ref
@@ -611,8 +610,7 @@
                               reset! timer-ref $ Option :none
                               let
                                   state $ assert-type (deref state-ref) WsClientState
-                                  current-now $
-                                    checked-now-ms
+                                  current-now (checked-now-ms)
                                 when
                                   and (generation-current? state generation)
                                     = (WsConnectionPhase :open) (:phase state)
