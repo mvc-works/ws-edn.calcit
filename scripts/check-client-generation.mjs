@@ -173,6 +173,11 @@ sockets[0].onclose({ stale: true });
 assert.equal(connected(), true);
 sockets[1].onmessage({ data: "\ndo |fresh\n" });
 assert.deepEqual(received, ["fresh"]);
+for (const invalid of [null, 42, false, {}, new Uint8Array([1, 2])]) {
+  assert.throws(() => sockets[1].onmessage({ data: invalid }), /expected a text WebSocket message/);
+}
+assert.deepEqual(received, ["fresh"]); // Invalid wire frames never reach the application callback.
+
 
 invoke_method("send", client, "payload");
 assert.equal(sockets[1].sent.length, 1);
