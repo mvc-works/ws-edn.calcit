@@ -203,6 +203,32 @@
           :schema $ :: 'Fn $ {} (:return 'Unit)
             :args $ [] 'WsClient0
             :features $ #{} :js-ffi
+        'checked-message-text $ %{} 'CodeEntry (:doc "|在浏览器 WebSocket 边界确认消息为文本。")
+          :code $ quote $ defn checked-message-text (data)
+            if (string? data) data $ raise "|ws-edn expected a text WebSocket message"
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'String)
+            :args $ [] 'T
+            :features $ #{} :js-ffi
+            :generics $ [] 'T
+        'checked-now-ms $ %{} 'CodeEntry (:doc "|读取浏览器当前毫秒时间，并在 JS 边界检查其为 Number。")
+          :code $ quote $ defn checked-now-ms ()
+            &let
+              now $ js/Date.now
+              if (number? now) now $ raise "|ws-edn expected Date.now to return a Number"
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'Number)
+            :args $ []
+            :features $ #{} :js-ffi
+        'checked-random-number $ %{} 'CodeEntry (:doc "|在 JS 边界读取随机数并检查其为 Number。")
+          :code $ quote $ defn checked-random-number ()
+            &let
+              value $ js/Math.random
+              if (number? value) value $ raise "|ws-edn expected Math.random to return a Number"
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'Number)
+            :args $ []
+            :features $ #{} :js-ffi
         'cleanup-client-lifecycle! $ %{} 'CodeEntry
           :doc "|Runs and clears the optional browser lifecycle cleanup capability."
           :code $ quote $ defn cleanup-client-lifecycle! (client)
@@ -384,9 +410,8 @@
             :generics $ [] 'D
         'client-state-handle $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn client-state-handle (value)
-            if
-              and (struct? value) (&struct:matches? value WsClient0)
-              assert-type value 'WsClient0
+            if (struct? value)
+              if (&struct:matches? value WsClient0) value $ raise "|[ws-edn] expected a WsClient state handle"
               raise "|[ws-edn] expected a WsClient state handle"
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'WsClient0)
@@ -439,7 +464,7 @@
                             let
                                 callback $ unsafe-coerce callback $ :: 'Fn
                                   {}
-                                    :args $ [] 'JsObject
+                                    :args $ [] 'Dynamic
                                     :return 'Unit
                               callback event
                           (:none) &unit
@@ -456,7 +481,7 @@
                                     :args $ [] 'Dynamic
                                     :return 'Unit
                                 message-event $ unsafe-coerce event 'BrowserMessageEventHost
-                                raw-data $ unsafe-coerce (.-data message-event) 'String
+                                raw-data $ checked-message-text $ .-data message-event
                               callback $ parse-cirru-edn raw-data $ &map:get (:options client) :class-mapper
                           (:none) &unit
                       , &unit
@@ -473,7 +498,7 @@
                               let
                                   callback $ unsafe-coerce callback $ :: 'Fn
                                     {}
-                                      :args $ [] 'JsObject
+                                      :args $ [] 'Dynamic
                                       :return 'Unit
                                 callback event
                             (:none) &unit
@@ -488,7 +513,7 @@
                             let
                                 callback $ unsafe-coerce callback $ :: 'Fn
                                   {}
-                                    :args $ [] 'JsObject
+                                    :args $ [] 'Dynamic
                                     :return 'Unit
                               callback error
                           (:none) &unit
@@ -524,13 +549,12 @@
                 (:some callback)
                   reset! on-data-ref $ Option :some callback
                 (:none) &unit
-              assert-type client 'WsClient
-              connect-client! client
+              connect-client! $ client-state-handle client
               , client
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'WsClient)
             :args $ [] 'String (:: 'Map 'Tag 'Dynamic)
-              :: 'Fn $ {} (:return 'BrowserWebSocketHost)
+              :: 'Fn $ {} (:return 'ws-edn.client/BrowserWebSocketHost)
                 :args $ [] 'String
             :features $ #{} :js-ffi
         'generation-current? $ %{} 'CodeEntry
@@ -578,17 +602,16 @@
                       lease-ref $ :heartbeat-lease client
                       timer-ref $ :heartbeat-timer client
                       state-ref $ :state client
-                      now-ms $ unsafe-coerce (js/Date.now) 'Number
+                      now-ms $ checked-now-ms
                       lease $ heartbeat-lease now-ms timeout-ms
                       timer $ flipped set-timeout! timeout-ms $ fn ()
                         match @timer-ref
                           (:some active-timer)
-                            when
-                              = (assert-type active-timer 'Number) (assert-type timer 'Number)
+                            when (= active-timer timer)
                               reset! timer-ref $ Option :none
                               let
                                   state $ assert-type (deref state-ref) WsClientState
-                                  current-now $ unsafe-coerce (js/Date.now) 'Number
+                                  current-now $ checked-now-ms
                                 when
                                   and (generation-current? state generation)
                                     = (WsConnectionPhase :open) (:phase state)
@@ -623,7 +646,7 @@
                       state-ref $ :state client
                       retry-state $ assert-type (deref retry-ref) 'cumulo-util.realtime/RetryBackoff
                       step $ assert-type
-                        retry-state .next $ unsafe-coerce (js/Math.random) 'Number
+                        retry-state .next $ checked-random-number
                         , 'cumulo-util.realtime/RetryStep
                       delay-ms $ :delay-ms step
                       timer $ flipped set-timeout! delay-ms $ fn ()
@@ -677,7 +700,9 @@
               (:none) &unit
             let
                 client $ create-client-with! ws-url options $ fn (url)
-                  unsafe-coerce (new js/WebSocket url) 'BrowserWebSocketHost
+                  hint-fn $ {} (:return 'ws-edn.client/BrowserWebSocketHost)
+                    :args $ [] 'String
+                  unsafe-coerce (new js/WebSocket url) 'ws-edn.client/BrowserWebSocketHost
               install-browser-lifecycle! client
               assert-type client WsClient
               reset! *global-client $ Option :some client
@@ -944,7 +969,8 @@
           :code $ quote $ defn node-data-string (raw-data)
             let
                 data $ unsafe-coerce raw-data 'NodeDataHost
-              unsafe-coerce (.!toString data) 'String
+                text $ .!toString data
+              if (string? text) text $ raise |Expected-String-WebSocket-data
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'String)
             :args $ [] 'Dynamic
@@ -1105,7 +1131,9 @@
         'wss-set-on-data! $ %{} 'CodeEntry
           :doc "|Sets the message handler for incoming WebSocket data across all connections. Handler receives session-id and parsed Cirru EDN data."
           :code $ quote $ defn wss-set-on-data! (on-data)
-            reset! *proxied-data-listener $ Option :some on-data
+            &let
+              _listener $ reset! *proxied-data-listener $ Option :some on-data
+              , &unit
           :examples $ [] $ quote
             wss-set-on-data! $ fn (sid data) (println "|New message from" sid : data)
           :schema $ :: 'Fn $ {} (:return 'Unit)
@@ -1137,7 +1165,8 @@
           :code $ quote $ defn current-iso-time! ()
             let
                 date $ unsafe-coerce (new js/Date) 'DateHost
-              unsafe-coerce (.!toISOString date) 'String
+                text $ .!toISOString date
+              if (string? text) text $ raise |Expected-String-ISO-time
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'String)
             :args $ []
