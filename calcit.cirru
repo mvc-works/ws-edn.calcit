@@ -481,8 +481,13 @@
                                     :args $ [] 'Dynamic
                                     :return 'Unit
                                 message-event $ unsafe-coerce event 'BrowserMessageEventHost
-                                raw-data $ checked-message-text $ .-data message-event
-                              callback $ parse-cirru-edn raw-data $ &map:get (:options client) :class-mapper
+                                parsed $ parse-client-message (.-data message-event) (:options client)
+                              match parsed
+                                (:ok data) (callback data)
+                                (:err message)
+                                  let
+                                      failure $ new js/Error message
+                                    if (notify-client-error! client failure) &unit $ raise message
                           (:none) &unit
                       , &unit
                   set! (.-onclose socket)
@@ -506,17 +511,7 @@
                       , &unit
                   set! (.-onerror socket)
                     fn (error)
-                      when (generation-current? @state-ref generation) (js/console.error |Failed-to-establish-WebSocket-connection error)
-                        match
-                          client-option-callback (:options client) :on-error
-                          (:some callback)
-                            let
-                                callback $ unsafe-coerce callback $ :: 'Fn
-                                  {}
-                                    :args $ [] 'Dynamic
-                                    :return 'Unit
-                              callback error
-                          (:none) &unit
+                      when (generation-current? @state-ref generation) (js/console.error |Failed-to-establish-WebSocket-connection error) (notify-client-error! client error)
                       , &unit
                   , &unit
           :examples $ []
@@ -591,6 +586,67 @@
             :args $ [] 'ClientInput
             :features $ #{} :js-ffi
             :generics $ [] 'ClientInput
+        'notify-client-error! $ %{} 'CodeEntry
+          :doc "|调用已有 on-error 一次并报告是否通知；保留开放宿主错误对象与 callback 的异常传播。"
+          :code $ quote $ defn notify-client-error! (client error)
+            match
+              client-option-callback (:options client) :on-error
+              (:some callback)
+                let
+                    callback $ unsafe-coerce callback $ :: 'Fn
+                      {}
+                        :args $ [] 'Dynamic
+                        :return 'Unit
+                  callback error
+                  , true
+              (:none) false
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'Bool)
+            :args $ [] 'WsClient0 'Dynamic
+            :features $ #{} :js-ffi
+        'parse-client-message $ %{} 'CodeEntry
+          :doc "|校验文本帧并解析开放 EDN，返回 Result<Dynamic,String>；错误不携带原始帧或解析器诊断。class-mapper 保留原有可选合同。"
+          :code $ quote $ defn parse-client-message (data options)
+            if (string? data)
+              try
+                Result :ok $ parse-cirru-edn data $ &map:get options :class-mapper
+                fn (message) (Result :err "|[ws-edn/message] invalid Cirru EDN")
+              Result :err "|[ws-edn/message] expected a text WebSocket message"
+          :examples $ []
+          :schema $ :: 'Fn $ {}
+            :args $ [] 'Dynamic $ :: 'Map 'Tag 'Dynamic
+            :return $ :: 'Result 'Dynamic 'String
+          :tests $ []
+            %{} 'TestEntry (:name |valid-open-payloads)
+              :code $ quote $ do
+                assert= (Result :ok nil)
+                  parse-client-message "|do nil" $ {}
+                assert= (Result :ok false)
+                  parse-client-message "|do false" $ {}
+                assert=
+                  Result :ok $ [] 1 2
+                  parse-client-message "|[] 1 2" $ {}
+              :tags $ #{} :message-boundary :unit
+            %{} 'TestEntry (:name |rejects-non-text)
+              :code $ quote $ do
+                assert=
+                  Result :err "|[ws-edn/message] expected a text WebSocket message"
+                  parse-client-message nil $ {}
+                assert=
+                  Result :err "|[ws-edn/message] expected a text WebSocket message"
+                  parse-client-message 42 $ {}
+                assert=
+                  Result :err "|[ws-edn/message] expected a text WebSocket message"
+                  parse-client-message false $ {}
+              :tags $ #{} :message-boundary :unit
+            %{} 'TestEntry (:name |rejects-malformed-edn)
+              :code $ quote $ assert= (Result :err "|[ws-edn/message] invalid Cirru EDN")
+                parse-client-message |{ $ {}
+              :tags $ #{} :message-boundary :unit
+            %{} 'TestEntry (:name |redacts-private-frame)
+              :code $ quote $ assert= (Result :err "|[ws-edn/message] invalid Cirru EDN")
+                parse-client-message "|{} $ :token $ unrecognized-private-token-7f12" $ {}
+              :tags $ #{} :message-boundary :unit
         'renew-client-heartbeat! $ %{} 'CodeEntry
           :doc "|Renews an enabled heartbeat lease and closes the current generation after its deadline."
           :code $ quote $ defn renew-client-heartbeat! (client generation)

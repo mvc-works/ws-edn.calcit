@@ -166,6 +166,25 @@ expansion。`ws-send!` 始终返回 `Unit`，方法形式 `.send` 返回
 `yarn check:client-generation`：同一组数值/回调 `:tests` 会在临时 Snapshot
 中回放，保留原源码字节，并验证错误容器/键类型的静态拒绝以及原连接生命周期。
 
+### 客户端消息错误边界
+
+已注册 `:on-data` 的客户端收到非文本帧或无效 Cirru EDN 时，会把一个
+JavaScript `Error` 交给现有 `:on-error`，且不调用 `:on-data`。错误的
+`message` 以 `[ws-edn/message]` 开头，只说明“需要文本消息”或“EDN 无效”，
+不包含原始帧、解析器详情或凭证。transport 的 `onerror` 仍传递原始宿主事件，
+不重新包装；因此原有错误回调入口不变，也没有新增平行配置项。
+
+没有可调用的 `:on-error` 时，非法帧仍抛错，但改为上述经过脱敏的消息。
+合法 EDN（包括 nil 和 false）只交付一次；`:on-data` 和 `:on-error`
+自身的异常继续向外传播，不会被当成解析失败再次通知。旧 generation 的迟到
+消息继续忽略；未注册 `:on-data` 时保留只续租 heartbeat、不解析 payload 的行为。
+原有 `:class-mapper` 继续传给解析器，不代表业务 payload 已取得具体类型证明。
+
+应用在自己的错误回调中决定是否保留旧状态、请求快照或有界重连；模块不会猜测
+业务默认值、自动重试解析或修改应用状态。用 `yarn check:unit` 查看定义附带的
+消息契约，`yarn check:client-generation` 用公开 socket factory 验证通知次数、
+错误脱敏、回调异常身份和生命周期隔离。
+
 ### 0.28 类型边界迁移
 
 Calcit CLI 与 `@calcit/procs` 对齐到 0.28.0，JS-FFI 声明升级到
