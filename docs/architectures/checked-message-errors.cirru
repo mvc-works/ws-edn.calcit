@@ -5,16 +5,18 @@
   :roots $ #{} 'ws-edn.client/parse-client-message 'ws-edn.client/notify-client-error!
   :definitions $ {}
     'ws-edn.client/parse-client-message $ {} (:mode :ensure) (:kind :fn)
-      :doc "|校验消息文本并解析 EDN，失败返回不含原始消息的稳定字符串。"
-      :params $ [] 'data 'options
+      :doc "|校验消息文本并调用传入 decoder，失败返回不含原始消息的稳定字符串；payload 类型由 decoder 决定。"
+      :params $ [] 'data 'decode
       :schema $ :: 'Fn $ {}
-        :args $ [] 'Dynamic (:: 'Map 'Tag 'Dynamic)
-        :return $ :: 'Result 'Dynamic 'String
+        :generics $ [] 'Data 'Payload
+        :args $ [] 'Data $ :: 'Fn $ {} (:args $ [] 'String) (:return 'Payload)
+        :return $ :: 'Result 'Payload 'String
     'ws-edn.client/notify-client-error! $ {} (:mode :ensure) (:kind :fn)
       :doc "|调用已有 on-error 一次，返回是否存在可调用的处理器，不捕获应用异常。"
       :params $ [] 'client 'error
       :schema $ :: 'Fn $ {}
-        :args $ [] 'ws-edn.client/WsClient0 'Dynamic
+        :generics $ [] 'E
+        :args $ [] 'ws-edn.client/WsClient0 'E
         :return 'Bool
         :features $ #{} :js-ffi
   :edges $ #{}

@@ -481,7 +481,9 @@
                                     :args $ [] 'Dynamic
                                     :return 'Unit
                                 message-event $ unsafe-coerce event 'BrowserMessageEventHost
-                                parsed $ parse-client-message (.-data message-event) (:options client)
+                                class-mapper $ &map:get (:options client) :class-mapper
+                                parsed $ parse-client-message (.-data message-event)
+                                  fn (text) (parse-cirru-edn text class-mapper)
                               match parsed
                                 (:ok data) (callback data)
                                 (:err message)
@@ -592,60 +594,58 @@
             match
               client-option-callback (:options client) :on-error
               (:some callback)
-                let
-                    callback $ unsafe-coerce callback $ :: 'Fn
-                      {}
-                        :args $ [] 'Dynamic
-                        :return 'Unit
-                  callback error
-                  , true
+                do (callback error) true
               (:none) false
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Bool)
-            :args $ [] 'WsClient0 'Dynamic
+            :args $ [] 'WsClient0 'E
             :features $ #{} :js-ffi
+            :generics $ [] 'E
         'parse-client-message $ %{} 'CodeEntry
-          :doc "|校验文本帧并解析开放 EDN，返回 Result<Dynamic,String>；错误不携带原始帧或解析器诊断。class-mapper 保留原有可选合同。"
-          :code $ quote $ defn parse-client-message (data options)
+          :doc "|校验文本帧并用传入的 decoder 解析，返回 Result<Payload,String>；错误不携带原始帧或解析器诊断。payload 类型由 decoder 决定，connect-client! 传入带 class-mapper 的开放 EDN 解析。"
+          :code $ quote $ defn parse-client-message (data decode)
             if (string? data)
               try
-                Result :ok $ parse-cirru-edn data $ &map:get options :class-mapper
+                Result :ok $ decode data
                 fn (message) (Result :err "|[ws-edn/message] invalid Cirru EDN")
               Result :err "|[ws-edn/message] expected a text WebSocket message"
           :examples $ []
           :schema $ :: 'Fn $ {}
-            :args $ [] 'Dynamic $ :: 'Map 'Tag 'Dynamic
-            :return $ :: 'Result 'Dynamic 'String
+            :args $ [] 'Data $ :: 'Fn
+              {} (:return 'Payload)
+                :args $ [] 'String
+            :generics $ [] 'Data 'Payload
+            :return $ :: 'Result 'Payload 'String
           :tests $ []
             %{} 'TestEntry (:name |valid-open-payloads)
               :code $ quote $ do
                 assert= (Result :ok nil)
-                  parse-client-message "|do nil" $ {}
+                  parse-client-message "|do nil" $ fn (text) (parse-cirru-edn text)
                 assert= (Result :ok false)
-                  parse-client-message "|do false" $ {}
+                  parse-client-message "|do false" $ fn (text) (parse-cirru-edn text)
                 assert=
                   Result :ok $ [] 1 2
-                  parse-client-message "|[] 1 2" $ {}
+                  parse-client-message "|[] 1 2" $ fn (text) (parse-cirru-edn text)
               :tags $ #{} :message-boundary :unit
             %{} 'TestEntry (:name |rejects-non-text)
               :code $ quote $ do
                 assert=
                   Result :err "|[ws-edn/message] expected a text WebSocket message"
-                  parse-client-message nil $ {}
+                  parse-client-message nil $ fn (text) (parse-cirru-edn text)
                 assert=
                   Result :err "|[ws-edn/message] expected a text WebSocket message"
-                  parse-client-message 42 $ {}
+                  parse-client-message 42 $ fn (text) (parse-cirru-edn text)
                 assert=
                   Result :err "|[ws-edn/message] expected a text WebSocket message"
-                  parse-client-message false $ {}
+                  parse-client-message false $ fn (text) (parse-cirru-edn text)
               :tags $ #{} :message-boundary :unit
             %{} 'TestEntry (:name |rejects-malformed-edn)
               :code $ quote $ assert= (Result :err "|[ws-edn/message] invalid Cirru EDN")
-                parse-client-message |{ $ {}
+                parse-client-message |{ $ fn (text) (parse-cirru-edn text)
               :tags $ #{} :message-boundary :unit
             %{} 'TestEntry (:name |redacts-private-frame)
               :code $ quote $ assert= (Result :err "|[ws-edn/message] invalid Cirru EDN")
-                parse-client-message "|{} $ :token $ unrecognized-private-token-7f12" $ {}
+                parse-client-message "|{} $ :token $ unrecognized-private-token-7f12" $ fn (text) (parse-cirru-edn text)
               :tags $ #{} :message-boundary :unit
         'renew-client-heartbeat! $ %{} 'CodeEntry
           :doc "|Renews an enabled heartbeat lease and closes the current generation after its deadline."
