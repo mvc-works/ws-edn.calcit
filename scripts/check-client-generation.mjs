@@ -14,6 +14,7 @@ import {
   ws_connect_$x_,
   ws_connected_$q_,
 } from "../out-page/ws-edn.client.mjs";
+import { Track, decode_track } from "../out-page/ws-edn.schema.mjs";
 
 // Replay the owning Calcit contracts, not a second JS implementation. Use a
 // guarded Snapshot copy and the same published toolchain as normal compilation.
@@ -28,10 +29,10 @@ try {
   await symlink(resolve("node_modules"), join(optionsFixture, "node_modules"), "dir");
   const commandOptions = { encoding: "utf8", timeout: 60000, maxBuffer: 16 * 1024 * 1024 };
   const run = (...args) => execFileSync("calcit", [snapshot, ...args], commandOptions);
-  const tests = ["client-option-number", "client-option-callback"].flatMap(name => {
+  const tests = [["client-option-number", 4], ["client-option-callback", 5], ["parse-client-message", 4]].flatMap(([name, count]) => {
     const response = JSON.parse(run("query", "def", `ws-edn.client/${name}`, "--format", "json"));
     assert.deepEqual(response.diagnostics, []);
-    assert.equal(response.data.tests.length, name === "client-option-number" ? 4 : 5);
+    assert.equal(response.data.tests.length, count);
     return response.data.tests;
   });
   const revision = JSON.parse(run("query", "config", "--format", "json")).revision;
@@ -65,7 +66,7 @@ try {
     }
   }
   assert.deepEqual(await readFile("calcit.cirru"), originalSnapshot);
-  console.log("Nine original options AST contracts pass on generated JS; invalid containers are rejected statically.");
+  console.log("Nine original options and four message AST contracts pass on generated JS; invalid containers are rejected statically.");
 } finally {
   await rm(optionsFixture, { recursive: true, force: true });
   assert.deepEqual(await readFile("calcit.cirru"), originalSnapshot);
@@ -321,3 +322,109 @@ try {
 }
 
 console.log("ws client generation and singleton nominal Ref smoke passed");
+
+// Only frame validation/parsing belongs to the message error boundary. Real
+// application and error-handler exceptions must retain their original identity.
+const errorTags = init_tags(["on-data", "on-error"]);
+const messageSockets = [];
+const messageValues = [];
+const messageErrors = [];
+const messageClient = create_client_with_$x_("ws://message-errors.test",
+  new CalcitMap()
+    .assoc(errorTags["on-data"], value => messageValues.push(value))
+    .assoc(errorTags["on-error"], error => messageErrors.push(error)),
+  url => {
+    const socket = new FakeSocket(url);
+    messageSockets.push(socket);
+    return socket;
+  });
+messageSockets[0].onopen({});
+const privateFrame = "{} $ :token $ unrecognized-private-token-7f12";
+const previousConsoleError = console.error;
+const messageLogs = [];
+console.error = (...args) => messageLogs.push(args.join(" "));
+try {
+  for (const invalid of [null, 42, false, {}, new Uint8Array([1, 2]), "{", privateFrame]) {
+    assert.doesNotThrow(() => messageSockets[0].onmessage({ data: invalid }));
+  }
+} finally {
+  console.error = previousConsoleError;
+}
+assert.equal(messageErrors.length, 7);
+assert.deepEqual(messageValues, []);
+for (const error of messageErrors) {
+  assert.ok(error instanceof Error);
+  assert.equal(error.name, "Error");
+  assert.match(error.message, /^\[ws-edn\/message\]/);
+  assert.doesNotMatch(error.message, /unrecognized-private-token|:token/);
+}
+assert.doesNotMatch(messageLogs.join("\n"), /unrecognized-private-token|:token/);
+messageSockets[0].onmessage({ data: "do |after-error" });
+assert.deepEqual(messageValues, ["after-error"]);
+invoke_method("reconnect", messageClient);
+messageSockets[0].onmessage({ data: "{" });
+messageSockets[0].onmessage({ data: null });
+assert.equal(messageErrors.length, 7);
+assert.deepEqual(messageValues, ["after-error"]);
+messageSockets[1].onopen({});
+const transportError = { type: "error", marker: "transport-identity" };
+console.error = () => {};
+try {
+  messageSockets[1].onerror(transportError);
+} finally {
+  console.error = previousConsoleError;
+}
+assert.equal(messageErrors.at(-1), transportError);
+invoke_method("close", messageClient);
+
+// The legacy mapper still reaches the parser through the public client path.
+const mapperTags = init_tags(["class-mapper", "Track", "message", "time"]);
+const mapperPrototype = decode_track(new CalcitMap()
+  .assoc(mapperTags.message, "")
+  .assoc(mapperTags.time, ""));
+let mappedSocket;
+const mappedValues = [];
+const mappedClient = create_client_with_$x_("ws://mapped-message.test",
+  new CalcitMap()
+    .assoc(mapperTags["class-mapper"], new CalcitMap().assoc(mapperTags.Track, mapperPrototype))
+    .assoc(errorTags["on-data"], value => mappedValues.push(value)),
+  url => (mappedSocket = new FakeSocket(url)));
+mappedSocket.onopen({});
+mappedSocket.onmessage({ data: "%{} Track (:message |hello) (:time |now)" });
+assert.equal(mappedValues.length, 1);
+assert.equal(mappedValues[0].structRef, Track);
+assert.deepEqual(mappedValues[0].values, ["hello", "now"]);
+invoke_method("close", mappedClient);
+
+const exerciseCallbackFailure = (throwInData) => {
+  const original = new Error(throwInData ? "application-failure" : "error-handler-failure");
+  let errorCalls = 0;
+  let socket;
+  const client = create_client_with_$x_("ws://callback-failure.test",
+    new CalcitMap()
+      .assoc(errorTags["on-data"], () => { if (throwInData) throw original; })
+      .assoc(errorTags["on-error"], () => { errorCalls += 1; throw original; }),
+    url => (socket = new FakeSocket(url)));
+  socket.onopen({});
+  assert.throws(() => socket.onmessage({ data: throwInData ? "do |ok" : "{" }), error => error === original);
+  assert.equal(errorCalls, throwInData ? 0 : 1);
+  invoke_method("close", client);
+};
+exerciseCallbackFailure(true);
+exerciseCallbackFailure(false);
+
+for (const invalidHandler of [null, 42]) {
+  let socket;
+  let calls = 0;
+  const client = create_client_with_$x_("ws://unhandled-message.test",
+    new CalcitMap()
+      .assoc(errorTags["on-data"], () => { calls += 1; })
+      .assoc(errorTags["on-error"], invalidHandler),
+    url => (socket = new FakeSocket(url)));
+  socket.onopen({});
+  assert.throws(() => socket.onmessage({ data: privateFrame }), /\[ws-edn\/message\] invalid Cirru EDN/);
+  assert.throws(() => socket.onmessage({ data: null }), /expected a text WebSocket message/);
+  assert.equal(calls, 0);
+  invoke_method("close", client);
+}
+console.log("Checked message notification, privacy, callback identity and stale-generation contracts passed");
