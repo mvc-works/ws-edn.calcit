@@ -87,8 +87,8 @@
     'ws-edn.client $ %{} 'FileEntry
       :defs $ {}
         '*global-client $ %{} 'CodeEntry
-          :doc "|Global atom that stores the WebSocket instance. Used internally to track the current connection."
-          :code $ quote $ defatom *global-client (Option :none)
+          :doc "|Global Ref that stores the WebSocket instance. Used internally to track the current connection."
+          :code $ quote $ defref *global-client (Option :none)
           :examples $ []
           :schema $ :: 'Ref $ :: 'calcit.core/Option 'ws-edn.client/WsClient
         'BrowserMessageEventHost $ %{} 'CodeEntry
@@ -423,7 +423,7 @@
                 WsClientState :generation 0 :phase (WsConnectionPhase :closed) :socket $ Option :none
               fn (value)
                 let
-                    rejected? $ atom false
+                    rejected? $ ref false
                   try (client-state-handle value)
                     fn (error) (assert= "|[ws-edn] expected a WsClient state handle" error) (reset! rejected? true)
                   assert |invalid-handle-rejected $ deref rejected?
@@ -527,9 +527,9 @@
           :doc "|Creates a client with an injected socket factory, primarily for tests and adapters."
           :code $ quote $ defn create-client-with! (url options socket-factory)
             let
-                state-ref $ atom $ WsClientState :generation 0 :phase (%:: WsConnectionPhase :closed) :socket (Option :none)
-                on-data-ref $ atom $ assert-type (Option :none) (:: 'Option 'Fn)
-                lifecycle-cleanup-ref $ atom $ assert-type (Option :none) (:: 'Option 'Fn)
+                state-ref $ ref $ WsClientState :generation 0 :phase (%:: WsConnectionPhase :closed) :socket (Option :none)
+                on-data-ref $ ref $ assert-type (Option :none) (:: 'Option 'Fn)
+                lifecycle-cleanup-ref $ ref $ assert-type (Option :none) (:: 'Option 'Fn)
                 retry-base-ms $ match (client-option-number options :retry-base-ms)
                   (:some value) value
                   (:none) 500
@@ -539,11 +539,11 @@
                 retry-jitter $ match (client-option-number options :retry-jitter)
                   (:some value) value
                   (:none) 0.2
-                retry-state-ref $ atom $ retry-backoff retry-base-ms retry-max-ms retry-jitter
-                reconnect-timer-ref $ atom $ assert-type (Option :none) (:: 'Option 'Number)
+                retry-state-ref $ ref $ retry-backoff retry-base-ms retry-max-ms retry-jitter
+                reconnect-timer-ref $ ref $ assert-type (Option :none) (:: 'Option 'Number)
                 heartbeat-timeout-ms $ client-option-number options :heartbeat-timeout-ms
-                heartbeat-lease-ref $ atom $ assert-type (Option :none) (:: 'Option 'cumulo-util.realtime/HeartbeatLease)
-                heartbeat-timer-ref $ atom $ assert-type (Option :none) (:: 'Option 'Number)
+                heartbeat-lease-ref $ ref $ assert-type (Option :none) (:: 'Option 'cumulo-util.realtime/HeartbeatLease)
+                heartbeat-timer-ref $ ref $ assert-type (Option :none) (:: 'Option 'Number)
                 client $ %{} WsClient (:state state-ref) (:url url) (:options options) (:on-data on-data-ref) (:socket-factory socket-factory) (:lifecycle-cleanup lifecycle-cleanup-ref) (:retry-state retry-state-ref) (:reconnect-timer reconnect-timer-ref) (:heartbeat-timeout-ms heartbeat-timeout-ms) (:heartbeat-lease heartbeat-lease-ref) (:heartbeat-timer heartbeat-timer-ref)
               match (client-option-callback options :on-data)
                 (:some callback)
@@ -790,13 +790,13 @@
     'ws-edn.server $ %{} 'FileEntry
       :defs $ {}
         '*global-connections $ %{} 'CodeEntry
-          :doc "|Global atom that stores active WebSocket connections as a map of session-id to socket."
-          :code $ quote $ defatom *global-connections ({})
+          :doc "|Global Ref that stores active WebSocket connections as a map of session-id to socket."
+          :code $ quote $ defref *global-connections ({})
           :examples $ []
           :schema $ :: 'Ref $ :: 'Map 'String 'ws-edn.server/NodeWebSocketHost
         '*proxied-data-listener $ %{} 'CodeEntry
-          :doc "|Global atom that stores the data listener callback function. Used internally for message handling."
-          :code $ quote $ defatom *proxied-data-listener (Option :none)
+          :doc "|Global Ref that stores the data listener callback function. Used internally for message handling."
+          :code $ quote $ defref *proxied-data-listener (Option :none)
           :examples $ []
           :schema $ :: 'Ref $ :: 'calcit.core/Option
             :: 'Fn $ {} (:return 'Unit)
