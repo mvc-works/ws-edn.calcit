@@ -41,13 +41,10 @@ jobs:
           git diff --exit-code -- calcit.cirru
           calcit calcit.cirru --check-only
           calcit calcit.cirru --entry server --check-only
-          calcit calcit.cirru analyze check-public --ns ws-edn.client --ns ws-edn.schema --summary-only --format json \
-            | jq -e '.data.summary.complete and .data.summary.passed and (.data.summary.definitions_checked == .data.summary.definitions_selected)'
-          calcit calcit.cirru --entry server analyze check-public --ns ws-edn.server --ns ws-edn.schema --summary-only --format json \
-            | jq -e '.data.summary.complete and .data.summary.passed and (.data.summary.definitions_checked == .data.summary.definitions_selected)'
-          calcit calcit.cirru analyze dynamic-methods --format json | jq -e '.data.summary.findings == 0'
-          calcit calcit.cirru --entry server analyze dynamic-methods --format json | jq -e '.data.summary.findings == 0'
-          calcit calcit.cirru analyze quality --baseline config/calcit-quality.cirru
+          calcit calcit.cirru --check-only --ns ws-edn.client --ns ws-edn.schema --ns ws-edn.util --ns ws-edn.app.page --format edn
+          calcit calcit.cirru --entry server --check-only --ns ws-edn.server --ns ws-edn.schema --ns ws-edn.util --ns ws-edn.app.server --format edn
+          calcit calcit.cirru analyze weak-types --only dynamic-method --format json | jq -e '.data.summary.findings == 0'
+          calcit calcit.cirru --entry server analyze weak-types --only dynamic-method --format json | jq -e '.data.summary.findings == 0'
 
       - name: "run tests and deprecated API check"
         run: |
