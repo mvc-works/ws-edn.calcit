@@ -4,11 +4,16 @@ ws-edn in calcit-js
 
 ### Usages
 
-0.0.34 对齐 Calcit/procs `0.29.0-alpha.6`、已发布 cumulo-util `0.0.25`
-与 JS-FFI `0.2.1-alpha.13`，为 Calcium/Reel 消除传递版本冲突。
-`when-let` 的旧 `some?` 调用迁移为等价的 `non-nil?`；false、0 和空集合
-仍作为非 nil 值。公开接口、原测试和严格 Caps／质量门禁保持不变；完整 CI
-通过后再发版。
+0.0.38 对齐正式 Calcit/procs `0.29.0`、cumulo-util `0.0.27`
+与 JS-FFI `0.2.1`。页面和服务端入口明确使用 `:js` mode，分别保留
+browser / node target；心跳与重连计时器改为直接调用 `set-timeout! callback delay`，
+不再使用废弃的 `flipped`。公开接口、业务语义及原有测试保持不变。
+
+CI 使用当前 `--check-only --ns` 及 `analyze weak-types` 入口；旧质量基线在
+正式版上通过后退役，不再维护重复预算。20 项附属测试、生成 JS 的生命周期及
+消息回归、两项 Node 宿主测试、真实双客户端 EDN 往返和 Vite 构建已在本地通过。
+仍有 21 个 partial 类型定义（共 67 个），开放协议及宿主边界未假装清零。
+网络测试不覆盖 TLS 或真实浏览器页面；发布仍须等待远端 CI。
 
 The server and browser connection snippets require their Node/WebSocket hosts, so
 they are marked `cirru.no-check`. CI validates both generated entries and runs the
@@ -84,7 +89,7 @@ let
 Each reconnect advances an internal generation before replacing the host
 socket. Late `open`, `message`, `close`, and `error` events from an older socket
 are ignored, so a stale callback cannot close or feed data into the active
-connection. Browser clients now reuse `Cumulo/cumulo-util.calcit` `0.0.19`:
+connection. Browser clients reuse `Cumulo/cumulo-util.calcit`:
 visibility and online recovery signals reconnect only after the active client has
 reached `:closed`. This preserves single-flight connection attempts, and `.close`
 removes the lifecycle listeners and timers. Protocol-specific heartbeat messages
@@ -94,7 +99,7 @@ and resync hooks still belong to the caller.
 `.connected?`、`.send`、`.reconnect` 与 `.close` 方法；旧的单例函数继续兼容。
 每次重连会先提升 generation，再替换宿主 WebSocket，因此旧连接迟到的
 `open/message/close/error` 事件不会污染当前连接。浏览器端现复用
-`Cumulo/cumulo-util.calcit` `0.0.19`：可见性和 online 恢复信号只会在 client
+`Cumulo/cumulo-util.calcit`：可见性和 online 恢复信号只会在 client
 已经进入 `:closed` 后触发连接，保持 single-flight；`.close` 会清理 lifecycle
 listener 与 timer。
 
@@ -141,12 +146,12 @@ Keep open protocol payloads as `Dynamic` only at the WebSocket/JS boundary and
 decode them into a named Struct or Enum as soon as their shape is known. Do not
 reintroduce the removed `calcit-test`, `lilac`, or `memof` modules.
 
-The module snapshot targets Calcit 0.28.0. Its local `when-let` macro declares
+The module snapshot targets Calcit 0.29.0. Its local `when-let` macro declares
 an explicit syntax/expansion contract. `ws-send!` always returns `Unit`; the
 method-oriented `.send` returns `WsSendOutcome` instead of leaking JavaScript
 `WebSocket.send` results.
 
-模块 Snapshot 已迁移到 Calcit 0.28.0；本地 `when-let` 明确声明 syntax 与
+模块 Snapshot 已迁移到 Calcit 0.29.0；本地 `when-let` 明确声明 syntax 与
 expansion。`ws-send!` 始终返回 `Unit`，方法形式 `.send` 返回
 `WsSendOutcome`，不会把 JavaScript `WebSocket.send` 的返回值泄漏到公开 API。
 
@@ -185,7 +190,7 @@ JavaScript `Error` 交给现有 `:on-error`，且不调用 `:on-data`。错误�
 消息契约，`yarn check:client-generation` 用公开 socket factory 验证通知次数、
 错误脱敏、回调异常身份和生命周期隔离。
 
-### 0.28 类型边界迁移
+### 0.28 类型边界迁移（历史记录）
 
 Calcit CLI 与 `@calcit/procs` 对齐到 0.28.0，JS-FFI 声明升级到
 0.2.1-alpha.11。Node HTTP/WebSocket 事件与可选 callback 使用源码类型 `Fn`；
@@ -199,7 +204,7 @@ generation/lifecycle 回归，覆盖旧 generation 回调隔离、重试、heart
 cleanup 与 singleton Ref。已有 `fn?` 证明及 Fn 参数合同消除了两处强制转换；
 callback 保留开放 arity，没有缩窄为单一回调签名。
 
-当前正式工具链通过 12 项附属测试、两个入口严格检查、客户端/共享公开定义
+当时的正式工具链通过 12 项附属测试、两个入口严格检查、客户端/共享公开定义
 34/34、服务端/共享公开定义 23/23，以及两项 Node Buffer/Date 回归。
 随机本地端口的真实双客户端网络回归确认 EDN 往返、不同 String session ID 和连接清理。
 服务端调用 nanoid 后校验 String，不再把函数对象当作 session ID；四处缺省 callback

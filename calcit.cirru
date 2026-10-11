@@ -3,11 +3,11 @@
   :about "|Machine-generated snapshot. Do not edit directly — changes will be overwritten. Use `calcit query` to inspect and `calcit edit`/`calcit tree` to modify. Run `calcit docs agents --contract` before mutations; use `--full` for first orientation or changed contract digest. Manual edits must follow format and schema conventions, then run `calcit edit format`."
   :package |ws-edn
   :entries $ {}
-    :default $ {} (:description |) (:init-fn 'ws-edn.app.page/main!) (:mode :native) (:reload-fn 'ws-edn.app.page/reload!) (:target :browser)
+    :default $ {} (:description |) (:init-fn 'ws-edn.app.page/main!) (:mode :js) (:reload-fn 'ws-edn.app.page/reload!) (:target :browser)
       :feature-policy $ {}
       :modules $ [] |cumulo-util.calcit/ |js-ffi/
       :type-slots $ {}
-    :server $ {} (:description |) (:init-fn 'ws-edn.app.server/main!) (:mode :native) (:reload-fn 'ws-edn.app.server/reload!) (:target :node)
+    :server $ {} (:description |) (:init-fn 'ws-edn.app.server/main!) (:mode :js) (:reload-fn 'ws-edn.app.server/reload!) (:target :node)
       :feature-policy $ {}
       :modules $ []
       :type-slots $ {}
@@ -660,28 +660,30 @@
                       state-ref $ :state client
                       now-ms $ checked-now-ms
                       lease $ heartbeat-lease now-ms timeout-ms
-                      timer $ flipped set-timeout! timeout-ms $ fn ()
-                        match @timer-ref
-                          (:some active-timer)
-                            when (= active-timer timer)
-                              reset! timer-ref $ Option :none
-                              let
-                                  state $ assert-type (deref state-ref) WsClientState
-                                  current-now $ checked-now-ms
-                                when
-                                  and (generation-current? state generation)
-                                    = (WsConnectionPhase :open) (:phase state)
-                                  match @lease-ref
-                                    (:some current-lease)
-                                      let
-                                          current-lease $ assert-type current-lease 'cumulo-util.realtime/HeartbeatLease
-                                        when (current-lease .expired? current-now)
-                                          match (:socket state)
-                                            (:some socket) (.!close socket)
-                                            (:none) &unit
-                                    (:none) &unit
-                          (:none) &unit
-                        , &unit
+                      timer $ set-timeout!
+                        fn ()
+                          match @timer-ref
+                            (:some active-timer)
+                              when (= active-timer timer)
+                                reset! timer-ref $ Option :none
+                                let
+                                    state $ assert-type (deref state-ref) WsClientState
+                                    current-now $ checked-now-ms
+                                  when
+                                    and (generation-current? state generation)
+                                      = (WsConnectionPhase :open) (:phase state)
+                                    match @lease-ref
+                                      (:some current-lease)
+                                        let
+                                            current-lease $ assert-type current-lease 'cumulo-util.realtime/HeartbeatLease
+                                          when (current-lease .expired? current-now)
+                                            match (:socket state)
+                                              (:some socket) (.!close socket)
+                                              (:none) &unit
+                                      (:none) &unit
+                            (:none) &unit
+                          , &unit
+                        , timeout-ms
                     reset! lease-ref $ Option :some lease
                     reset! timer-ref $ Option :some timer
                     , &unit
@@ -705,14 +707,16 @@
                         retry-state .next $ checked-random-number
                         , 'cumulo-util.realtime/RetryStep
                       delay-ms $ :delay-ms step
-                      timer $ flipped set-timeout! delay-ms $ fn ()
-                        reset! timer-ref $ Option :none
-                        let
-                            state $ assert-type (deref state-ref) WsClientState
-                          when
-                            = (WsConnectionPhase :backoff) (:phase state)
-                            connect-client! client
-                        , &unit
+                      timer $ set-timeout!
+                        fn ()
+                          reset! timer-ref $ Option :none
+                          let
+                              state $ assert-type (deref state-ref) WsClientState
+                            when
+                              = (WsConnectionPhase :backoff) (:phase state)
+                              connect-client! client
+                          , &unit
+                        , delay-ms
                     reset! retry-ref $ :next step
                     let
                         state $ assert-type (deref state-ref) WsClientState
