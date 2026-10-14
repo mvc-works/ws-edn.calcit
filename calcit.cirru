@@ -818,7 +818,7 @@
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns ws-edn.client
           :require
-            [] ws-edn.util :refer $ [] when-let parse-data stringify-data
+            ws-edn.util :refer $ when-let parse-data stringify-data
             cumulo-util.activity :refer $ watch-browser-lifecycle!
             cumulo-util.realtime :refer $ retry-backoff heartbeat-lease
             js-ffi.browser :refer $ set-timeout!
