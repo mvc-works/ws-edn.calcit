@@ -4,8 +4,10 @@ ws-edn in calcit-js
 
 ### Usages
 
-0.0.38 对齐正式 Calcit/procs `0.29.0`、cumulo-util `0.0.27`
-与 JS-FFI `0.2.1`。页面和服务端入口明确使用 `:js` mode，分别保留
+候选 0.0.39 对齐正式 Calcit/procs `0.29.3`、cumulo-util `0.0.28`
+与 JS-FFI `0.2.3`，供下游收敛严格依赖版本。新版本保留原公开接口、消息格式、
+连接及重连行为；Yarn 新包安装隔离期按既有授权统一为一小时，不设置逐版本豁免。
+页面和服务端入口明确使用 `:js` mode，分别保留
 browser / node target；心跳与重连计时器改为直接调用 `set-timeout! callback delay`，
 不再使用废弃的 `flipped`。公开接口、业务语义及原有测试保持不变。
 
@@ -146,12 +148,12 @@ Keep open protocol payloads as `Dynamic` only at the WebSocket/JS boundary and
 decode them into a named Struct or Enum as soon as their shape is known. Do not
 reintroduce the removed `calcit-test`, `lilac`, or `memof` modules.
 
-The module snapshot targets Calcit 0.29.0. Its local `when-let` macro declares
+The module snapshot targets Calcit 0.29.3. Its local `when-let` macro declares
 an explicit syntax/expansion contract. `ws-send!` always returns `Unit`; the
 method-oriented `.send` returns `WsSendOutcome` instead of leaking JavaScript
 `WebSocket.send` results.
 
-模块 Snapshot 已迁移到 Calcit 0.29.0；本地 `when-let` 明确声明 syntax 与
+模块 Snapshot 已迁移到 Calcit 0.29.3；本地 `when-let` 明确声明 syntax 与
 expansion。`ws-send!` 始终返回 `Unit`，方法形式 `.send` 返回
 `WsSendOutcome`，不会把 JavaScript `WebSocket.send` 的返回值泄漏到公开 API。
 
