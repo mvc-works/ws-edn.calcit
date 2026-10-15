@@ -42,6 +42,7 @@ jobs:
           git diff --exit-code -- calcit.cirru
           calcit calcit.cirru --check-only
           calcit calcit.cirru --entry server --check-only
+          calcit calcit.cirru fix --workflow strict --verify --format edn
           calcit calcit.cirru --check-only --ns ws-edn.client --ns ws-edn.schema --ns ws-edn.util --ns ws-edn.app.page --format edn
           calcit calcit.cirru --entry server --check-only --ns ws-edn.server --ns ws-edn.schema --ns ws-edn.util --ns ws-edn.app.server --format edn
           calcit calcit.cirru analyze weak-types --only dynamic-method --format json | jq -e '.data.summary.findings == 0'

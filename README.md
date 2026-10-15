@@ -16,6 +16,8 @@ CI 使用当前 `--check-only --ns` 及 `analyze weak-types` 入口；旧质量�
 消息回归、三项 Node 宿主测试、真实双客户端 EDN 往返和 Vite 构建已在本地通过。
 开放协议及宿主边界未假装清零；formatter 仍报告三处待审类型槽。
 原网络测试不覆盖 TLS 或真实浏览器页面；本轮临时 TLS 验证见下文，发布仍须等待远端 CI。
+CI 在原校验步骤使用现有 `calcit fix --workflow strict --verify` 门禁，
+保留原分入口检查，不引入额外 checker 或预算脚本。
 
 本轮六处底层 Map 读取改用公开 `get` 的 Option 合同，以无副作用的 nil
 fallback 保留缺失和存在 nil 的原行为，原 Number/String/Fn 检查不变。
