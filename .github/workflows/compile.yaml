@@ -22,6 +22,7 @@ jobs:
       - uses: calcit-lang/setup-calcit@v1.5.0
         with:
           tools: calcit,caps
+          deps-file: deps.cirru
 
       - name: Enable Corepack
         run: |
