@@ -948,7 +948,7 @@
             maintain-socket! (unsafe-coerce raw-socket 'NodeWebSocketHost) options
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Unit)
-            :args $ [] 'Dynamic 'Dynamic
+            :args $ [] 'Dynamic $ :: 'Map 'Tag 'Dynamic
             :features $ #{} :js-ffi
         'maintain-socket! $ %{} 'CodeEntry
           :doc "|Registers and maintains a WebSocket connection. Sets up event handlers for message, close, and error events. Accepts options map with :on-open, :on-close, :on-data, :on-error, and :class-mapper callbacks."
@@ -1014,7 +1014,7 @@
               , &unit
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Unit)
-            :args $ [] 'ws-edn.server/NodeWebSocketHost 'Dynamic
+            :args $ [] 'ws-edn.server/NodeWebSocketHost $ :: 'Map 'Tag 'Dynamic
             :features $ #{} :js-ffi
         'new-session-id! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn new-session-id! ()
@@ -1044,7 +1044,7 @@
                 Option :none
           :examples $ []
           :schema $ :: 'Fn $ {}
-            :args $ [] 'Dynamic 'Tag
+            :args $ [] (:: 'Map 'Tag 'Dynamic) 'Tag
             :features $ #{} :js-ffi
             :return $ :: 'calcit.core/Option 'Fn
           :tests $ []
@@ -1073,9 +1073,42 @@
               if (string? value) (Option :some value) (Option :none)
           :examples $ []
           :schema $ :: 'Fn $ {}
-            :args $ [] 'Dynamic 'Tag
+            :args $ [] (:: 'Map 'Tag 'Dynamic) 'Tag
             :features $ #{} :js-ffi
             :return $ :: 'calcit.core/Option 'String
+          :tests $ []
+            %{} 'TestEntry (:name |preserves-empty-and-unicode-string-options)
+              :code $ quote $ do
+                assert= (Option :some |)
+                  server-option-string
+                    {} $ :cert |
+                    , :cert
+                assert= (Option :some "|证书🌱.pem")
+                  server-option-string
+                    {} $ :cert "|证书🌱.pem"
+                    , :cert
+              :tags $ #{} :server :unit
+            %{} 'TestEntry (:name |missing-and-non-string-options-stay-none)
+              :code $ quote $ do
+                assert= (Option :none)
+                  server-option-string ({}) :cert
+                assert= (Option :none)
+                  server-option-string
+                    {} $ :cert nil
+                    , :cert
+                assert= (Option :none)
+                  server-option-string
+                    {} $ :cert 42
+                    , :cert
+                assert= (Option :none)
+                  server-option-string
+                    {} $ :cert false
+                    , :cert
+                assert= (Option :none)
+                  server-option-string
+                    {} $ :cert $ fn () 1
+                    , :cert
+              :tags $ #{} :server :unit
         'write-health-response! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn write-health-response! (raw-response)
             let
@@ -1186,7 +1219,7 @@
               :on-listening $ fn () $ println "|Server listening on 8080"
               :on-data $ fn (sid data) (println "|Received from" sid : data)
           :schema $ :: 'Fn $ {} (:return 'NodeWebSocketServerHost)
-            :args $ [] 'Number 'Dynamic
+            :args $ [] 'Number $ :: 'Map 'Tag 'Dynamic
             :features $ #{} :js-ffi
         'wss-set-on-data! $ %{} 'CodeEntry
           :doc "|Sets the message handler for incoming WebSocket data across all connections. Handler receives session-id and parsed Cirru EDN data."

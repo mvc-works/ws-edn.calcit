@@ -4,7 +4,7 @@ ws-edn in calcit-js
 
 ### Usages
 
-候选 0.0.39 对齐正式 Calcit/procs `0.29.3`、cumulo-util `0.0.28`
+本模块对齐正式 Calcit/procs `0.29.3`、cumulo-util `0.0.28`
 与 JS-FFI `0.2.3`，供下游收敛严格依赖版本。新版本保留原公开接口、消息格式、
 连接及重连行为；Yarn 新包安装隔离期按既有授权统一为一小时，不设置逐版本豁免。
 页面和服务端入口明确使用 `:js` mode，分别保留
@@ -12,10 +12,16 @@ browser / node target；心跳与重连计时器改为直接调用 `set-timeout!
 不再使用废弃的 `flipped`。公开接口、业务语义及原有测试保持不变。
 
 CI 使用当前 `--check-only --ns` 及 `analyze weak-types` 入口；旧质量基线在
-正式版上通过后退役，不再维护重复预算。20 项附属测试、生成 JS 的生命周期及
+正式版上通过后退役，不再维护重复预算。22 项附属测试、生成 JS 的生命周期及
 消息回归、两项 Node 宿主测试、真实双客户端 EDN 往返和 Vite 构建已在本地通过。
 仍有 21 个 partial 类型定义（共 67 个），开放协议及宿主边界未假装清零。
 网络测试不覆盖 TLS 或真实浏览器页面；发布仍须等待远端 CI。
+
+客户端和服务端的 options 都使用 `Map<Tag,Dynamic>`：容器与键有明确合同，
+值继续保存异构回调、数值与文本。服务端入口、连接维护和选项读取使用同一容器类型，
+不会先擦除成 Dynamic 再读取 Map。缺失或类型不符的字符串/回调选项仍返回 none，
+空字符串和 Unicode 文本原样保留；回调 arity 与运行时授权不因容器类型而得到证明。
+字符串与回调定义附带的测试由现有 native/生成 JS 流程回放，不增加独立运行器。
 
 The server and browser connection snippets require their Node/WebSocket hosts, so
 they are marked `cirru.no-check`. CI validates both generated entries and runs the
