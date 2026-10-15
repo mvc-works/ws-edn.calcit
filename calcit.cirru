@@ -53,7 +53,11 @@
           :code $ quote $ defn main! () (println |started) (load-console-formatter!)
             wss-serve! 9001 $ {}
               :on-listening $ fn () $ println "|server listening"
-              :on-open $ fn (sid socket) (println |opened sid)
+              :on-open $ fn (sid socket)
+                hint-fn $ {}
+                  :args $ [] 'String 'ws-edn.server/NodeWebSocketHost
+                  :return 'Unit
+                println |opened sid
                 wss-send! sid $ : op "|initial message"
               :on-data $ fn (sid data) (js/console.log "|just data" sid data)
               :on-close $ fn (sid event) (println |close sid)
@@ -62,7 +66,12 @@
               :class-mapper $ {} $ :Track Track
             js/setInterval
               fn () (println |heartbeat)
-                wss-each! $ fn (sid socket) (js/console.log sid)
+                wss-each! $ fn (sid socket)
+                  hint-fn $ {}
+                    :args $ [] 'String 'ws-edn.server/NodeWebSocketHost
+                    :return 'Unit
+                    :features $ #{} :js-ffi
+                  js/console.log sid
                   wss-send! sid $ : message "|event 2s"
                   wss-send! sid $ Track :message "|from server" :time $ current-iso-time!
               , 2000
@@ -277,7 +286,7 @@
         'client-option-callback $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn client-option-callback (options key)
             let
-                value $ &map:get options key
+                value $ .unwrap-or (get options key) nil
               if (fn? value) (Option :some value) (Option :none)
           :examples $ []
           :schema $ :: 'Fn $ {}
@@ -320,7 +329,7 @@
         'client-option-number $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn client-option-number (options key)
             let
-                value $ &map:get options key
+                value $ .unwrap-or (get options key) nil
               if (number? value) (Option :some value) (Option :none)
           :examples $ []
           :schema $ :: 'Fn $ {}
@@ -481,7 +490,9 @@
                                     :args $ [] 'Dynamic
                                     :return 'Unit
                                 message-event $ unsafe-coerce event 'BrowserMessageEventHost
-                                class-mapper $ &map:get (:options client) :class-mapper
+                                class-mapper $ .unwrap-or
+                                  get (:options client) :class-mapper
+                                  , nil
                                 parsed $ parse-client-message (.-data message-event)
                                   fn (text) (parse-cirru-edn text class-mapper)
                               match parsed
@@ -524,7 +535,7 @@
           :doc "|Creates a client with an injected socket factory, primarily for tests and adapters."
           :code $ quote $ defn create-client-with! (url options socket-factory)
             let
-                state-ref $ ref $ WsClientState :generation 0 :phase (%:: WsConnectionPhase :closed) :socket (Option :none)
+                state-ref $ ref $ WsClientState :generation 0 :phase (WsConnectionPhase :closed) :socket (Option :none)
                 on-data-ref $ ref $ assert-type (Option :none) (:: 'Option 'Fn)
                 lifecycle-cleanup-ref $ ref $ assert-type (Option :none) (:: 'Option 'Fn)
                 retry-base-ms $ match (client-option-number options :retry-base-ms)
@@ -827,7 +838,7 @@
         'Track $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defstruct Track (:message 'String) (:time 'String)
           :examples $ []
-          :schema $ :: 'Struct
+          :schema $ :: 'StructDef
         'decode-track $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn decode-track (value) (decode-map-as value Track)
           :examples $ []
@@ -930,7 +941,7 @@
         'log-request-url! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn log-request-url! (raw-request)
             let
-                request $ unsafe-coerce raw-request 'NodeHttpRequestHost
+                request $ js-cast raw-request 'NodeHttpRequestHost
               js/console.log $ .-url request
               , &unit
           :examples $ []
@@ -945,7 +956,7 @@
             :features $ #{} :js-ffi
         'maintain-host-socket! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn maintain-host-socket! (raw-socket options)
-            maintain-socket! (unsafe-coerce raw-socket 'NodeWebSocketHost) options
+            maintain-socket! (js-cast raw-socket 'NodeWebSocketHost) options
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Unit)
             :args $ [] 'Dynamic $ :: 'Map 'Tag 'Dynamic
@@ -959,12 +970,12 @@
                   (:some callback)
                     Option :some $ unsafe-coerce callback $ :: 'Fn
                       {}
-                        :args $ [] 'String 'JsObject
+                        :args $ [] 'String 'Number
                         :return 'Unit
                   (:none)
                     assert-type (Option :none)
                       :: 'Option $ :: 'Fn $ {}
-                        :args $ [] 'String 'JsObject
+                        :args $ [] 'String 'Number
                         :return 'Unit
                 on-error $ match (server-option-callback options :on-error)
                   (:some callback)
@@ -995,18 +1006,27 @@
                       :return 'Unit
                 (:none)
                   reset! *proxied-data-listener $ Option :none
-              .!on socket |message $ fn (raw-data binary?)
+              .on socket |message $ fn (raw-data binary?)
                 match @*proxied-data-listener
                   (:some callback)
-                    callback sid $ parse-cirru-edn (node-data-string raw-data) (&map:get options :class-mapper)
+                    callback sid $ parse-cirru-edn (node-data-string raw-data)
+                      .unwrap-or (get options :class-mapper) nil
                   (:none) &unit
                 , &unit
-              .!on socket |close $ fn (event binary?) (swap! *global-connections dissoc sid)
+              .on socket |close $ fn (event binary?)
+                hint-fn $ {}
+                  :args $ [] 'Number 'JsObject
+                  :return 'Unit
+                swap! *global-connections dissoc sid
                 match on-close
                   (:some callback) (callback sid event)
                   (:none) &unit
                 , &unit
-              .!on socket |error $ fn (error) (swap! *global-connections dissoc sid)
+              .on socket |error $ fn (error)
+                hint-fn $ {}
+                  :args $ [] 'JsObject
+                  :return 'Unit
+                swap! *global-connections dissoc sid
                 match on-error
                   (:some callback) (callback error)
                   (:none) &unit
@@ -1038,10 +1058,8 @@
         'server-option-callback $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn server-option-callback (options key)
             let
-                value $ &map:get options key
-              if (fn? value)
-                Option :some $ unsafe-coerce value 'Fn
-                Option :none
+                value $ .unwrap-or (get options key) nil
+              if (fn? value) (Option :some value) (Option :none)
           :examples $ []
           :schema $ :: 'Fn $ {}
             :args $ [] (:: 'Map 'Tag 'Dynamic) 'Tag
@@ -1069,7 +1087,7 @@
         'server-option-string $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn server-option-string (options key)
             let
-                value $ &map:get options key
+                value $ .unwrap-or (get options key) nil
               if (string? value) (Option :some value) (Option :none)
           :examples $ []
           :schema $ :: 'Fn $ {}
@@ -1112,9 +1130,9 @@
         'write-health-response! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn write-health-response! (raw-response)
             let
-                response $ unsafe-coerce raw-response 'NodeHttpResponseHost
-              .!write-head response 200
-              .!end response "|WSS Server"
+                response $ js-cast raw-response 'NodeHttpResponseHost
+              .write-head response 200
+              .end response "|WSS Server"
               , &unit
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Unit)
@@ -1190,25 +1208,28 @@
                           let
                               ssl-options $ &js-object :key (fs/readFileSync key-file) :cert $ fs/readFileSync cert-file
                               raw-server $ https/createServer ssl-options $ fn (req res) (write-health-response! res)
-                              server $ unsafe-coerce raw-server 'NodeHttpServerHost
-                            .!add-listener server |upgrade $ fn (req res head) (log-request-url! req)
-                            .!on server |error $ fn (error) (log-server-error! error)
-                            .!listen server port $ fn () $ println "|server at" port
-                            unsafe-coerce
+                              server $ js-cast raw-server 'NodeHttpServerHost
+                            .add-listener server |upgrade $ fn (req res head) (log-request-url! req)
+                            .on server |error $ fn (error) (log-server-error! error)
+                            .listen server port $ fn () $ println "|server at" port
+                            js-cast
                               new WebSocketServer $ &js-object :server server :path |/
                               , 'NodeWebSocketServerHost
                         (:none) (raise "|missing SSL key")
                     (:none)
-                      unsafe-coerce
+                      js-cast
                         new WebSocketServer $ &js-object :port port
                         , 'NodeWebSocketServerHost
-                .!on wss |connection $ fn (socket req) (maintain-host-socket! socket options) &unit
-                .!on wss |listening $ fn ()
+                .on wss |connection $ fn (socket req) (maintain-host-socket! socket options) &unit
+                .on wss |listening $ fn ()
                   match on-listening
                     (:some callback) (callback)
                     (:none) &unit
                   , &unit
-                .!on wss |error $ fn (error)
+                .on wss |error $ fn (error)
+                  hint-fn $ {}
+                    :args $ [] 'JsObject
+                    :return 'Unit
                   match on-error
                     (:some callback) (callback error)
                     (:none) (log-server-error! error)
@@ -1257,8 +1278,8 @@
           :doc "|Returns the current JavaScript time as an ISO string through the typed Date adapter."
           :code $ quote $ defn current-iso-time! ()
             let
-                date $ unsafe-coerce (new js/Date) 'DateHost
-                text $ .!toISOString date
+                date $ js-cast (new js/Date) 'DateHost
+                text $ .to-iso-string date
               if (string? text) text $ raise |Expected-String-ISO-time
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'String)
