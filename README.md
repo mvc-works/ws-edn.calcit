@@ -4,7 +4,7 @@ ws-edn in calcit-js
 
 ### Usages
 
-本模块对齐正式 Calcit/procs `0.29.3`、cumulo-util `0.0.28`
+本轮将 Calcit/procs 配对升级到正式 `0.30.0`，保留 cumulo-util `0.0.28`
 与 JS-FFI `0.2.3`，供下游收敛严格依赖版本。新版本保留原公开接口、消息格式、
 连接及重连行为；Yarn 新包安装隔离期按既有授权统一为一小时，不设置逐版本豁免。
 页面和服务端入口明确使用 `:js` mode，分别保留
@@ -13,9 +13,22 @@ browser / node target；心跳与重连计时器改为直接调用 `set-timeout!
 
 CI 使用当前 `--check-only --ns` 及 `analyze weak-types` 入口；旧质量基线在
 正式版上通过后退役，不再维护重复预算。22 项附属测试、生成 JS 的生命周期及
-消息回归、两项 Node 宿主测试、真实双客户端 EDN 往返和 Vite 构建已在本地通过。
-仍有 21 个 partial 类型定义（共 67 个），开放协议及宿主边界未假装清零。
-网络测试不覆盖 TLS 或真实浏览器页面；发布仍须等待远端 CI。
+消息回归、三项 Node 宿主测试、真实双客户端 EDN 往返和 Vite 构建已在本地通过。
+开放协议及宿主边界未假装清零；formatter 仍报告三处待审类型槽。
+原网络测试不覆盖 TLS 或真实浏览器页面；本轮临时 TLS 验证见下文，发布仍须等待远端 CI。
+
+本轮六处底层 Map 读取改用公开 `get` 的 Option 合同，以无副作用的 nil
+fallback 保留缺失和存在 nil 的原行为，原 Number/String/Fn 检查不变。
+`Track` 的定义对象声明更新为 `StructDef`，字段和线上 EDN 格式不变。
+宿主对象边界使用已有 `js-cast` 检查成员形状，再通过现有 trait 调用；因此不合法
+宿主替身会更早失败，但方法参数/返回值仍是宿主合同，不代表深层数据已验证。
+服务端 close 参数准确声明为 Node ws 原本传来的 Number code，不再标成 JsObject。
+
+TLS 路径的 `write-head` / `add-listener` 现在通过 trait 映射到实际的
+`writeHead` / `addListener`，修复旧生成代码的无效方法名；没有改变证书配置或端口。
+在原 Node 宿主测试文件内补一项 health 响应回归，不新增检查脚本。
+临时本机自签证书、随机端口的 HTTPS health/WSS Unicode EDN 回声和关闭事件已通过；
+这不等于生产证书、真实浏览器、WASM 或尚未发布的 0.30.1 已验收，不触发部署或发版。
 
 客户端和服务端的 options 都使用 `Map<Tag,Dynamic>`：容器与键有明确合同，
 值继续保存异构回调、数值与文本。服务端入口、连接维护和选项读取使用同一容器类型，
@@ -154,12 +167,12 @@ Keep open protocol payloads as `Dynamic` only at the WebSocket/JS boundary and
 decode them into a named Struct or Enum as soon as their shape is known. Do not
 reintroduce the removed `calcit-test`, `lilac`, or `memof` modules.
 
-The module snapshot targets Calcit 0.29.3. Its local `when-let` macro declares
+The module snapshot targets Calcit 0.30.0. Its local `when-let` macro declares
 an explicit syntax/expansion contract. `ws-send!` always returns `Unit`; the
 method-oriented `.send` returns `WsSendOutcome` instead of leaking JavaScript
 `WebSocket.send` results.
 
-模块 Snapshot 已迁移到 Calcit 0.29.3；本地 `when-let` 明确声明 syntax 与
+模块 Snapshot 已迁移到 Calcit 0.30.0；本地 `when-let` 明确声明 syntax 与
 expansion。`ws-send!` 始终返回 `Unit`，方法形式 `.send` 返回
 `WsSendOutcome`，不会把 JavaScript `WebSocket.send` 的返回值泄漏到公开 API。
 
