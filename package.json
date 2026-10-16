@@ -1,15 +1,15 @@
 {
   "packageManager": "yarn@4.18.0",
   "dependencies": {
-    "@calcit/procs": "0.30.1-alpha.2",
+    "@calcit/procs": "0.30.1-alpha.4",
     "nanoid": "^5.1.5"
   },
   "scripts": {
-    "watch-server": "calcit --entry server js -w",
+    "watch-server": "calcit -w --entry server",
     "compile-server": "calcit --entry server js",
     "compile-page": "calcit --emit-path out-page/ js",
     "build-page": "vite build --base=./",
-    "watch-page": "calcit --emit-path out-page/ js -w",
+    "watch-page": "calcit -w --emit-path out-page/",
     "check:unit": "calcit test --tag unit --require-match --summary-only --format json",
     "check:deprecated": "calcit analyze weak-types --only deprecated-call --summary-only --format json",
     "check:client-generation": "node scripts/check-client-generation.mjs",
@@ -19,5 +19,5 @@
     "vite": "^8.0.2",
     "ws": "^8.18.2"
   },
-  "version": "0.0.40"
+  "version": "0.0.41"
 }
