@@ -30,7 +30,7 @@ try {
   await symlink(resolve("node_modules"), join(optionsFixture, "node_modules"), "dir");
   const commandOptions = { encoding: "utf8", timeout: 60000, maxBuffer: 16 * 1024 * 1024 };
   const run = (...args) => execFileSync("calcit", [snapshot, ...args], commandOptions);
-  const tests = [["client-option-number", 4], ["client-option-callback", 5], ["parse-client-message", 4]].flatMap(([name, count]) => {
+  const tests = [["client-option-number", 4], ["client-option-callback", 6], ["parse-client-message", 4]].flatMap(([name, count]) => {
     const response = JSON.parse(run("query", "def", `ws-edn.client/${name}`, "--format", "json"));
     assert.deepEqual(response.diagnostics, []);
     assert.equal(response.data.tests.length, count);
@@ -83,7 +83,7 @@ try {
     }
   }
   assert.deepEqual(await readFile("calcit.cirru"), originalSnapshot);
-  console.log("Nine client options, four server options and four message AST contracts pass on generated JS; invalid containers are rejected statically.");
+  console.log("Ten client options, four server options and four message AST contracts pass on generated JS; invalid containers are rejected statically.");
 } finally {
   await rm(optionsFixture, { recursive: true, force: true });
   assert.deepEqual(await readFile("calcit.cirru"), originalSnapshot);

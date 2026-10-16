@@ -25,8 +25,9 @@ CI 使用 `--check-only --ns` 及 `analyze weak-types` 入口，不维护旧计�
 不引入额外 checker 或预算脚本。开放协议及宿主边界继续保留，formatter 报告的
 三处待审类型槽也不视为已完成类型收敛。
 
-本轮六处底层 Map 读取改用公开 `get` 的 Option 合同，以无副作用的 nil
-fallback 保留缺失和存在 nil 的原行为，原 Number/String/Fn 检查不变。
+六处底层 Map 读取已改用公开 `get` 的 Option 合同。四个选项 helper
+直接在 Some 分支检查 Number/String/Fn，缺失时返回 None，不先恢复 nil；
+原检查及缺失/存在 nil 的结果不变。其余传入解析器的可空参数保持原协议边界。
 `Track` 的定义对象声明更新为 `StructDef`，字段和线上 EDN 格式不变。
 宿主对象边界使用已有 `js-cast` 检查成员形状，再通过现有 trait 调用；因此不合法
 宿主替身会更早失败，但方法参数/返回值仍是宿主合同，不代表深层数据已验证。
@@ -43,6 +44,9 @@ TLS 路径的 `write-head` / `add-listener` 现在通过 trait 映射到实际�
 不会先擦除成 Dynamic 再读取 Map。缺失或类型不符的字符串/回调选项仍返回 none，
 空字符串和 Unicode 文本原样保留；回调 arity 与运行时授权不因容器类型而得到证明。
 字符串与回调定义附带的测试由现有 native/生成 JS 流程回放，不增加独立运行器。
+回调读取保留原函数对象、不同 arity 和开放 Fn 合同，不执行回调，也不根据
+`fn?` 推断参数/返回签名或授予宿主能力。缺失、nil、false、空字符串仍不是回调；
+Number 的零/负数/小数与 String 的空字符串/Unicode 行为保持不变。
 
 The server and browser connection snippets require their Node/WebSocket hosts, so
 they are marked `cirru.no-check`. CI validates both generated entries and runs the
