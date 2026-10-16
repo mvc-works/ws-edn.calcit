@@ -5,7 +5,7 @@ ws-edn in calcit-js
 ### Usages
 
 模块 `0.0.41` 使用已正式发布的 Calcit CLI / `@calcit/procs` 配对
-`0.30.1-alpha.4`，保留 cumulo-util `0.0.28` 与 JS-FFI `0.2.3`，供下游
+`0.30.1-alpha.4`，升级 cumulo-util `0.0.29`、保留 JS-FFI `0.2.3`，供下游
 使用一致的严格依赖版本。公开接口、消息格式、连接及重连行为不变；Yarn 新包
 安装隔离期为一小时，不设置逐版本豁免。
 页面和服务端入口明确使用 `:js` mode，分别保留
@@ -16,7 +16,9 @@ browser / node target；心跳与重连计时器改为直接调用 `set-timeout!
 测试保留原断言，并通过已有跨后端运行器在 native 和生成 JS 上同源回放。
 客户端生成与生命周期检查、三项 Node 宿主测试、真实双客户端 EDN 往返、文档
 检查和 Vite 生产构建仍是原有验收内容。升级只调整工具链 pin、锁文件和原 CI
-strict 结果检查，不修改程序或线上协议，不代表稳定 Calcit 0.30.1 已交付。
+strict 结果检查，不修改本模块程序或线上协议，不代表稳定 Calcit 0.30.1 已交付。
+Util 0.0.29 修复路径字符串边界；与其他已升级消费者使用同一正式版本，避免
+严格传递依赖安装冲突。开发 watch 命令使用入口的持续模式，不再误用单次 `js` 子命令。
 
 CI 使用 `--check-only --ns` 及 `analyze weak-types` 入口，不维护旧计数预算；
 原 strict 步骤同时要求 passed 状态与空 diagnostics，保留原分入口检查，
