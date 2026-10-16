@@ -4,26 +4,24 @@ ws-edn in calcit-js
 
 ### Usages
 
-本轮将 Calcit/procs 配对升级到已正式发布的预发布版 `0.30.1-alpha.2`，保留 cumulo-util `0.0.28`
-与 JS-FFI `0.2.3`，供下游收敛严格依赖版本。新版本保留原公开接口、消息格式、
-连接及重连行为；Yarn 新包安装隔离期按既有授权统一为一小时，不设置逐版本豁免。
+模块 `0.0.41` 使用已正式发布的 Calcit CLI / `@calcit/procs` 配对
+`0.30.1-alpha.4`，保留 cumulo-util `0.0.28` 与 JS-FFI `0.2.3`，供下游
+使用一致的严格依赖版本。公开接口、消息格式、连接及重连行为不变；Yarn 新包
+安装隔离期为一小时，不设置逐版本豁免。
 页面和服务端入口明确使用 `:js` mode，分别保留
 browser / node target；心跳与重连计时器改为直接调用 `set-timeout! callback delay`，
 不再使用废弃的 `flipped`。公开接口、业务语义及原有测试保持不变。
 
-当前配对通过完整 strict workflow、严格 Caps 安装及工具链核对；全部 22 项
-definition 测试在 native 和生成 JS 上同源回放，两侧均无排除。原客户端生成与
-生命周期检查、三项 Node 宿主测试、真实双客户端 EDN 往返、文档检查和 Vite
-生产构建均通过。本次只更新工具链 pin 与锁文件，不修改程序、原断言或线上协议。
-这是预发布配对证据，不代表稳定 0.30.1 或其他消费者已验收。
+验证使用完整 strict workflow、严格 Caps 安装及工具链核对；22 项 definition
+测试保留原断言，并通过已有跨后端运行器在 native 和生成 JS 上同源回放。
+客户端生成与生命周期检查、三项 Node 宿主测试、真实双客户端 EDN 往返、文档
+检查和 Vite 生产构建仍是原有验收内容。升级只调整工具链 pin、锁文件和原 CI
+strict 结果检查，不修改程序或线上协议，不代表稳定 Calcit 0.30.1 已交付。
 
-CI 使用当前 `--check-only --ns` 及 `analyze weak-types` 入口；旧质量基线在
-正式版上通过后退役，不再维护重复预算。22 项附属测试、生成 JS 的生命周期及
-消息回归、三项 Node 宿主测试、真实双客户端 EDN 往返和 Vite 构建已在本地通过。
-开放协议及宿主边界未假装清零；formatter 仍报告三处待审类型槽。
-原网络测试不覆盖 TLS 或真实浏览器页面；本轮临时 TLS 验证见下文，发布仍须等待远端 CI。
-CI 在原校验步骤使用现有 `calcit fix --workflow strict --verify` 门禁，
-保留原分入口检查，不引入额外 checker 或预算脚本。
+CI 使用 `--check-only --ns` 及 `analyze weak-types` 入口，不维护旧计数预算；
+原 strict 步骤同时要求 passed 状态与空 diagnostics，保留原分入口检查，
+不引入额外 checker 或预算脚本。开放协议及宿主边界继续保留，formatter 报告的
+三处待审类型槽也不视为已完成类型收敛。
 
 本轮六处底层 Map 读取改用公开 `get` 的 Option 合同，以无副作用的 nil
 fallback 保留缺失和存在 nil 的原行为，原 Number/String/Fn 检查不变。
@@ -35,8 +33,8 @@ fallback 保留缺失和存在 nil 的原行为，原 Number/String/Fn 检查不
 TLS 路径的 `write-head` / `add-listener` 现在通过 trait 映射到实际的
 `writeHead` / `addListener`，修复旧生成代码的无效方法名；没有改变证书配置或端口。
 在原 Node 宿主测试文件内补一项 health 响应回归，不新增检查脚本。
-临时本机自签证书、随机端口的 HTTPS health/WSS Unicode EDN 回声和关闭事件已通过；
-这不等于生产证书、真实浏览器、WASM 或稳定 0.30.1 已验收，不触发部署。
+此前迁移曾用临时本机自签证书与随机端口验证 HTTPS health、WSS Unicode EDN
+回声和关闭事件；它不是当前每次升级都会自动重放的测试。
 
 客户端和服务端的 options 都使用 `Map<Tag,Dynamic>`：容器与键有明确合同，
 值继续保存异构回调、数值与文本。服务端入口、连接维护和选项读取使用同一容器类型，
@@ -175,12 +173,7 @@ Keep open protocol payloads as `Dynamic` only at the WebSocket/JS boundary and
 decode them into a named Struct or Enum as soon as their shape is known. Do not
 reintroduce the removed `calcit-test`, `lilac`, or `memof` modules.
 
-The module snapshot targets Calcit 0.30.1-alpha.2. Its local `when-let` macro declares
-an explicit syntax/expansion contract. `ws-send!` always returns `Unit`; the
-method-oriented `.send` returns `WsSendOutcome` instead of leaking JavaScript
-`WebSocket.send` results.
-
-模块 Snapshot 使用 Calcit 0.30.1-alpha.2；本地 `when-let` 明确声明 syntax 与
+模块 Snapshot 使用 Calcit 0.30.1-alpha.4；本地 `when-let` 明确声明 syntax 与
 expansion。`ws-send!` 始终返回 `Unit`，方法形式 `.send` 返回
 `WsSendOutcome`，不会把 JavaScript `WebSocket.send` 的返回值泄漏到公开 API。
 
@@ -264,6 +257,13 @@ add in options to enabled WSS mode:
   :key "./path-to.pem"
   :cert "./path-to.pem"
 ```
+
+### 限制
+
+- 当前公开配对使用 Calcit 预发布工具链，不代表稳定 0.30.1 已完成。
+- 原网络回归验证本地双客户端 WebSocket，不覆盖 TLS 或真实浏览器页面。
+- 既有宿主边界及混合协议载荷保持开放，不代表深层业务数据已取得具体类型证明。
+- 本模块不承诺 WASM 后端支持；浏览器/Node 生成 JS 是本次验证目标。
 
 ### License
 
