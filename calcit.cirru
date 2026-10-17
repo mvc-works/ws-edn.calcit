@@ -285,9 +285,10 @@
             :args $ [] 'WsClient0
         'client-option-callback $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn client-option-callback (options key)
-            let
-                value $ .unwrap-or (get options key) nil
-              if (fn? value) (Option :some value) (Option :none)
+            match (get options key)
+              (:some value)
+                if (fn? value) (Option :some value) (Option :none)
+              (:none) (Option :none)
           :examples $ []
           :schema $ :: 'Fn $ {}
             :args $ [] (:: 'Map 'Tag 'Dynamic) 'Tag
@@ -326,11 +327,50 @@
                     {} $ :on-data callback
                     , :on-data
               :tags $ #{} :unit
+            %{} 'TestEntry (:name |retains-callback-identity-without-calling)
+              :code $ quote $ let
+                  calls $ ref 0
+                  callback $ fn () (swap! calls inc) &unit
+                assert= (Option :none)
+                  ws-edn.client/client-option-callback
+                    {} $ :on-data nil
+                    , :on-data
+                assert= (Option :none)
+                  ws-edn.client/client-option-callback
+                    {} $ :on-data false
+                    , :on-data
+                assert= (Option :none)
+                  ws-edn.client/client-option-callback
+                    {} $ :on-data |
+                    , :on-data
+                assert= (Option :none)
+                  ws-edn.server/server-option-callback
+                    {} $ :on-data nil
+                    , :on-data
+                assert= (Option :none)
+                  ws-edn.server/server-option-callback
+                    {} $ :on-data false
+                    , :on-data
+                assert= (Option :none)
+                  ws-edn.server/server-option-callback
+                    {} $ :on-data |
+                    , :on-data
+                assert= (Option :some callback)
+                  ws-edn.client/client-option-callback
+                    {} $ :on-data callback
+                    , :on-data
+                assert= (Option :some callback)
+                  ws-edn.server/server-option-callback
+                    {} $ :on-data callback
+                    , :on-data
+                assert= 0 @calls
+              :tags $ #{} :options-contract :unit
         'client-option-number $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn client-option-number (options key)
-            let
-                value $ .unwrap-or (get options key) nil
-              if (number? value) (Option :some value) (Option :none)
+            match (get options key)
+              (:some value)
+                if (number? value) (Option :some value) (Option :none)
+              (:none) (Option :none)
           :examples $ []
           :schema $ :: 'Fn $ {}
             :args $ [] (:: 'Map 'Tag 'Dynamic) 'Tag
@@ -1057,9 +1097,10 @@
             :features $ #{} :js-ffi
         'server-option-callback $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn server-option-callback (options key)
-            let
-                value $ .unwrap-or (get options key) nil
-              if (fn? value) (Option :some value) (Option :none)
+            match (get options key)
+              (:some value)
+                if (fn? value) (Option :some value) (Option :none)
+              (:none) (Option :none)
           :examples $ []
           :schema $ :: 'Fn $ {}
             :args $ [] (:: 'Map 'Tag 'Dynamic) 'Tag
@@ -1086,9 +1127,10 @@
               :tags $ #{} :server :unit
         'server-option-string $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn server-option-string (options key)
-            let
-                value $ .unwrap-or (get options key) nil
-              if (string? value) (Option :some value) (Option :none)
+            match (get options key)
+              (:some value)
+                if (string? value) (Option :some value) (Option :none)
+              (:none) (Option :none)
           :examples $ []
           :schema $ :: 'Fn $ {}
             :args $ [] (:: 'Map 'Tag 'Dynamic) 'Tag
