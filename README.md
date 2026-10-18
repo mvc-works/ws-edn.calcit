@@ -4,16 +4,16 @@ ws-edn in calcit-js
 
 ### Usages
 
-模块 `0.0.41` 使用已正式发布的 Calcit CLI / `@calcit/procs` 配对
-`0.30.1-alpha.4`，升级 cumulo-util `0.0.29`、保留 JS-FFI `0.2.3`，供下游
+模块 `0.0.43` 候选使用已正式发布的 Calcit CLI / `@calcit/procs` 配对
+`0.30.1-alpha.5`，保留 cumulo-util `0.0.29`、JS-FFI `0.2.3`，供下游
 使用一致的严格依赖版本。公开接口、消息格式、连接及重连行为不变；Yarn 新包
 安装隔离期为一小时，不设置逐版本豁免。
 页面和服务端入口明确使用 `:js` mode，分别保留
 browser / node target；心跳与重连计时器改为直接调用 `set-timeout! callback delay`，
 不再使用废弃的 `flipped`。公开接口、业务语义及原有测试保持不变。
 
-验证使用完整 strict workflow、严格 Caps 安装及工具链核对；22 项 definition
-测试保留原断言，并通过已有跨后端运行器在 native 和生成 JS 上同源回放。
+验证使用完整 strict workflow、严格 Caps 安装及工具链核对；23 项 native definition
+测试保留原断言，其中 18 项契约由现有脚本从相同 AST 在生成 JS 上回放；宿主专属行为使用原 Node 用例。
 客户端生成与生命周期检查、三项 Node 宿主测试、真实双客户端 EDN 往返、文档
 检查和 Vite 生产构建仍是原有验收内容。升级只调整工具链 pin、锁文件和原 CI
 strict 结果检查，不修改本模块程序或线上协议，不代表稳定 Calcit 0.30.1 已交付。
@@ -179,7 +179,7 @@ Keep open protocol payloads as `Dynamic` only at the WebSocket/JS boundary and
 decode them into a named Struct or Enum as soon as their shape is known. Do not
 reintroduce the removed `calcit-test`, `lilac`, or `memof` modules.
 
-模块 Snapshot 使用 Calcit 0.30.1-alpha.4；本地 `when-let` 明确声明 syntax 与
+模块 Snapshot 使用 Calcit 0.30.1-alpha.5；本地 `when-let` 明确声明 syntax 与
 expansion。`ws-send!` 始终返回 `Unit`，方法形式 `.send` 返回
 `WsSendOutcome`，不会把 JavaScript `WebSocket.send` 的返回值泄漏到公开 API。
 
