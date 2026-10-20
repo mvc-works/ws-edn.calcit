@@ -4,9 +4,9 @@ ws-edn in calcit-js
 
 ### Usages
 
-模块 `0.0.44` 候选使用已正式发布的 Calcit CLI / `@calcit/procs` 配对
-`0.30.1-alpha.5`，保留 cumulo-util `0.0.29`、JS-FFI `0.2.3`，供下游
-使用一致的严格依赖版本。公开接口、消息格式、连接及重连行为不变；Yarn 新包
+模块 `0.0.45` 候选保留已完成发布的 Calcit CLI / `@calcit/procs` 配对
+`0.30.1-alpha.5`，同步正式 cumulo-util `0.0.30`、JS-FFI `0.2.4`，供下游
+使用一致的严格依赖版本。本次 Calcit 源码与正式 `0.0.44` 相同；公开接口、消息格式、连接及重连行为不变。正式 0.30.1 CLI/npm 配对尚未完成，不能只升其中一端；模块正式 tag 发布前不改用 main/hash。Yarn 新包
 安装隔离期为一小时，不设置逐版本豁免。
 页面和服务端入口明确使用 `:js` mode，分别保留
 browser / node target；心跳与重连计时器改为直接调用 `set-timeout! callback delay`，
