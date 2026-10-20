@@ -42,7 +42,6 @@ try {
     assert.equal(response.data.tests.length, count);
     return response.data.tests;
   });
-  const revision = JSON.parse(run("query", "config", "--format", "json")).revision;
   const operations = [
     ["edit", "def", "ws-edn.server/replay-server-options-contract!", "--input-format", "json-ast", "--code",
       JSON.stringify(["defn", "replay-server-options-contract!", [], ...serverTests.map(test => test.code), "&unit"])],
@@ -57,9 +56,9 @@ try {
     ["config", "set", "target", "node"],
   ];
   run("docs", "agents", "--contract");
-  const transaction = ["edit", "transaction", "--code", JSON.stringify(operations), "--expect-revision", revision, "--format", "edn"];
-  run(...transaction, "--dry-run");
-  run(...transaction);
+  const transaction = ["edit", "transaction", "--code", JSON.stringify(operations), "--format", "json"];
+  const staged = JSON.parse(run(...transaction, "--dry-run"));
+  run(...transaction, "--expect-revision", staged.scoped_revision);
   run("--check-only");
   const output = join(optionsFixture, "js-out");
   run("--emit-path", output, "js");
