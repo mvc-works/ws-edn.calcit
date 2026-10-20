@@ -954,9 +954,15 @@
             .listen $ :: 'Fn $ {}
               :args $ [] 'NodeHttpServerHost 'Number 'Fn
               :return 'NodeHttpServerHost
+            .listen-host $ :: 'Fn $ {}
+              :args $ [] 'NodeHttpServerHost 'Number 'String $ :: 'Fn
+                {}
+                  :args $ []
+                  :return 'Unit
+              :return 'NodeHttpServerHost
           :examples $ []
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :node)
-            :names $ {} $ :add-listener |addListener
+            :names $ {} (:add-listener |addListener) (:listen-host |listen)
           :schema $ :: 'Trait
         'NodeWebSocketHost $ %{} 'CodeEntry
           :doc "|Typed Node ws connection surface used by server lifecycle adapters."
@@ -1214,11 +1220,12 @@
             :args $ [] 'String 'Dynamic
             :features $ #{} :js-ffi
         'wss-serve! $ %{} 'CodeEntry
-          :doc "|Starts a WebSocket server on the specified port. Accepts options map with :cert, :key (for SSL), :on-listening, :on-open, :on-close, :on-data, :on-error, and :class-mapper callbacks."
+          :doc "|Starts a WebSocket server on the specified port. Optional :host String selects the bind address for WS and TLS; omission preserves the Node default. Other options: :cert, :key, :on-listening, :on-open, :on-close, :on-data, :on-error, :class-mapper."
           :code $ quote $ defn wss-serve! (port options)
             let
                 cert-path $ server-option-string options :cert
                 key-path $ server-option-string options :key
+                host $ server-option-string options :host
                 on-listening $ match (server-option-callback options :on-listening)
                   (:some callback)
                     Option :some $ unsafe-coerce callback $ :: 'Fn
@@ -1241,6 +1248,9 @@
                       :: 'Option $ :: 'Fn $ {}
                         :args $ [] 'JsObject
                         :return 'Unit
+              when
+                and (contains? options :host) (.none? host)
+                raise "|ws-edn :host must be a String"
               assert "|SSL requires both :cert and :key options" $ = (option:some? cert-path) (option:some? key-path)
               let
                   wss $ match cert-path
@@ -1253,14 +1263,20 @@
                               server $ js-cast raw-server 'NodeHttpServerHost
                             .add-listener server |upgrade $ fn (req res head) (log-request-url! req)
                             .on server |error $ fn (error) (log-server-error! error)
-                            .listen server port $ fn () $ println "|server at" port
+                            match host
+                              (:some hostname)
+                                .listen-host server port hostname $ fn () $ println "|server at" port
+                              (:none)
+                                .listen server port $ fn () $ println "|server at" port
                             js-cast
                               new WebSocketServer $ &js-object :server server :path |/
                               , 'NodeWebSocketServerHost
                         (:none) (raise "|missing SSL key")
                     (:none)
                       js-cast
-                        new WebSocketServer $ &js-object :port port
+                        new WebSocketServer $ match host
+                          (:some hostname) (&js-object :port port :host hostname)
+                          (:none) (&js-object :port port)
                         , 'NodeWebSocketServerHost
                 .on wss |connection $ fn (socket req) (maintain-host-socket! socket options) &unit
                 .on wss |listening $ fn ()

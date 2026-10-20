@@ -4,7 +4,7 @@ ws-edn in calcit-js
 
 ### Usages
 
-模块 `0.0.43` 候选使用已正式发布的 Calcit CLI / `@calcit/procs` 配对
+模块 `0.0.44` 候选使用已正式发布的 Calcit CLI / `@calcit/procs` 配对
 `0.30.1-alpha.5`，保留 cumulo-util `0.0.29`、JS-FFI `0.2.3`，供下游
 使用一致的严格依赖版本。公开接口、消息格式、连接及重连行为不变；Yarn 新包
 安装隔离期为一小时，不设置逐版本豁免。
@@ -15,7 +15,7 @@ browser / node target；心跳与重连计时器改为直接调用 `set-timeout!
 验证使用完整 strict workflow、严格 Caps 安装及工具链核对；23 项 native definition
 测试保留原断言，其中 18 项契约由现有脚本从相同 AST 在生成 JS 上回放；宿主专属行为使用原 Node 用例。
 客户端生成与生命周期检查、三项 Node 宿主测试、真实双客户端 EDN 往返、文档
-检查和 Vite 生产构建仍是原有验收内容。升级只调整工具链 pin、锁文件和原 CI
+检查和 Vite 生产构建仍是原有验收内容。0.0.43 的工具链升级只调整 pin、锁文件和原 CI
 strict 结果检查，不修改本模块程序或线上协议，不代表稳定 Calcit 0.30.1 已交付。
 Util 0.0.29 修复路径字符串边界；与其他已升级消费者使用同一正式版本，避免
 严格传递依赖安装冲突。开发 watch 命令使用入口的持续模式，不再误用单次 `js` 子命令。
@@ -36,8 +36,8 @@ CI 使用 `--check-only --ns` 及 `analyze weak-types` 入口，不维护旧计�
 TLS 路径的 `write-head` / `add-listener` 现在通过 trait 映射到实际的
 `writeHead` / `addListener`，修复旧生成代码的无效方法名；没有改变证书配置或端口。
 在原 Node 宿主测试文件内补一项 health 响应回归，不新增检查脚本。
-此前迁移曾用临时本机自签证书与随机端口验证 HTTPS health、WSS Unicode EDN
-回声和关闭事件；它不是当前每次升级都会自动重放的测试。
+此前迁移曾手工验证 TLS；0.0.44 已将回环绑定、HTTPS health 与 WSS Unicode EDN
+往返加入现有网络测试，使用临时证书和显式 CA 信任。
 
 客户端和服务端的 options 都使用 `Map<Tag,Dynamic>`：容器与键有明确合同，
 值继续保存异构回调、数值与文本。服务端入口、连接维护和选项读取使用同一容器类型，
@@ -55,9 +55,18 @@ remain checked by `calcit docs check-md`.
 
 Server side:
 
+`wss-serve!` 新增可选 `:host` String，例如 `:host |127.0.0.1` 用于只接受回环连接。
+WS 和 TLS 都传递该地址；省略时保留 Node 原默认监听行为，不会自动变为回环。
+显式提供非 String 的 host 会报错，不会悄悄退回默认监听。
+地址值交由 Node 解析；空字符串等值不等同于回环隔离，请明确写 `127.0.0.1`。
+线上协议、端口、生命周期回调及 class-mapper 不变；这不是认证、授权或 sandbox。
+原双客户端用例改为显式回环并检查实际绑定地址；同一测试文件补充 TLS health/WSS Unicode 往返，
+使用临时证书的显式 CA 信任，不关闭证书校验，不增加独立验证脚本。
+
 ```cirru.no-check
 ws-edn.server/wss-serve! 5001
   {}
+    :host |127.0.0.1
     :on-open $ fn (sid socket)
       println |opened sid
     :on-data $ fn (sid data)
@@ -267,7 +276,7 @@ add in options to enabled WSS mode:
 ### 限制
 
 - 当前公开配对使用 Calcit 预发布工具链，不代表稳定 0.30.1 已完成。
-- 原网络回归验证本地双客户端 WebSocket，不覆盖 TLS 或真实浏览器页面。
+- 当前网络回归验证本地 WS/WSS 和 HTTPS health，不覆盖真实浏览器页面。
 - 既有宿主边界及混合协议载荷保持开放，不代表深层业务数据已取得具体类型证明。
 - 本模块不承诺 WASM 后端支持；浏览器/Node 生成 JS 是本次验证目标。
 
