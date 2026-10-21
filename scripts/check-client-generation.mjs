@@ -30,7 +30,7 @@ try {
   await symlink(resolve("node_modules"), join(optionsFixture, "node_modules"), "dir");
   const commandOptions = { encoding: "utf8", timeout: 60000, maxBuffer: 16 * 1024 * 1024 };
   const run = (...args) => execFileSync("calcit", [snapshot, ...args], commandOptions);
-  const tests = [["client-option-number", 4], ["client-option-callback", 6], ["parse-client-message", 4]].flatMap(([name, count]) => {
+  const tests = [["client-option-number", 4], ["client-option-callback", 6], ["parse-client-message", 4], ["transition-phase", 1]].flatMap(([name, count]) => {
     const response = JSON.parse(run("query", "def", `ws-edn.client/${name}`, "--format", "json"));
     assert.deepEqual(response.diagnostics, []);
     assert.equal(response.data.tests.length, count);
@@ -81,8 +81,34 @@ try {
       assert.match(`${rejected.stdout}\n${rejected.stderr}`, /W_FN_ARG_TYPE_MISMATCH|E_CALL_ARGUMENT_MISMATCH/);
     }
   }
+
+  // An inferred swap! callback must retain both Map parameters, including the
+  // nominal host value. Creating this function does not open a network socket.
+  for (const [key, value, invalidArgument] of [
+    ["|sid", "socket", null],
+    ["42", "socket", 2],
+    ["|sid", "|not-a-socket", 3],
+  ]) {
+    const snippet = `fn (socket)
+  hint-fn $ {} (:args $ [] 'ws-edn.server/NodeWebSocketHost) (:return 'Unit)
+  let
+      connections $ ref $ assert-type ({}) $ :: 'Map 'String 'ws-edn.server/NodeWebSocketHost
+    swap! connections
+      fn (current key value) (.assoc current key value)
+      , ${key} ${value}
+    , &unit`;
+    const result = spawnSync("calcit", ["eval", "--dep", "./", snippet], commandOptions);
+    if (result.error) throw result.error;
+    const output = `${result.stdout}\n${result.stderr}`;
+    if (invalidArgument === null) {
+      assert.equal(result.status, 0, output);
+    } else {
+      assert.notEqual(result.status, 0, output);
+      assert.match(output, new RegExp(`\\[W_PROC_ARG_TYPE_MISMATCH\\].*arg ${invalidArgument} expects type`));
+    }
+  }
   assert.deepEqual(await readFile("calcit.cirru"), originalSnapshot);
-  console.log("Ten client options, four server options and four message AST contracts pass on generated JS; invalid containers are rejected statically.");
+  console.log("Ten client options, four server options, four message and one phase transition AST contracts pass on generated JS; invalid containers are rejected statically.");
 } finally {
   await rm(optionsFixture, { recursive: true, force: true });
   assert.deepEqual(await readFile("calcit.cirru"), originalSnapshot);

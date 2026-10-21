@@ -262,12 +262,12 @@
               match (:socket state)
                 (:some socket)
                   do
-                    reset! state-ref $ assoc state :phase $ WsConnectionPhase :closing
+                    reset! state-ref $ .assoc state :phase $ WsConnectionPhase :closing
                     .!close socket
                     , &unit
                 (:none)
                   do
-                    reset! state-ref $ assoc state :phase $ WsConnectionPhase :closed
+                    reset! state-ref $ .assoc state :phase $ WsConnectionPhase :closed
                     , &unit
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Unit)
@@ -505,7 +505,7 @@
                               deref $ :retry-state client
                               , 'cumulo-util.realtime/RetryBackoff
                           reset! (:retry-state client) (retry-state .reset)
-                        reset! state-ref $ assoc @state-ref :phase $ WsConnectionPhase :open
+                        reset! state-ref $ .assoc @state-ref :phase $ WsConnectionPhase :open
                         renew-client-heartbeat! client generation
                         match
                           client-option-callback (:options client) :on-open
@@ -771,7 +771,7 @@
                     reset! retry-ref $ :next step
                     let
                         state $ assert-type (deref state-ref) WsClientState
-                      reset! state-ref $ assoc state :phase $ WsConnectionPhase :backoff
+                      reset! state-ref $ .assoc state :phase $ WsConnectionPhase :backoff
                     reset! timer-ref $ Option :some timer
                     , &unit
           :examples $ []
@@ -782,7 +782,7 @@
           :doc "|Applies a phase transition only for the active generation."
           :code $ quote $ defn transition-phase (state generation phase)
             if (generation-current? state generation)
-              Option :some $ assoc state :phase phase
+              Option :some $ .assoc state :phase phase
               Option :none
           :examples $ []
           :schema $ :: 'Fn $ {}
@@ -791,7 +791,7 @@
           :tests $ [] $ %{} 'TestEntry (:name |ignores-stale-transition)
             :code $ quote $ let
                 state $ WsClientState :generation 2 :phase (%:: WsConnectionPhase :connecting) :socket $ Option :none
-                open-state $ assoc state :phase $ %:: WsConnectionPhase :open
+                open-state $ .assoc state :phase $ %:: WsConnectionPhase :open
               match
                 transition-phase state 2 $ %:: WsConnectionPhase :open
                 (:some next-state)
@@ -1034,7 +1034,9 @@
                       :: 'Option $ :: 'Fn $ {}
                         :args $ [] 'JsObject
                         :return 'Unit
-              swap! *global-connections assoc sid socket
+              swap! *global-connections
+                fn (connections key value) (.assoc connections key value)
+                , sid socket
               match (server-option-callback options :on-open)
                 (:some callback)
                   let
@@ -1063,7 +1065,9 @@
                 hint-fn $ {}
                   :args $ [] 'Number 'JsObject
                   :return 'Unit
-                swap! *global-connections dissoc sid
+                swap! *global-connections
+                  fn (connections key) (.dissoc connections key)
+                  , sid
                 match on-close
                   (:some callback) (callback sid event)
                   (:none) &unit
@@ -1072,7 +1076,9 @@
                 hint-fn $ {}
                   :args $ [] 'JsObject
                   :return 'Unit
-                swap! *global-connections dissoc sid
+                swap! *global-connections
+                  fn (connections key) (.dissoc connections key)
+                  , sid
                 match on-error
                   (:some callback) (callback error)
                   (:none) &unit
