@@ -55,7 +55,7 @@ try {
     ["config", "set", "reload-fn", "ws-edn.client/replay-options-contract!"],
     ["config", "set", "target", "node"],
   ];
-  run("docs", "agents", "--contract");
+  run("docs", "agents", "--full");
   const transaction = ["edit", "transaction", "--code", JSON.stringify(operations), "--format", "json"];
   const staged = JSON.parse(run(...transaction, "--dry-run"));
   run(...transaction, "--expect-revision", staged.scoped_revision);
