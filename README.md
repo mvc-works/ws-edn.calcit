@@ -4,9 +4,12 @@ ws-edn in calcit-js
 
 ### Usages
 
-模块 `0.0.45` 候选保留已完成发布的 Calcit CLI / `@calcit/procs` 配对
-`0.30.1-alpha.5`，同步正式 cumulo-util `0.0.30`、JS-FFI `0.2.4`，供下游
-使用一致的严格依赖版本。本次 Calcit 源码与正式 `0.0.44` 相同；公开接口、消息格式、连接及重连行为不变。正式 0.30.1 CLI/npm 配对尚未完成，不能只升其中一端；模块正式 tag 发布前不改用 main/hash。Yarn 新包
+使用者注意：模块 `0.0.47` 是 `maintenance/0.30.1` 分支的正式 Calcit
+CLI / `@calcit/procs` **0.30.1** 配对候选，依赖 cumulo-util **0.0.31**、
+JS-FFI **0.2.5**。下游需要同步完整正式依赖图，保留 Caps strict。
+本次 Calcit 源码与已发布 `0.0.45` 相同，公开接口、消息格式、连接及重连行为不变。
+main / `0.0.46` 的 0.31 alpha 迁移保持原样，不回退 main；本维护版本不作为
+0.31 消费者的自动升级建议。正式 tag 发布前不改用 main/hash。Yarn 新包
 安装隔离期为一小时，不设置逐版本豁免。
 页面和服务端入口明确使用 `:js` mode，分别保留
 browser / node target；心跳与重连计时器改为直接调用 `set-timeout! callback delay`，
@@ -188,7 +191,7 @@ Keep open protocol payloads as `Dynamic` only at the WebSocket/JS boundary and
 decode them into a named Struct or Enum as soon as their shape is known. Do not
 reintroduce the removed `calcit-test`, `lilac`, or `memof` modules.
 
-模块 Snapshot 使用 Calcit 0.30.1-alpha.5；本地 `when-let` 明确声明 syntax 与
+模块 Snapshot 在本维护分支配对正式 Calcit 0.30.1；本地 `when-let` 明确声明 syntax 与
 expansion。`ws-send!` 始终返回 `Unit`，方法形式 `.send` 返回
 `WsSendOutcome`，不会把 JavaScript `WebSocket.send` 的返回值泄漏到公开 API。
 
@@ -275,7 +278,7 @@ add in options to enabled WSS mode:
 
 ### 限制
 
-- 当前公开配对使用 Calcit 预发布工具链，不代表稳定 0.30.1 已完成。
+- 本维护候选需通过正式 0.30.1 CI 与合并分支验收后才发布；版本号不代表已完成。
 - 当前网络回归验证本地 WS/WSS 和 HTTPS health，不覆盖真实浏览器页面。
 - 既有宿主边界及混合协议载荷保持开放，不代表深层业务数据已取得具体类型证明。
 - 本模块不承诺 WASM 后端支持；浏览器/Node 生成 JS 是本次验证目标。
