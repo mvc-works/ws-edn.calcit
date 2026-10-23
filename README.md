@@ -4,10 +4,17 @@ ws-edn in calcit-js
 
 ### Usages
 
-使用者注意：模块 `0.0.47` 是 `maintenance/0.30.1` 分支的正式 Calcit
-CLI / `@calcit/procs` **0.30.1** 配对候选，依赖 cumulo-util **0.0.31**、
-JS-FFI **0.2.5**。下游需要同步完整正式依赖图，保留 Caps strict。
-本次 Calcit 源码与已发布 `0.0.45` 相同，公开接口、消息格式、连接及重连行为不变。
+使用者注意：模块 `0.0.48` 是 `maintenance/0.30.1` 分支的正式 Calcit
+CLI / `@calcit/procs` **0.30.1** 配对维护版本，依赖 cumulo-util **0.0.32**、
+JS-FFI **0.2.6**。下游需要同步完整正式依赖图，保留 Caps strict。
+本次修正两端 Demo 的 class-mapper：传完整 Track 值原型，而不是 StructDef，
+避免解析成功却丢失类型身份。公开接口、消息格式、连接及重连行为不变。
+剩余 Option helper 和 Struct 构造迁到方法/直接构造；原断言保留。
+生命周期 cleanup Ref 按真实 producer 收紧为零参数、返回 Unit 的函数；
+浏览器 message 事件改用已有 js-cast 检查 data 成员，字段如实保留 Dynamic，
+文本/非文本仍由原解析边界区分。无效宿主替身可能更早报错；成员检查不证明
+完整方法签名或业务 payload。Node Buffer 的原转换边界保持不变：正式运行时
+不把 Buffer 当作 js-cast 宿主，不能为降低 unsafe 数量而错误替换。
 main / `0.0.46` 的 0.31 alpha 迁移保持原样，不回退 main；本维护版本不作为
 0.31 消费者的自动升级建议。正式 tag 发布前不改用 main/hash。Yarn 新包
 安装隔离期为一小时，不设置逐版本豁免。
@@ -255,10 +262,27 @@ callback 保留开放 arity，没有缩窄为单一回调签名。
 
 Legacy class mapper (for compatibility with older payloads):
 
-```cirru.no-check
-  :class-mapper $ {}
-    :Person Person
+Struct mapper 的值必须是包含全部字段的 **实例原型**，不是 `defstruct` 返回的
+StructDef；Enum mapper 则传 EnumDef。以下纯数据示例可由现有 docs check 执行。
+传给连接 options 时，把 `mapper` 放在 `:class-mapper` 下。应用自有的每个名义类型
+都需显式登记；不要按短名称猜测，也不要用 `assert-type` 掩盖丢失的定义信息。
+
+```cirru
+let
+    Person $ defstruct :Person (:name 'String)
+    Status $ defenum :Status (:online) (:offline)
+    prototype $ Person :name |
+    mapper $ {} (:Person prototype) (:Status Status)
+    original $ Person :name |中文🌱
+    restored $ parse-cirru-edn (format-cirru-edn original) mapper
+    status $ Status :online
+  assert= (struct-definition original) (struct-definition restored)
+  assert= original restored
+  assert= status $ parse-cirru-edn (format-cirru-edn status) mapper
 ```
+
+恢复名义定义不等于验证业务字段；开放载荷仍需在所属应用使用 checked decoder。
+仅比较名称/字段形状的 `&struct:matches?` 不能单独证明定义身份已恢复。
 
 Deps:
 
@@ -278,7 +302,7 @@ add in options to enabled WSS mode:
 
 ### 限制
 
-- 本维护候选需通过正式 0.30.1 CI 与合并分支验收后才发布；版本号不代表已完成。
+- 发布状态以正式 tag 及其精确提交 CI 为准；仅修改版本号不代表已完成发版。
 - 当前网络回归验证本地 WS/WSS 和 HTTPS health，不覆盖真实浏览器页面。
 - 既有宿主边界及混合协议载荷保持开放，不代表深层业务数据已取得具体类型证明。
 - 本模块不承诺 WASM 后端支持；浏览器/Node 生成 JS 是本次验证目标。
