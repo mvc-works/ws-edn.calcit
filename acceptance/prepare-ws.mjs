@@ -6,6 +6,14 @@ const q=(...args)=>JSON.parse(run('query',...args,'--format','json')).data;
 assert.equal(run('-v').trim(),'0.30.1');
 run('docs','agents','--full');
 const config=q('config');
+// JSON transports EDN Sets as arrays. Compare membership without treating the
+// process-dependent iteration order as a source change; AST Lists stay ordered.
+function canonical(value){
+  if(Array.isArray(value))return value.map(canonical);
+  if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([k,v])=>
+    [k,k==='__edn_set'?v.map(canonical).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b))):canonical(v)]));
+  return value;
+}
 const inventory=()=>{
   const all=[];const namespaces=q('ns').namespaces;assert.equal(namespaces.length,7);
   for(const ns of namespaces){
@@ -13,10 +21,10 @@ const inventory=()=>{
     assert.equal(names.length,q('ns',ns).definition_count);
     for(const name of names)all.push(q('def',`${ns}/${name}`));
   }
-  assert.equal(all.length,69);return all;
+  assert.equal(all.length,69);return canonical(all);
 };
 const before=inventory();
-assert.deepEqual(before,JSON.parse(readFileSync('acceptance/reviewed.json','utf8')));
+assert.deepEqual(before,canonical(JSON.parse(readFileSync('acceptance/reviewed.json','utf8'))));
 const expected=structuredClone(before),counts={option:0,constructors:0,mapper:0,cleanup:0,host:0};
 const cleanup=['::',"'Fn",['{}',[':return',"'Unit"],[':args',['[]']]]];
 const get=id=>expected.find(d=>d.id===id);
