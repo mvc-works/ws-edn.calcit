@@ -60,10 +60,15 @@ get('ws-edn.client/create-client-with!').code=visit(get('ws-edn.client/create-cl
     n[1][1][2][2]=cleanup;counts.cleanup++;
   }return n;
 });
-const data=get('ws-edn.server/node-data-string');
-data.code=visit(data.code,n=>{
-  if(n[0]==='unsafe-coerce'){
-    assert.deepEqual(n,['unsafe-coerce','raw-data',"'NodeDataHost"]);counts.host++;return ['js-cast',n[1],n[2]];
+// Buffer is a Calcit value, not a js-cast host. Keep its original Node adapter
+// until a checked Buffer boundary is available; do not disguise it as JsObject.
+const event=get('ws-edn.client/BrowserMessageEventHost');
+assert.deepEqual(event.code,['deftrait','BrowserMessageEventHost',[':data',"'String"]]);
+event.code[2][1]="'Dynamic";
+get('ws-edn.client/connect-client!').code=visit(get('ws-edn.client/connect-client!').code,n=>{
+  if(n[0]==='unsafe-coerce'&&n[1]==='event'){
+    assert.deepEqual(n,['unsafe-coerce','event',"'BrowserMessageEventHost"]);
+    counts.host++;return ['js-cast',n[1],n[2]];
   }return n;
 });
 assert.deepEqual(counts,{option:2,constructors:2,mapper:2,cleanup:2,host:1});

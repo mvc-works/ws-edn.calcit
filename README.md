@@ -11,8 +11,10 @@ JS-FFI **0.2.6**。下游需要同步完整正式依赖图，保留 Caps strict�
 避免解析成功却丢失类型身份。公开接口、消息格式、连接及重连行为不变。
 剩余 Option helper 和 Struct 构造迁到方法/直接构造；原断言保留。
 生命周期 cleanup Ref 按真实 producer 收紧为零参数、返回 Unit 的函数；
-Node 数据入口改用已有 js-cast 检查 toString 成员，仍检查结果为 String。
-无效宿主替身可能更早报错；成员检查不证明完整方法签名或业务 payload。
+浏览器 message 事件改用已有 js-cast 检查 data 成员，字段如实保留 Dynamic，
+文本/非文本仍由原解析边界区分。无效宿主替身可能更早报错；成员检查不证明
+完整方法签名或业务 payload。Node Buffer 的原转换边界保持不变：正式运行时
+不把 Buffer 当作 js-cast 宿主，不能为降低 unsafe 数量而错误替换。
 main / `0.0.46` 的 0.31 alpha 迁移保持原样，不回退 main；本维护版本不作为
 0.31 消费者的自动升级建议。正式 tag 发布前不改用 main/hash。Yarn 新包
 安装隔离期为一小时，不设置逐版本豁免。
