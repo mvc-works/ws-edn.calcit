@@ -5,7 +5,7 @@ ws-edn in calcit-js
 ### Usages
 
 使用者注意：模块 `0.0.48` 是 `maintenance/0.30.1` 分支的正式 Calcit
-CLI / `@calcit/procs` **0.30.1** 配对候选，依赖 cumulo-util **0.0.32**、
+CLI / `@calcit/procs` **0.30.1** 配对维护版本，依赖 cumulo-util **0.0.32**、
 JS-FFI **0.2.6**。下游需要同步完整正式依赖图，保留 Caps strict。
 本次修正两端 Demo 的 class-mapper：传完整 Track 值原型，而不是 StructDef，
 避免解析成功却丢失类型身份。公开接口、消息格式、连接及重连行为不变。
@@ -302,7 +302,7 @@ add in options to enabled WSS mode:
 
 ### 限制
 
-- 本维护候选需通过正式 0.30.1 CI 与合并分支验收后才发布；版本号不代表已完成。
+- 发布状态以正式 tag 及其精确提交 CI 为准；仅修改版本号不代表已完成发版。
 - 当前网络回归验证本地 WS/WSS 和 HTTPS health，不覆盖真实浏览器页面。
 - 既有宿主边界及混合协议载荷保持开放，不代表深层业务数据已取得具体类型证明。
 - 本模块不承诺 WASM 后端支持；浏览器/Node 生成 JS 是本次验证目标。
