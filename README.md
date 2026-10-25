@@ -5,7 +5,7 @@ ws-edn in calcit-js
 ### Usages
 
 模块 `0.0.46` 候选使用已发布的 Calcit CLI / `@calcit/procs` 配对
-`0.31.0-alpha.1`，保留正式 cumulo-util `0.0.30`、JS-FFI `0.2.4`。
+`0.31.0-alpha.4`，保留正式 cumulo-util `0.0.30`、JS-FFI `0.2.4`。
 客户端状态通过名义 `WsClientState` 的 `.assoc` 更新；连接表通过现有 Map 方法
 和普通闭包更新，由编译器推断参数与返回类型，不再传递旧 `assoc` / `dissoc` 函数。
 公开接口、消息格式、连接及重连行为不变。CLI 与 runtime 必须成对升级；
@@ -192,7 +192,7 @@ Keep open protocol payloads as `Dynamic` only at the WebSocket/JS boundary and
 decode them into a named Struct or Enum as soon as their shape is known. Do not
 reintroduce the removed `calcit-test`, `lilac`, or `memof` modules.
 
-模块 Snapshot 使用 Calcit 0.31.0-alpha.1；本地 `when-let` 明确声明 syntax 与
+模块 Snapshot 使用 Calcit 0.31.0-alpha.4；本地 `when-let` 明确声明 syntax 与
 expansion。`ws-send!` 始终返回 `Unit`，方法形式 `.send` 返回
 `WsSendOutcome`，不会把 JavaScript `WebSocket.send` 的返回值泄漏到公开 API。
 
