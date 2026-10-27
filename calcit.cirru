@@ -22,7 +22,7 @@
                   ws-send! $ : test
                 :on-data $ fn (data) (js/console.log |data data)
                 :on-close $ fn (event) (println |close)
-                :class-mapper $ {} $ :Track Track
+                :class-mapper $ {} $ :Track (Track :message | :time |)
             js/setInterval
               fn ()
                 println "|connected try send" $ ws-connected?
@@ -63,7 +63,7 @@
               :on-close $ fn (sid event) (println |close sid)
               ; :key |certs/key.pem
               ; :cert |certs/cert.pem
-              :class-mapper $ {} $ :Track Track
+              :class-mapper $ {} $ :Track (Track :message | :time |)
             js/setInterval
               fn () (println |heartbeat)
                 wss-each! $ fn (sid socket)
@@ -102,7 +102,7 @@
           :schema $ :: 'Ref $ :: 'calcit.core/Option 'ws-edn.client/WsClient
         'BrowserMessageEventHost $ %{} 'CodeEntry
           :doc "|Typed message-event payload exposed by browser WebSocket callbacks."
-          :code $ quote $ deftrait BrowserMessageEventHost (:data 'String)
+          :code $ quote $ deftrait BrowserMessageEventHost (:data 'Dynamic)
           :examples $ []
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :browser)
           :schema $ :: 'Trait
@@ -135,7 +135,9 @@
               :args $ [] 'String
               :return 'ws-edn.client/BrowserWebSocketHost
               :features $ #{} :js-ffi
-            :lifecycle-cleanup $ :: 'Ref $ :: 'Option 'Fn
+            :lifecycle-cleanup $ :: 'Ref $ :: 'Option
+              :: 'Fn $ {} (:return 'Unit)
+                :args $ []
             :retry-state $ :: 'Ref 'cumulo-util.realtime/RetryBackoff
             :reconnect-timer $ :: 'Ref $ :: 'Option 'Number
             :heartbeat-timeout-ms $ :: 'Option 'Number
@@ -529,7 +531,7 @@
                                   {}
                                     :args $ [] 'Dynamic
                                     :return 'Unit
-                                message-event $ unsafe-coerce event 'BrowserMessageEventHost
+                                message-event $ js-cast event 'BrowserMessageEventHost
                                 class-mapper $ .unwrap-or
                                   get (:options client) :class-mapper
                                   , nil
@@ -577,7 +579,9 @@
             let
                 state-ref $ ref $ WsClientState :generation 0 :phase (WsConnectionPhase :closed) :socket (Option :none)
                 on-data-ref $ ref $ assert-type (Option :none) (:: 'Option 'Fn)
-                lifecycle-cleanup-ref $ ref $ assert-type (Option :none) (:: 'Option 'Fn)
+                lifecycle-cleanup-ref $ ref $ assert-type (Option :none)
+                  :: 'Option $ :: 'Fn $ {} (:return 'Unit)
+                    :args $ []
                 retry-base-ms $ match (client-option-number options :retry-base-ms)
                   (:some value) value
                   (:none) 500
@@ -592,7 +596,7 @@
                 heartbeat-timeout-ms $ client-option-number options :heartbeat-timeout-ms
                 heartbeat-lease-ref $ ref $ assert-type (Option :none) (:: 'Option 'cumulo-util.realtime/HeartbeatLease)
                 heartbeat-timer-ref $ ref $ assert-type (Option :none) (:: 'Option 'Number)
-                client $ %{} WsClient (:state state-ref) (:url url) (:options options) (:on-data on-data-ref) (:socket-factory socket-factory) (:lifecycle-cleanup lifecycle-cleanup-ref) (:retry-state retry-state-ref) (:reconnect-timer reconnect-timer-ref) (:heartbeat-timeout-ms heartbeat-timeout-ms) (:heartbeat-lease heartbeat-lease-ref) (:heartbeat-timer heartbeat-timer-ref)
+                client $ WsClient :state state-ref :url url :options options :on-data on-data-ref :socket-factory socket-factory :lifecycle-cleanup lifecycle-cleanup-ref :retry-state retry-state-ref :reconnect-timer reconnect-timer-ref :heartbeat-timeout-ms heartbeat-timeout-ms :heartbeat-lease heartbeat-lease-ref :heartbeat-timer heartbeat-timer-ref
               match (client-option-callback options :on-data)
                 (:some callback)
                   reset! on-data-ref $ Option :some callback
@@ -790,15 +794,15 @@
             :return $ :: 'calcit.core/Option 'WsClientState
           :tests $ [] $ %{} 'TestEntry (:name |ignores-stale-transition)
             :code $ quote $ let
-                state $ WsClientState :generation 2 :phase (%:: WsConnectionPhase :connecting) :socket $ Option :none
-                open-state $ .assoc state :phase $ %:: WsConnectionPhase :open
+                state $ WsClientState :generation 2 :phase (WsConnectionPhase :connecting) :socket $ Option :none
+                open-state $ .assoc state :phase $ WsConnectionPhase :open
               match
-                transition-phase state 2 $ %:: WsConnectionPhase :open
+                transition-phase state 2 $ WsConnectionPhase :open
                 (:some next-state)
                   assert "|current generation should transition" $ = open-state next-state
                 (:none) (raise "|current generation did not transition")
               match
-                transition-phase state 1 $ %:: WsConnectionPhase :open
+                transition-phase state 1 $ WsConnectionPhase :open
                 (:some _) (raise "|stale generation transitioned")
                 (:none) &unit
             :tags $ #{} :unit
@@ -813,7 +817,7 @@
                 client $ create-client-with! ws-url options $ fn (url)
                   hint-fn $ {} (:return 'ws-edn.client/BrowserWebSocketHost)
                     :args $ [] 'String
-                  unsafe-coerce (new js/WebSocket url) 'ws-edn.client/BrowserWebSocketHost
+                  js-cast (new js/WebSocket url) 'ws-edn.client/BrowserWebSocketHost
               install-browser-lifecycle! client
               assert-type client WsClient
               reset! *global-client $ Option :some client
@@ -887,8 +891,7 @@
           :tests $ []
             %{} 'TestEntry (:name |decodes-track-map)
               :code $ quote $ assert "|decoded track should retain fields"
-                =
-                  %{} Track (:message |hello) (:time |now)
+                = (Track :message |hello :time |now)
                   decode-track $ {} (:message |hello) (:time |now)
               :tags $ #{} :unit
             %{} 'TestEntry (:name |rejects-missing-time)
@@ -1198,7 +1201,7 @@
             let
                 connections $ assert-type @*global-connections $ :: 'Map 'String 'ws-edn.server/NodeWebSocketHost
               &doseq
-                sid $ &map:keys connections
+                sid $ .keys connections
                 match
                   get connections $ assert-type sid 'String
                   (:some socket) (handler sid socket)
@@ -1257,7 +1260,7 @@
               when
                 and (contains? options :host) (.none? host)
                 raise "|ws-edn :host must be a String"
-              assert "|SSL requires both :cert and :key options" $ = (option:some? cert-path) (option:some? key-path)
+              assert "|SSL requires both :cert and :key options" $ = (.some? cert-path) (.some? key-path)
               let
                   wss $ match cert-path
                     (:some cert-file)
@@ -1352,14 +1355,21 @@
         'when-let $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defmacro when-let (pair & body)
             assert "|expected 2 tokens" $ and (list? pair)
-              = 2 $ count pair
+              = 2 $ .len pair
             quasiquote $ &let ~pair $ when
-              non-nil? $ ~ $ first pair
+              non-nil? $ ~ $ .unwrap (first pair)
               , ~@body
           :examples $ []
           :schema $ :: 'Macro $ {} (:rest 'Syntax)
             :capabilities $ #{}
             :expansion $ :: 'Expr 'Dynamic
             :required $ [] 'SyntaxList
+          :tests $ [] $ %{} 'TestEntry (:name |legacy-nil-binding-keeps-symbol)
+            :code $ quote $ do
+              ws-edn.util/when-let (x 1) (assert= 1 x)
+              ws-edn.util/when-let (x false) (assert= false x)
+              ws-edn.util/when-let (x nil) (raise |nil-binding-ran)
+              , &unit
+            :tags $ #{} :legacy-when-let :unit
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns ws-edn.util

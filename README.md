@@ -2,62 +2,47 @@
 ws-edn in calcit-js
 ----
 
-### 当前工具链：Calcit 0.31.0
+### 使用者需要注意
 
-CLI 与 `@calcit/procs` 从现有 alpha.6 成对升级至正式 `0.31.0`。
-Snapshot、原精确 Util/JS FFI 图及线上 EDN 协议不变。新版默认预检查会拒绝未证明
-的 Dynamic 流向；沿用原 browser/node 分入口 strict、原测试和回环网络验收，
-不关闭 proof audit，不部署或重启任何服务。以下 alpha.4 迁移说明保留为历史。
+候选 `0.0.49` 配对正式 Calcit CLI / `@calcit/procs` `0.31.0`、已发布
+Cumulo Util `0.0.33` 和 JS FFI `0.2.7`。消费者需同步完整精确版本图并重新生成 JS；
+0.30.1 使用者继续用已发布的 `0.0.48`。本提交不等于新 tag 已发布，不以 main/hash
+替代发布依赖，不放宽 Caps strict、proof audit 或原类型门禁。
+
+客户端状态更新保留当前方法写法；WsClient 与既有测试的构造改用直接构造器，
+Demo 的 Track mapper 使用真实空 Track 值。生命周期清理 Ref 明确存储
+`Option<Fn() -> Unit>`，与 Util 的真实返回合同一致；协议、重连、心跳及清理顺序不变。
+
+两处浏览器宿主断言改为 `js-cast` 成员检查；缺少声明成员的非法宿主替身会更早失败。
+原生成 JS 夹具的全局 WebSocket 构造器替身补齐 native 本有的四个初始事件槽，原断言保留。
+MessageEvent 的 data 声明纠正为真实 raw 值，仍由原 `parse-client-message` 的 `string?`
+检查及 Result 合同收敛，保留非文本拒绝、脱敏错误和 callback 异常；不放宽业务 payload。
+Node Buffer 不属于可 `js-cast` 的宿主，原窄转换及 String 结果检查继续保留，见
+[JS FFI #191](https://github.com/calcit-lang/js-ffi/issues/191)，不伪装成 JsObject。
+
+修复旧 `ws-edn.util/when-let` 将 `first` 的 Option 当作符号展开的问题，见
+[#79](https://github.com/mvc-works/ws-edn.calcit/issues/79)。兼容 helper 保留 nil 语句语义，
+绑定只求值一次，false 仍执行正文；新代码优先使用 core 的 Option `when-let`。
+若使用本库的旧 helper，请用显式 namespace alias 区分同名宏。仅增加一项真实缺陷回归，
+复用现有 native/生成 JS 检查，不增加独立脚本或编译器改写规则。
+
+原完整 strict、分入口公开检查、unit、客户端 generation/retry/heartbeat/cleanup、
+Node 宿主、真实 WS/WSS 回环、HTTPS health、文档和 Vite 构建继续执行。
+宿主网络回归使用 127.0.0.1、合成数据和显式信任的临时证书，不部署或重启业务服务。
+
+### 现有接口与边界
+
+客户端和服务端 options 保留 `Map<Tag,Dynamic>`，外层容器不擦除，异构值保持开放。
+Number 的零/负数/小数、String 的空串/Unicode 和缺失/非法值返回 None 的行为不变。
+回调读取的 `fn?` 只证明 callable kind，不能证明 arity 或返回类型；九处既有回调恢复点
+仍如实审阅，不把开放 Fn 强装成已完成的签名证明。与一处 Buffer 信任边界合计仍有
+十处 unsafe，本迁移不宣称零类型债务。
+
+线上 EDN、端口、TLS 配置、可选 :host 绑定及 class-mapper 合同保持。
+Node `writeHead` / `addListener` 继续沿用准确 trait 映射；严格检查与静态容器拒绝仍是门禁，
+`weak-types` 仅提供诊断，不通过旧计数或预算例外替代检查。Yarn 新包安装隔离期保持一小时。
 
 ### Usages
-
-模块 `0.0.46` 候选使用已发布的 Calcit CLI / `@calcit/procs` 配对
-`0.31.0-alpha.4`，保留正式 cumulo-util `0.0.30`、JS-FFI `0.2.4`。
-客户端状态通过名义 `WsClientState` 的 `.assoc` 更新；连接表通过现有 Map 方法
-和普通闭包更新，由编译器推断参数与返回类型，不再传递旧 `assoc` / `dissoc` 函数。
-公开接口、消息格式、连接及重连行为不变。CLI 与 runtime 必须成对升级；
-`0.0.45` 用户可继续使用原 `0.30.1-alpha.5` 配对。新配对用于 0.31 迁移，
-不代表稳定 0.31 已发布；正式 tag 状态以 Releases 为准，不使用 main/hash 代替版本。Yarn 新包
-安装隔离期为一小时，不设置逐版本豁免。
-页面和服务端入口明确使用 `:js` mode，分别保留
-browser / node target；心跳与重连计时器改为直接调用 `set-timeout! callback delay`，
-不再使用废弃的 `flipped`。公开接口、业务语义及原有测试保持不变。
-
-验证使用完整 strict workflow、严格 Caps 安装及工具链核对；23 项 native definition
-测试保留原断言，其中 19 项契约由现有脚本从相同 AST 在生成 JS 上回放，包含原有状态转换测试；宿主专属行为使用原 Node 用例。
-客户端生成与生命周期检查、三项 Node 宿主测试、真实双客户端 EDN 往返、文档
-检查和 Vite 生产构建仍是原有验收内容。0.0.43 的工具链升级只调整 pin、锁文件和原 CI
-strict 结果检查，不修改本模块程序或线上协议，不代表稳定 Calcit 0.30.1 已交付。
-Util 0.0.29 修复路径字符串边界；与其他已升级消费者使用同一正式版本，避免
-严格传递依赖安装冲突。开发 watch 命令使用入口的持续模式，不再误用单次 `js` 子命令。
-
-CI 使用 `--check-only --ns` 及 `analyze weak-types` 入口，不维护旧计数预算；
-原 strict 步骤同时要求 passed 状态与空 diagnostics，保留原分入口检查，
-不引入额外 checker 或预算脚本。开放协议及宿主边界继续保留，formatter 报告的
-三处待审类型槽也不视为已完成类型收敛。
-
-六处底层 Map 读取已改用公开 `get` 的 Option 合同。四个选项 helper
-直接在 Some 分支检查 Number/String/Fn，缺失时返回 None，不先恢复 nil；
-原检查及缺失/存在 nil 的结果不变。其余传入解析器的可空参数保持原协议边界。
-`Track` 的定义对象声明更新为 `StructDef`，字段和线上 EDN 格式不变。
-宿主对象边界使用已有 `js-cast` 检查成员形状，再通过现有 trait 调用；因此不合法
-宿主替身会更早失败，但方法参数/返回值仍是宿主合同，不代表深层数据已验证。
-服务端 close 参数准确声明为 Node ws 原本传来的 Number code，不再标成 JsObject。
-
-TLS 路径的 `write-head` / `add-listener` 现在通过 trait 映射到实际的
-`writeHead` / `addListener`，修复旧生成代码的无效方法名；没有改变证书配置或端口。
-在原 Node 宿主测试文件内补一项 health 响应回归，不新增检查脚本。
-此前迁移曾手工验证 TLS；0.0.44 已将回环绑定、HTTPS health 与 WSS Unicode EDN
-往返加入现有网络测试，使用临时证书和显式 CA 信任。
-
-客户端和服务端的 options 都使用 `Map<Tag,Dynamic>`：容器与键有明确合同，
-值继续保存异构回调、数值与文本。服务端入口、连接维护和选项读取使用同一容器类型，
-不会先擦除成 Dynamic 再读取 Map。缺失或类型不符的字符串/回调选项仍返回 none，
-空字符串和 Unicode 文本原样保留；回调 arity 与运行时授权不因容器类型而得到证明。
-字符串与回调定义附带的测试由现有 native/生成 JS 流程回放，不增加独立运行器。
-回调读取保留原函数对象、不同 arity 和开放 Fn 合同，不执行回调，也不根据
-`fn?` 推断参数/返回签名或授予宿主能力。缺失、nil、false、空字符串仍不是回调；
-Number 的零/负数/小数与 String 的空字符串/Unicode 行为保持不变。
 
 The server and browser connection snippets require their Node/WebSocket hosts, so
 they are marked `cirru.no-check`. CI validates both generated entries and runs the
