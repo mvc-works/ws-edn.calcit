@@ -42,13 +42,17 @@ try {
     assert.equal(response.data.tests.length, count);
     return response.data.tests;
   });
+  const macroResponse = JSON.parse(run("query", "def", "ws-edn.util/when-let", "--format", "json"));
+  assert.deepEqual(macroResponse.diagnostics, []);
+  const macroTests = macroResponse.data.tests;
+  assert.equal(macroTests.length, 1);
   const operations = [
     ["edit", "def", "ws-edn.server/replay-server-options-contract!", "--input-format", "json-ast", "--code",
       JSON.stringify(["defn", "replay-server-options-contract!", [], ...serverTests.map(test => test.code), "&unit"])],
     ["edit", "schema", "ws-edn.server/replay-server-options-contract!", "--input-format", "json-ast", "--code",
       JSON.stringify(["::", "'Fn", ["{}", [":args", ["[]"]], [":return", "'Unit"], [":features", ["#{}", ":js-ffi"]]]])],
     ["edit", "def", "ws-edn.client/replay-options-contract!", "--input-format", "json-ast", "--code",
-      JSON.stringify(["defn", "replay-options-contract!", [], ...tests.map(test => test.code), ["ws-edn.server/replay-server-options-contract!"], "&unit"])],
+      JSON.stringify(["defn", "replay-options-contract!", [], ...tests.map(test => test.code), ...macroTests.map(test => test.code), ["ws-edn.server/replay-server-options-contract!"], "&unit"])],
     ["edit", "schema", "ws-edn.client/replay-options-contract!", "--input-format", "json-ast", "--code",
       JSON.stringify(["::", "'Fn", ["{}", [":args", ["[]"]], [":return", "'Unit"], [":features", ["#{}", ":js-ffi"]]]])],
     ["config", "set", "init-fn", "ws-edn.client/replay-options-contract!"],
@@ -108,7 +112,7 @@ try {
     }
   }
   assert.deepEqual(await readFile("calcit.cirru"), originalSnapshot);
-  console.log("Ten client options, four server options, four message and one phase transition AST contracts pass on generated JS; invalid containers are rejected statically.");
+  console.log("Client/server options, message, phase transition and legacy nil-binding macro AST contracts pass on generated JS; invalid containers are rejected statically.");
 } finally {
   await rm(optionsFixture, { recursive: true, force: true });
   assert.deepEqual(await readFile("calcit.cirru"), originalSnapshot);
@@ -343,6 +347,8 @@ const originalWebSocket = Object.getOwnPropertyDescriptor(globalThis, "WebSocket
 globalThis.WebSocket = class extends FakeSocket {
   constructor(url) {
     super(url);
+    // Match the native constructor's event slots before the checked host cast.
+    this.onopen = this.onmessage = this.onclose = this.onerror = null;
     singletonSockets.push(this);
   }
 };
