@@ -2,9 +2,9 @@
 ws-edn in calcit-js
 ----
 
-### 当前工具链：Calcit 0.31.0-alpha.7
+### 当前工具链：Calcit 0.31.0
 
-CLI 与 `@calcit/procs` 从现有 alpha.6 成对升级至已发布 `0.31.0-alpha.7`。
+CLI 与 `@calcit/procs` 从现有 alpha.6 成对升级至正式 `0.31.0`。
 Snapshot、原精确 Util/JS FFI 图及线上 EDN 协议不变。新版默认预检查会拒绝未证明
 的 Dynamic 流向；沿用原 browser/node 分入口 strict、原测试和回环网络验收，
 不关闭 proof audit，不部署或重启任何服务。以下 alpha.4 迁移说明保留为历史。
