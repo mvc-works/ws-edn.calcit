@@ -246,12 +246,29 @@ callback 保留开放 arity，没有缩窄为单一回调签名。
 本地链接现已固定到发布的 JS-FFI alpha.11 与 cumulo-util 0.0.23，未修改缓存。
 完整 Caps 严格依赖解析仍应以远端 CI 为准；本地网络回归不覆盖 TLS 或真实浏览器页面。
 
-Legacy class mapper (for compatibility with older payloads):
+### Class mapper：恢复名义类型定义
 
-```cirru.no-check
-  :class-mapper $ {}
-    :Person Person
+Struct mapper 的值必须是包含全部字段的 **实例原型**，不是 `defstruct` 返回的
+StructDef；Enum mapper 则传 EnumDef。以下纯数据示例可由现有 docs check 执行。
+传给连接 options 时，把 `mapper` 放在 `:class-mapper` 下。应用自有的每个名义类型
+都需显式登记；不要按短名称猜测，也不要用 `assert-type` 掩盖丢失的定义信息。
+
+```cirru
+let
+    Person $ defstruct :Person (:name 'String)
+    Status $ defenum :Status (:online) (:offline)
+    prototype $ Person :name |
+    mapper $ {} (:Person prototype) (:Status Status)
+    original $ Person :name |中文🌱
+    restored $ parse-cirru-edn (format-cirru-edn original) mapper
+    status $ Status :online
+  assert= (struct-definition original) (struct-definition restored)
+  assert= original restored
+  assert= status $ parse-cirru-edn (format-cirru-edn status) mapper
 ```
+
+恢复名义定义不等于验证业务字段；开放载荷仍需在所属应用使用 checked decoder。
+仅比较名称/字段形状的 `&struct:matches?` 不能单独证明定义身份已恢复。
 
 Deps:
 
