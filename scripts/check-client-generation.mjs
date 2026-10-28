@@ -49,12 +49,12 @@ try {
   const operations = [
     ["edit", "def", "ws-edn.server/replay-server-options-contract!", "--input-format", "json-ast", "--code",
       JSON.stringify(["defn", "replay-server-options-contract!", [], ...serverTests.map(test => test.code), "&unit"])],
-    ["edit", "schema", "ws-edn.server/replay-server-options-contract!", "--input-format", "json-ast", "--code",
-      JSON.stringify(["::", "'Fn", ["{}", [":args", ["[]"]], [":return", "'Unit"], [":features", ["#{}", ":js-ffi"]]]])],
+    ["edit", "schema", "ws-edn.server/replay-server-options-contract!", "--input-format", "cirru", "--code",
+      "quote $ Fn (-> Unit) (:features :js-ffi)"],
     ["edit", "def", "ws-edn.client/replay-options-contract!", "--input-format", "json-ast", "--code",
       JSON.stringify(["defn", "replay-options-contract!", [], ...tests.map(test => test.code), ...macroTests.map(test => test.code), ["ws-edn.server/replay-server-options-contract!"], "&unit"])],
-    ["edit", "schema", "ws-edn.client/replay-options-contract!", "--input-format", "json-ast", "--code",
-      JSON.stringify(["::", "'Fn", ["{}", [":args", ["[]"]], [":return", "'Unit"], [":features", ["#{}", ":js-ffi"]]]])],
+    ["edit", "schema", "ws-edn.client/replay-options-contract!", "--input-format", "cirru", "--code",
+      "quote $ Fn (-> Unit) (:features :js-ffi)"],
     ["config", "set", "init-fn", "ws-edn.client/replay-options-contract!"],
     ["config", "set", "reload-fn", "ws-edn.client/replay-options-contract!"],
     ["config", "set", "target", "node"],
@@ -94,9 +94,9 @@ try {
     ["|sid", "|not-a-socket", 3],
   ]) {
     const snippet = `fn (socket)
-  hint-fn $ {} (:args $ [] 'ws-edn.server/NodeWebSocketHost) (:return 'Unit)
+  hint-fn $ Fn ws-edn.server/NodeWebSocketHost (-> Unit)
   let
-      connections $ ref $ assert-type ({}) $ :: 'Map 'String 'ws-edn.server/NodeWebSocketHost
+      connections $ ref $ assert-type ({}) $ quote $ Map String ws-edn.server/NodeWebSocketHost
     swap! connections
       fn (current key value) (.assoc current key value)
       , ${key} ${value}
