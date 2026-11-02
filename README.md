@@ -4,13 +4,16 @@ ws-edn in calcit-js
 
 ### 使用者需要注意
 
-候选 `0.0.51` 配对正式 Calcit CLI / `@calcit/procs` `0.32.1`、已发布
-Cumulo Util `0.0.35` 和 JS FFI `0.2.9`。消费者需同步完整精确版本图并重新生成 JS；
+候选 `0.0.52` 配对正式 Calcit CLI / `@calcit/procs` `0.34.1`、已发布
+Cumulo Util `0.0.36` 和 JS FFI `0.2.9`。消费者需同步完整精确版本图并重新生成 JS；
 0.30.1 使用者继续用已发布的 `0.0.48`。本提交不等于新 tag 已发布，不以 main/hash
 替代发布依赖，不放宽 Caps strict、proof audit 或原类型门禁。
 
-本轮通过官方 formatter 更新类型标注，既有生成 JS 测试的 Fn schema、hint 和 Map 类型同步为新语法；
-原类型、协议和测试断言保持。
+本轮通过官方 formatter 更新类型标注。两个 Demo `main!` 明确返回 Unit，
+不再把页面定时器编号或 Node Timeout 作为开放返回值；消费者若直接调用 Demo 入口，
+不要依赖其返回值作为定时器句柄。原连接、发送、回调、协议和测试断言保持。
+开放 options / EDN payload 仍由原入口检查，不以有限 union 擦除真实开放合同；
+`WsClient` 是附加 impl 的同源句柄，不是需要额外 union 包装的第二种数据。
 
 客户端状态更新保留当前方法写法；WsClient 与既有测试的构造改用直接构造器，
 Demo 的 Track mapper 使用真实空 Track 值。生命周期清理 Ref 明确存储

@@ -30,8 +30,9 @@
                 ws-send! $ : message |in |string
                 ws-send! $ Track :message "|from client" :time $ current-iso-time!
               , 2000
+            , &unit
           :examples $ []
-          :schema $ quote $ Fn (-> Dynamic) (:features :js-ffi)
+          :schema $ quote $ Fn (-> Unit) (:features :js-ffi)
         'reload! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn reload! ()
             ws-set-on-data! $ fn (data) (println "|reloaded 8:" data)
@@ -67,8 +68,9 @@
                   wss-send! sid $ : message "|event 2s"
                   wss-send! sid $ Track :message "|from server" :time $ current-iso-time!
               , 2000
+            , &unit
           :examples $ []
-          :schema $ quote $ Fn (-> Dynamic) (:features :js-ffi)
+          :schema $ quote $ Fn (-> Unit) (:features :js-ffi)
         'reload! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn reload! ()
             wss-set-on-data! $ fn (sid data) (js/console.log "|reloaded 8:" sid data) &unit
@@ -112,7 +114,7 @@
           :doc "|Raw browser client handle before attaching lifecycle methods."
           :code $ quote $ defstruct WsClient0
             :state $ quote $ Ref WsClientState
-            :url 'String
+            :url String
             :options $ quote $ Map Tag Dynamic
             :on-data $ quote $ Ref (Option Fn)
             :socket-factory $ quote $ Fn String (-> ws-edn.client/BrowserWebSocketHost) (:features :js-ffi)
@@ -139,7 +141,7 @@
           :schema $ quote Impl
         'WsClientState $ %{} 'CodeEntry
           :doc "|Generation, phase, and current host socket for one browser client."
-          :code $ quote $ defstruct WsClientState (:generation 'Number) (:phase 'WsConnectionPhase)
+          :code $ quote $ defstruct WsClientState (:generation Number) (:phase WsConnectionPhase)
             :socket $ quote $ Option BrowserWebSocketHost
           :examples $ []
           :schema $ quote StructDef
@@ -149,7 +151,7 @@
           :schema $ quote EnumDef
         'WsSendOutcome $ %{} 'CodeEntry
           :doc "|Typed outcome from attempting a browser WebSocket send."
-          :code $ quote $ defenum WsSendOutcome (:sent) (:not-open 'WsConnectionPhase)
+          :code $ quote $ defenum WsSendOutcome (:sent) (:not-open WsConnectionPhase)
           :examples $ []
           :schema $ quote EnumDef
         'cancel-client-heartbeat! $ %{} 'CodeEntry
@@ -795,7 +797,7 @@
     'ws-edn.schema $ %{} 'FileEntry
       :defs $ {}
         'Track $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defstruct Track (:message 'String) (:time 'String)
+          :code $ quote $ defstruct Track (:message String) (:time String)
           :examples $ []
           :schema $ quote StructDef
         'decode-track $ %{} 'CodeEntry (:doc |)
