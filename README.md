@@ -4,12 +4,15 @@ ws-edn in calcit-js
 
 ### 使用者需要注意
 
-候选 `0.0.52` 配对正式 Calcit CLI / `@calcit/procs` `0.34.1`、已发布
-Cumulo Util `0.0.36` 和 JS FFI `0.2.9`。消费者需同步完整精确版本图并重新生成 JS；
+候选 `0.0.53` 配对正式 Calcit CLI / `@calcit/procs` `0.34.2`、已发布
+Cumulo Util `0.0.37` 和 JS FFI `0.2.9`。消费者需同步完整精确版本图并重新生成 JS；
 0.30.1 使用者继续用已发布的 `0.0.48`。本提交不等于新 tag 已发布，不以 main/hash
 替代发布依赖，不放宽 Caps strict、proof audit 或原类型门禁。
 
-本轮通过官方 formatter 更新类型标注。两个 Demo `main!` 明确返回 Unit，
+本轮仅更新精确工具链、Util 依赖、模块版本及说明。0.34.2 官方 formatter 无需改写，
+Snapshot、原测试、脚本和工作流保持逐字节相同；不新增 union 来限制开放 options 或 wire 数据。
+
+以下为此前迁移后继续保留的合同：两个 Demo `main!` 明确返回 Unit，
 不再把页面定时器编号或 Node Timeout 作为开放返回值；消费者若直接调用 Demo 入口，
 不要依赖其返回值作为定时器句柄。原连接、发送、回调、协议和测试断言保持。
 开放 options / EDN payload 仍由原入口检查，不以有限 union 擦除真实开放合同；
@@ -35,6 +38,9 @@ Node Buffer 不属于可 `js-cast` 的宿主，原窄转换及 String 结果检�
 原完整 strict、分入口公开检查、unit、客户端 generation/retry/heartbeat/cleanup、
 Node 宿主、真实 WS/WSS 回环、HTTPS health、文档和 Vite 构建继续执行。
 宿主网络回归使用 127.0.0.1、合成数据和显式信任的临时证书，不部署或重启业务服务。
+本轮 0.34.2 已通过正式 tags 的 Caps strict/toolchain、immutable 安装、完整 strict、
+原 24 项单元测试、双入口公开检查、文档和 Vite 构建；运行时回归及精确 Linux CI 结果见 PR。
+本库工作流不部署 Demo，也不发布 npm。
 
 ### 现有接口与边界
 
