@@ -4,13 +4,18 @@ ws-edn in calcit-js
 
 ### 使用者需要注意
 
-候选 `0.0.53` 配对正式 Calcit CLI / `@calcit/procs` `0.34.2`、已发布
-Cumulo Util `0.0.37` 和 JS FFI `0.2.9`。消费者需同步完整精确版本图并重新生成 JS；
-0.30.1 使用者继续用已发布的 `0.0.48`。本提交不等于新 tag 已发布，不以 main/hash
-替代发布依赖，不放宽 Caps strict、proof audit 或原类型门禁。
+候选 `0.0.54` 对齐 Cumulo Util `0.0.38` 和正式 JS-FFI `0.2.10`，解除现代
+Respo/UI 消费者严格依赖图冲突。CLI / `@calcit/procs` 继续配对正式 `0.34.2`。
+使用者需等正式 Git tags 后同步整图并重新生成 JS；不以 main/hash 或关闭 Caps strict 代替。
 
-本轮仅更新精确工具链、Util 依赖、模块版本及说明。0.34.2 官方 formatter 无需改写，
-Snapshot、原测试、脚本和工作流保持逐字节相同；不新增 union 来限制开放 options 或 wire 数据。
+本次只改依赖版本及说明，Snapshot、原测试、脚本和工作流保持逐字节相同。
+公开 options、异构 EDN payload、回调和 wire 协议不变，不引入有限 union 收窄开放输入。
+原完整 strict、unit、双入口公开检查、动态方法检查、客户端生命周期、Node 宿主、
+WS/WSS 回环、HTTPS health、文档及构建门禁全部保留。
+本地候选链接图已通过完整 strict、双入口公开检查、24 项 unit、3 项 Node 宿主、
+2 项真实 WS/WSS/HTTPS 回环、原客户端 generation/cleanup 回归、文档和 Vite 构建；
+两入口 dynamic-method 均为零。正式根 Caps 安装需等 Util 0.0.38 tag 发布后重跑，
+候选链接通过不等于正式依赖图通过。精确 Linux CI 结果见 PR。
 
 以下为此前迁移后继续保留的合同：两个 Demo `main!` 明确返回 Unit，
 不再把页面定时器编号或 Node Timeout 作为开放返回值；消费者若直接调用 Demo 入口，
@@ -38,8 +43,8 @@ Node Buffer 不属于可 `js-cast` 的宿主，原窄转换及 String 结果检�
 原完整 strict、分入口公开检查、unit、客户端 generation/retry/heartbeat/cleanup、
 Node 宿主、真实 WS/WSS 回环、HTTPS health、文档和 Vite 构建继续执行。
 宿主网络回归使用 127.0.0.1、合成数据和显式信任的临时证书，不部署或重启业务服务。
-本轮 0.34.2 已通过正式 tags 的 Caps strict/toolchain、immutable 安装、完整 strict、
-原 24 项单元测试、双入口公开检查、文档和 Vite 构建；运行时回归及精确 Linux CI 结果见 PR。
+此前 0.0.53 / 0.34.2 已通过正式 tags 的 Caps strict/toolchain、immutable 安装、完整 strict、
+原 24 项单元测试、双入口公开检查、文档和 Vite 构建；这不代替本候选的精确 CI。
 本库工作流不部署 Demo，也不发布 npm。
 
 ### 现有接口与边界
@@ -196,7 +201,7 @@ Keep open protocol payloads as `Dynamic` only at the WebSocket/JS boundary and
 decode them into a named Struct or Enum as soon as their shape is known. Do not
 reintroduce the removed `calcit-test`, `lilac`, or `memof` modules.
 
-模块 Snapshot 使用 Calcit 0.32.1；本地 `when-let` 明确声明 syntax 与
+本候选使用 Calcit 0.34.2；本地 `when-let` 明确声明 syntax 与
 expansion。`ws-send!` 始终返回 `Unit`，方法形式 `.send` 返回
 `WsSendOutcome`，不会把 JavaScript `WebSocket.send` 的返回值泄漏到公开 API。
 
@@ -300,7 +305,7 @@ add in options to enabled WSS mode:
 
 ### 限制
 
-- 本候选配对正式 0.32.1；需要 0.31.0 的使用者继续使用已发布 0.0.49。
+- 本候选配对正式 0.34.2；需要 0.31.0 的使用者继续使用已发布 0.0.49。
 - 当前网络回归验证本地 WS/WSS 和 HTTPS health，不覆盖真实浏览器页面。
 - 既有宿主边界及混合协议载荷保持开放，不代表深层业务数据已取得具体类型证明。
 - 本模块不承诺 WASM 后端支持；浏览器/Node 生成 JS 是本次验证目标。
