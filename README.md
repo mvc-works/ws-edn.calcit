@@ -14,8 +14,9 @@ Respo/UI 消费者严格依赖图冲突。CLI / `@calcit/procs` 继续配对正�
 WS/WSS 回环、HTTPS health、文档及构建门禁全部保留。
 本地候选链接图已通过完整 strict、双入口公开检查、24 项 unit、3 项 Node 宿主、
 2 项真实 WS/WSS/HTTPS 回环、原客户端 generation/cleanup 回归、文档和 Vite 构建；
-两入口 dynamic-method 均为零。正式根 Caps 安装需等 Util 0.0.38 tag 发布后重跑，
-候选链接通过不等于正式依赖图通过。精确 Linux CI 结果见 PR。
+两入口 dynamic-method 均为零。Util 0.0.38 正式 tag 发布后，已移走本地候选链接，
+重新通过正式根 Caps strict/toolchain 和完整 strict；发布源码与已测候选逐字节相同。
+精确 Linux CI 结果见 PR。
 
 以下为此前迁移后继续保留的合同：两个 Demo `main!` 明确返回 Unit，
 不再把页面定时器编号或 Node Timeout 作为开放返回值；消费者若直接调用 Demo 入口，
