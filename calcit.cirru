@@ -99,8 +99,8 @@
         'BrowserWebSocketHost $ %{} 'CodeEntry
           :doc "|Typed browser WebSocket surface used by the client lifecycle adapter."
           :code $ quote $ deftrait BrowserWebSocketHost (:onopen 'Fn) (:onmessage 'Fn) (:onclose 'Fn) (:onerror 'Fn)
-            .send $ quote $ Fn BrowserWebSocketHost String (-> Unit)
-            .close $ quote $ Fn BrowserWebSocketHost (-> Unit)
+            .send $ Fn BrowserWebSocketHost String $ -> Unit
+            .close $ Fn BrowserWebSocketHost $ -> Unit
           :examples $ []
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :browser)
             :writable $ #{} :onclose :onerror :onmessage :onopen
@@ -113,26 +113,26 @@
         'WsClient0 $ %{} 'CodeEntry
           :doc "|Raw browser client handle before attaching lifecycle methods."
           :code $ quote $ defstruct WsClient0
-            :state $ quote $ Ref WsClientState
+            :state $ Ref WsClientState
             :url String
-            :options $ quote $ Map Tag Dynamic
-            :on-data $ quote $ Ref (Option Fn)
-            :socket-factory $ quote $ Fn String (-> ws-edn.client/BrowserWebSocketHost) (:features :js-ffi)
-            :lifecycle-cleanup $ quote $ Ref
-              Option $ Fn $ -> Unit
-            :retry-state $ quote $ Ref cumulo-util.realtime/RetryBackoff
-            :reconnect-timer $ quote $ Ref (Option Number)
-            :heartbeat-timeout-ms $ quote $ Option Number
-            :heartbeat-lease $ quote $ Ref (Option cumulo-util.realtime/HeartbeatLease)
-            :heartbeat-timer $ quote $ Ref (Option Number)
+            :options $ Map Tag Dynamic
+            :on-data $ Ref $ Option Fn
+            :socket-factory $ Fn String (-> ws-edn.client/BrowserWebSocketHost) (:features :js-ffi)
+            :lifecycle-cleanup $ Ref $ Option
+              Fn $ -> Unit
+            :retry-state $ Ref cumulo-util.realtime/RetryBackoff
+            :reconnect-timer $ Ref $ Option Number
+            :heartbeat-timeout-ms $ Option Number
+            :heartbeat-lease $ Ref $ Option cumulo-util.realtime/HeartbeatLease
+            :heartbeat-timer $ Ref $ Option Number
           :examples $ []
           :schema $ quote StructDef
         'WsClientOps $ %{} 'CodeEntry (:doc "|Method contract for browser WebSocket clients.")
           :code $ quote $ deftrait WsClientOps
-            .connected? $ quote $ Fn T (-> Bool) (:generics T)
-            .send $ quote $ Fn T D (-> WsSendOutcome) (:generics T D)
-            .close $ quote $ Fn T (-> Unit) (:generics T)
-            .reconnect $ quote $ Fn T (-> Unit) (:generics T)
+            .connected? $ Fn T (-> Bool) (:generics T)
+            .send $ Fn T D (-> WsSendOutcome) (:generics T D)
+            .close $ Fn T (-> Unit) (:generics T)
+            .reconnect $ Fn T (-> Unit) (:generics T)
           :examples $ []
           :schema $ quote Trait
         'WsClientOpsImpl $ %{} 'CodeEntry (:doc "|Lifecycle method implementation for WsClient.")
@@ -142,7 +142,7 @@
         'WsClientState $ %{} 'CodeEntry
           :doc "|Generation, phase, and current host socket for one browser client."
           :code $ quote $ defstruct WsClientState (:generation Number) (:phase WsConnectionPhase)
-            :socket $ quote $ Option BrowserWebSocketHost
+            :socket $ Option BrowserWebSocketHost
           :examples $ []
           :schema $ quote StructDef
         'WsConnectionPhase $ %{} 'CodeEntry (:doc "|Explicit browser WebSocket lifecycle phase.")
@@ -458,8 +458,7 @@
                           client-option-callback (:options client) :on-open
                           (:some callback)
                             let
-                                callback $ unsafe-coerce callback $ quote
-                                  Fn Dynamic $ -> Unit
+                                callback $ unsafe-coerce callback $ Fn Dynamic (-> Unit)
                               callback event
                           (:none) &unit
                       , &unit
@@ -470,8 +469,7 @@
                           deref $ :on-data client
                           (:some callback)
                             let
-                                callback $ unsafe-coerce callback $ quote
-                                  Fn Dynamic $ -> Unit
+                                callback $ unsafe-coerce callback $ Fn Dynamic (-> Unit)
                                 message-event $ js-cast event 'BrowserMessageEventHost
                                 class-mapper $ .unwrap-or
                                   get (:options client) :class-mapper
@@ -497,8 +495,7 @@
                             client-option-callback (:options client) :on-close
                             (:some callback)
                               let
-                                  callback $ unsafe-coerce callback $ quote
-                                    Fn Dynamic $ -> Unit
+                                  callback $ unsafe-coerce callback $ Fn Dynamic (-> Unit)
                                 callback event
                             (:none) &unit
                           when (not explicit-close?) (schedule-client-reconnect! client)
@@ -515,10 +512,9 @@
           :code $ quote $ defn create-client-with! (url options socket-factory)
             let
                 state-ref $ ref $ WsClientState :generation 0 :phase (WsConnectionPhase :closed) :socket (Option :none)
-                on-data-ref $ ref $ assert-type (Option :none)
-                  quote $ Option Fn
+                on-data-ref $ ref $ assert-type (Option :none) (Option Fn)
                 lifecycle-cleanup-ref $ ref $ assert-type (Option :none)
-                  quote $ Option $ Fn (-> Unit)
+                  Option $ Fn $ -> Unit
                 retry-base-ms $ match (client-option-number options :retry-base-ms)
                   (:some value) value
                   (:none) 500
@@ -529,13 +525,10 @@
                   (:some value) value
                   (:none) 0.2
                 retry-state-ref $ ref $ retry-backoff retry-base-ms retry-max-ms retry-jitter
-                reconnect-timer-ref $ ref $ assert-type (Option :none)
-                  quote $ Option Number
+                reconnect-timer-ref $ ref $ assert-type (Option :none) (Option Number)
                 heartbeat-timeout-ms $ client-option-number options :heartbeat-timeout-ms
-                heartbeat-lease-ref $ ref $ assert-type (Option :none)
-                  quote $ Option cumulo-util.realtime/HeartbeatLease
-                heartbeat-timer-ref $ ref $ assert-type (Option :none)
-                  quote $ Option Number
+                heartbeat-lease-ref $ ref $ assert-type (Option :none) (Option cumulo-util.realtime/HeartbeatLease)
+                heartbeat-timer-ref $ ref $ assert-type (Option :none) (Option Number)
                 client $ WsClient :state state-ref :url url :options options :on-data on-data-ref :socket-factory socket-factory :lifecycle-cleanup lifecycle-cleanup-ref :retry-state retry-state-ref :reconnect-timer reconnect-timer-ref :heartbeat-timeout-ms heartbeat-timeout-ms :heartbeat-lease heartbeat-lease-ref :heartbeat-timer heartbeat-timer-ref
               match (client-option-callback options :on-data)
                 (:some callback)
@@ -833,7 +826,7 @@
         'NodeDataHost $ %{} 'CodeEntry
           :doc "|Typed string conversion surface for Node ws message payloads."
           :code $ quote $ deftrait NodeDataHost
-            .to-string $ quote $ Fn NodeDataHost (-> String)
+            .to-string $ Fn NodeDataHost $ -> String
           :examples $ []
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :node)
             :names $ {} $ :to-string |toString
@@ -841,15 +834,15 @@
         'NodeHttpRequestHost $ %{} 'CodeEntry
           :doc "|Typed request URL surface used by the HTTPS upgrade diagnostic."
           :code $ quote $ deftrait NodeHttpRequestHost
-            :url $ quote $ JsNullish String
+            :url $ JsNullish String
           :examples $ []
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :node)
           :schema $ quote Trait
         'NodeHttpResponseHost $ %{} 'CodeEntry
           :doc "|Typed response methods used by the minimal HTTPS health response."
           :code $ quote $ deftrait NodeHttpResponseHost
-            .write-head $ quote $ Fn NodeHttpResponseHost Number (-> Unit)
-            .end $ quote $ Fn NodeHttpResponseHost String (-> Unit)
+            .write-head $ Fn NodeHttpResponseHost Number $ -> Unit
+            .end $ Fn NodeHttpResponseHost String $ -> Unit
           :examples $ []
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :node)
             :names $ {} $ :write-head |writeHead
@@ -857,10 +850,10 @@
         'NodeHttpServerHost $ %{} 'CodeEntry
           :doc "|Typed HTTPS server event and listen surface used by secure WebSocket setup."
           :code $ quote $ deftrait NodeHttpServerHost
-            .add-listener $ quote $ Fn NodeHttpServerHost String Fn (-> NodeHttpServerHost)
-            .on $ quote $ Fn NodeHttpServerHost String Fn (-> NodeHttpServerHost)
-            .listen $ quote $ Fn NodeHttpServerHost Number Fn (-> NodeHttpServerHost)
-            .listen-host $ quote $ Fn NodeHttpServerHost Number String
+            .add-listener $ Fn NodeHttpServerHost String Fn $ -> NodeHttpServerHost
+            .on $ Fn NodeHttpServerHost String Fn $ -> NodeHttpServerHost
+            .listen $ Fn NodeHttpServerHost Number Fn $ -> NodeHttpServerHost
+            .listen-host $ Fn NodeHttpServerHost Number String
               Fn $ -> Unit
               -> NodeHttpServerHost
           :examples $ []
@@ -870,14 +863,14 @@
         'NodeWebSocketHost $ %{} 'CodeEntry
           :doc "|Typed Node ws connection surface used by server lifecycle adapters."
           :code $ quote $ deftrait NodeWebSocketHost
-            .on $ quote $ Fn NodeWebSocketHost String Fn (-> NodeWebSocketHost)
-            .send $ quote $ Fn NodeWebSocketHost String (-> Unit)
+            .on $ Fn NodeWebSocketHost String Fn $ -> NodeWebSocketHost
+            .send $ Fn NodeWebSocketHost String $ -> Unit
           :examples $ []
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :node)
           :schema $ quote Trait
         'NodeWebSocketServerHost $ %{} 'CodeEntry (:doc "|Typed Node ws server event surface.")
           :code $ quote $ deftrait NodeWebSocketServerHost
-            .on $ quote $ Fn NodeWebSocketServerHost String Fn (-> NodeWebSocketServerHost)
+            .on $ Fn NodeWebSocketServerHost String Fn $ -> NodeWebSocketServerHost
           :examples $ []
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :node)
           :schema $ quote Trait
@@ -905,32 +898,29 @@
                 sid $ new-session-id!
                 on-close $ match (server-option-callback options :on-close)
                   (:some callback)
-                    Option :some $ unsafe-coerce callback $ quote
-                      Fn String Number $ -> Unit
+                    Option :some $ unsafe-coerce callback $ Fn String Number (-> Unit)
                   (:none)
                     assert-type (Option :none)
-                      quote $ Option $ Fn String Number (-> Unit)
+                      Option $ Fn String Number $ -> Unit
                 on-error $ match (server-option-callback options :on-error)
                   (:some callback)
-                    Option :some $ unsafe-coerce callback $ quote
-                      Fn JsObject $ -> Unit
+                    Option :some $ unsafe-coerce callback $ Fn JsObject (-> Unit)
                   (:none)
                     assert-type (Option :none)
-                      quote $ Option $ Fn JsObject (-> Unit)
+                      Option $ Fn JsObject $ -> Unit
               swap! *global-connections
                 fn (connections key value) (.assoc connections key value)
                 , sid socket
               match (server-option-callback options :on-open)
                 (:some callback)
                   let
-                      callback $ unsafe-coerce callback $ quote
-                        Fn String ws-edn.server/NodeWebSocketHost $ -> Unit
+                      callback $ unsafe-coerce callback $ Fn String ws-edn.server/NodeWebSocketHost (-> Unit)
                     callback sid socket
                 (:none) &unit
               match (server-option-callback options :on-data)
                 (:some callback)
                   reset! *proxied-data-listener $ Option :some $ unsafe-coerce callback
-                    quote $ Fn String Dynamic $ -> Unit
+                    Fn String Dynamic $ -> Unit
                 (:none)
                   reset! *proxied-data-listener $ Option :none
               .on socket |message $ fn (raw-data binary?)
@@ -1061,7 +1051,7 @@
           :doc "|Iterates over all active WebSocket connections. Handler function receives session-id and socket as arguments."
           :code $ quote $ defn wss-each! (handler)
             let
-                connections $ assert-type @*global-connections $ quote (Map String ws-edn.server/NodeWebSocketHost)
+                connections $ assert-type @*global-connections $ Map String ws-edn.server/NodeWebSocketHost
               &doseq
                 sid $ .keys connections
                 match
@@ -1096,18 +1086,16 @@
                 host $ server-option-string options :host
                 on-listening $ match (server-option-callback options :on-listening)
                   (:some callback)
-                    Option :some $ unsafe-coerce callback $ quote
-                      Fn $ -> Unit
+                    Option :some $ unsafe-coerce callback $ Fn (-> Unit)
                   (:none)
                     assert-type (Option :none)
-                      quote $ Option $ Fn (-> Unit)
+                      Option $ Fn $ -> Unit
                 on-error $ match (server-option-callback options :on-error)
                   (:some callback)
-                    Option :some $ unsafe-coerce callback $ quote
-                      Fn JsObject $ -> Unit
+                    Option :some $ unsafe-coerce callback $ Fn JsObject (-> Unit)
                   (:none)
                     assert-type (Option :none)
-                      quote $ Option $ Fn JsObject (-> Unit)
+                      Option $ Fn JsObject $ -> Unit
               when
                 and (contains? options :host) (.none? host)
                 raise "|ws-edn :host must be a String"
@@ -1180,7 +1168,7 @@
         'DateHost $ %{} 'CodeEntry
           :doc "|Typed JavaScript Date formatting surface shared by generated page and server payloads."
           :code $ quote $ deftrait DateHost
-            .to-iso-string $ quote $ Fn DateHost (-> String)
+            .to-iso-string $ Fn DateHost $ -> String
           :examples $ []
           :ffi $ {} (:backend :js) (:kind :external-object)
             :names $ {} $ :to-iso-string |toISOString
