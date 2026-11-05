@@ -2,7 +2,24 @@
 ws-edn in calcit-js
 ----
 
-### 使用者需要注意
+### 0.0.55 候选：使用者需要注意
+
+CLI / `@calcit/procs` 同步正式 **0.35.0**，Cumulo Util **0.0.39**、
+JS-FFI **0.2.12** 使用已发布正式 tag。消费者需要统一精确图并重新生成 JS。
+公开 options、回调、任意 EDN payload、wire 协议、端口与 TLS 合同保持。
+
+源码只经过官方带 revision 的类型格式迁移；原函数逻辑、测试、脚本和工作流保持。
+任意 EDN 与异构 options 不能伪装成有限 union；已有 WsClient 名义句柄、
+WsConnectionPhase / WsSendOutcome 枚举与受检 Track 保留，不放宽类型门禁。
+
+本轮正式图已通过 Caps strict/toolchain、immutable、完整 strict、browser 44 / node 28
+个公开定义检查、24 项 unit、3 项 Node 宿主回归、2 项真实 WS/WSS/HTTPS 回环、
+原客户端 generation/cleanup、文档和 Vite 构建；两入口 dynamic-method 为零。
+回环仅使用合成数据和显式信任的临时证书，不访问生产；不部署、不发布 npm。
+精确 PR CI 与评审状态见 PR，不把检查通过当成 WASM 或真实浏览器网络验收。
+
+### 0.0.54 历史配对
+
 
 候选 `0.0.54` 对齐 Cumulo Util `0.0.38` 和正式 JS-FFI `0.2.10`，解除现代
 Respo/UI 消费者严格依赖图冲突。CLI / `@calcit/procs` 继续配对正式 `0.34.2`。
@@ -202,7 +219,7 @@ Keep open protocol payloads as `Dynamic` only at the WebSocket/JS boundary and
 decode them into a named Struct or Enum as soon as their shape is known. Do not
 reintroduce the removed `calcit-test`, `lilac`, or `memof` modules.
 
-本候选使用 Calcit 0.34.2；本地 `when-let` 明确声明 syntax 与
+本候选使用 Calcit 0.35.0；本地 `when-let` 明确声明 syntax 与
 expansion。`ws-send!` 始终返回 `Unit`，方法形式 `.send` 返回
 `WsSendOutcome`，不会把 JavaScript `WebSocket.send` 的返回值泄漏到公开 API。
 
@@ -306,7 +323,7 @@ add in options to enabled WSS mode:
 
 ### 限制
 
-- 本候选配对正式 0.34.2；需要 0.31.0 的使用者继续使用已发布 0.0.49。
+- 本候选配对正式 0.35.0；需要 0.31.0 的使用者继续使用已发布 0.0.49。
 - 当前网络回归验证本地 WS/WSS 和 HTTPS health，不覆盖真实浏览器页面。
 - 既有宿主边界及混合协议载荷保持开放，不代表深层业务数据已取得具体类型证明。
 - 本模块不承诺 WASM 后端支持；浏览器/Node 生成 JS 是本次验证目标。
