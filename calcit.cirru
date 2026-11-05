@@ -98,7 +98,7 @@
           :schema $ quote Trait
         'BrowserWebSocketHost $ %{} 'CodeEntry
           :doc "|Typed browser WebSocket surface used by the client lifecycle adapter."
-          :code $ quote $ deftrait BrowserWebSocketHost (:onopen 'Fn) (:onmessage 'Fn) (:onclose 'Fn) (:onerror 'Fn)
+          :code $ quote $ deftrait BrowserWebSocketHost (:onopen 'AnyFn) (:onmessage 'AnyFn) (:onclose 'AnyFn) (:onerror 'AnyFn)
             .send $ Fn BrowserWebSocketHost String $ -> Unit
             .close $ Fn BrowserWebSocketHost $ -> Unit
           :examples $ []
@@ -116,7 +116,7 @@
             :state $ Ref WsClientState
             :url String
             :options $ Map Tag Dynamic
-            :on-data $ Ref $ Option Fn
+            :on-data $ Ref $ Option AnyFn
             :socket-factory $ Fn String (-> ws-edn.client/BrowserWebSocketHost) (:features :js-ffi)
             :lifecycle-cleanup $ Ref $ Option
               Fn $ -> Unit
@@ -248,7 +248,7 @@
               (:none) (Option :none)
           :examples $ []
           :schema $ quote $ Fn (Map Tag Dynamic) Tag
-            -> $ Option Fn
+            -> $ Option AnyFn
             :features :js-ffi
           :tests $ []
             %{} 'TestEntry (:name |rejects-missing-callback)
@@ -512,7 +512,7 @@
           :code $ quote $ defn create-client-with! (url options socket-factory)
             let
                 state-ref $ ref $ WsClientState :generation 0 :phase (WsConnectionPhase :closed) :socket (Option :none)
-                on-data-ref $ ref $ assert-type (Option :none) (Option Fn)
+                on-data-ref $ ref $ assert-type (Option :none) (Option AnyFn)
                 lifecycle-cleanup-ref $ ref $ assert-type (Option :none)
                   Option $ Fn $ -> Unit
                 retry-base-ms $ match (client-option-number options :retry-base-ms)
@@ -779,7 +779,7 @@
             , &unit
           :examples $ [] $ quote
             ws-set-on-data! $ fn (data) (println "|New message:" data)
-          :schema $ quote $ Fn Fn (-> Unit) (:features :js-ffi)
+          :schema $ quote $ Fn AnyFn (-> Unit) (:features :js-ffi)
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns ws-edn.client
           :require
@@ -850,9 +850,9 @@
         'NodeHttpServerHost $ %{} 'CodeEntry
           :doc "|Typed HTTPS server event and listen surface used by secure WebSocket setup."
           :code $ quote $ deftrait NodeHttpServerHost
-            .add-listener $ Fn NodeHttpServerHost String Fn $ -> NodeHttpServerHost
-            .on $ Fn NodeHttpServerHost String Fn $ -> NodeHttpServerHost
-            .listen $ Fn NodeHttpServerHost Number Fn $ -> NodeHttpServerHost
+            .add-listener $ Fn NodeHttpServerHost String AnyFn $ -> NodeHttpServerHost
+            .on $ Fn NodeHttpServerHost String AnyFn $ -> NodeHttpServerHost
+            .listen $ Fn NodeHttpServerHost Number AnyFn $ -> NodeHttpServerHost
             .listen-host $ Fn NodeHttpServerHost Number String
               Fn $ -> Unit
               -> NodeHttpServerHost
@@ -863,14 +863,14 @@
         'NodeWebSocketHost $ %{} 'CodeEntry
           :doc "|Typed Node ws connection surface used by server lifecycle adapters."
           :code $ quote $ deftrait NodeWebSocketHost
-            .on $ Fn NodeWebSocketHost String Fn $ -> NodeWebSocketHost
+            .on $ Fn NodeWebSocketHost String AnyFn $ -> NodeWebSocketHost
             .send $ Fn NodeWebSocketHost String $ -> Unit
           :examples $ []
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :node)
           :schema $ quote Trait
         'NodeWebSocketServerHost $ %{} 'CodeEntry (:doc "|Typed Node ws server event surface.")
           :code $ quote $ deftrait NodeWebSocketServerHost
-            .on $ Fn NodeWebSocketServerHost String Fn $ -> NodeWebSocketServerHost
+            .on $ Fn NodeWebSocketServerHost String AnyFn $ -> NodeWebSocketServerHost
           :examples $ []
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :node)
           :schema $ quote Trait
@@ -974,7 +974,7 @@
               (:none) (Option :none)
           :examples $ []
           :schema $ quote $ Fn (Map Tag Dynamic) Tag
-            -> $ calcit.core/Option Fn
+            -> $ calcit.core/Option AnyFn
             :features :js-ffi
           :tests $ []
             %{} 'TestEntry (:name |accepts-function-option)
