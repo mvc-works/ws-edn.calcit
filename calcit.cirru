@@ -961,7 +961,7 @@
                 match @*proxied-data-listener
                   (:some callback)
                     callback sid $ parse-cirru-edn (node-data-string raw-data)
-                      .unwrap-or (get options :class-mapper) $ {}
+                      .unwrap-or (get options :class-mapper) ({})
                   (:none) &unit
                 , &unit
               .on-close socket |close $ fn (event binary?)
