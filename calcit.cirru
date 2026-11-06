@@ -98,7 +98,11 @@
           :schema $ quote Trait
         'BrowserWebSocketHost $ %{} 'CodeEntry
           :doc "|Typed browser WebSocket surface used by the client lifecycle adapter."
-          :code $ quote $ deftrait BrowserWebSocketHost (:onopen 'AnyFn) (:onmessage 'AnyFn) (:onclose 'AnyFn) (:onerror 'AnyFn)
+          :code $ quote $ deftrait BrowserWebSocketHost
+            :onopen $ Fn JsObject $ -> Unit
+            :onmessage $ Fn BrowserMessageEventHost $ -> Unit
+            :onclose $ Fn JsObject $ -> Unit
+            :onerror $ Fn JsObject $ -> Unit
             .send $ Fn BrowserWebSocketHost String $ -> Unit
             .close $ Fn BrowserWebSocketHost $ -> Unit
           :examples $ []
@@ -856,29 +860,53 @@
         'NodeHttpServerHost $ %{} 'CodeEntry
           :doc "|Typed HTTPS server event and listen surface used by secure WebSocket setup."
           :code $ quote $ deftrait NodeHttpServerHost
-            .add-listener $ Fn NodeHttpServerHost String AnyFn $ -> NodeHttpServerHost
-            .on $ Fn NodeHttpServerHost String AnyFn $ -> NodeHttpServerHost
-            .listen $ Fn NodeHttpServerHost Number AnyFn $ -> NodeHttpServerHost
+            .on-upgrade $ Fn NodeHttpServerHost String
+              Fn NodeHttpRequestHost JsObject JsObject $ -> Unit
+              -> NodeHttpServerHost
+            .on-error $ Fn NodeHttpServerHost String
+              Fn JsObject $ -> Unit
+              -> NodeHttpServerHost
+            .listen $ Fn NodeHttpServerHost Number
+              Fn $ -> Unit
+              -> NodeHttpServerHost
             .listen-host $ Fn NodeHttpServerHost Number String
               Fn $ -> Unit
               -> NodeHttpServerHost
           :examples $ []
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :node)
-            :names $ {} (:add-listener |addListener) (:listen-host |listen)
+            :names $ {} (:listen-host |listen) (:on-error |on) (:on-upgrade |addListener)
           :schema $ quote Trait
         'NodeWebSocketHost $ %{} 'CodeEntry
           :doc "|Typed Node ws connection surface used by server lifecycle adapters."
           :code $ quote $ deftrait NodeWebSocketHost
-            .on $ Fn NodeWebSocketHost String AnyFn $ -> NodeWebSocketHost
+            .on-message $ Fn NodeWebSocketHost String
+              Fn NodeDataHost Bool $ -> Unit
+              -> NodeWebSocketHost
+            .on-close $ Fn NodeWebSocketHost String
+              Fn Number JsObject $ -> Unit
+              -> NodeWebSocketHost
+            .on-error $ Fn NodeWebSocketHost String
+              Fn JsObject $ -> Unit
+              -> NodeWebSocketHost
             .send $ Fn NodeWebSocketHost String $ -> Unit
           :examples $ []
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :node)
+            :names $ {} (:on-close |on) (:on-error |on) (:on-message |on)
           :schema $ quote Trait
         'NodeWebSocketServerHost $ %{} 'CodeEntry (:doc "|Typed Node ws server event surface.")
           :code $ quote $ deftrait NodeWebSocketServerHost
-            .on $ Fn NodeWebSocketServerHost String AnyFn $ -> NodeWebSocketServerHost
+            .on-connection $ Fn NodeWebSocketServerHost String
+              Fn NodeWebSocketHost NodeHttpRequestHost $ -> Unit
+              -> NodeWebSocketServerHost
+            .on-listening $ Fn NodeWebSocketServerHost String
+              Fn $ -> Unit
+              -> NodeWebSocketServerHost
+            .on-error $ Fn NodeWebSocketServerHost String
+              Fn JsObject $ -> Unit
+              -> NodeWebSocketServerHost
           :examples $ []
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :node)
+            :names $ {} (:on-connection |on) (:on-error |on) (:on-listening |on)
           :schema $ quote Trait
         'log-request-url! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn log-request-url! (raw-request)
@@ -929,14 +957,14 @@
                     Fn String Dynamic $ -> Unit
                 (:none)
                   reset! *proxied-data-listener $ Option :none
-              .on socket |message $ fn (raw-data binary?)
+              .on-message socket |message $ fn (raw-data binary?)
                 match @*proxied-data-listener
                   (:some callback)
                     callback sid $ parse-cirru-edn (node-data-string raw-data)
                       .unwrap-or (get options :class-mapper) nil
                   (:none) &unit
                 , &unit
-              .on socket |close $ fn (event binary?)
+              .on-close socket |close $ fn (event binary?)
                 hint-fn $ Fn Number JsObject $ -> Unit
                 swap! *global-connections
                   fn (connections key) (.dissoc connections key)
@@ -945,7 +973,7 @@
                   (:some callback) (callback sid event)
                   (:none) &unit
                 , &unit
-              .on socket |error $ fn (error)
+              .on-error socket |error $ fn (error)
                 hint-fn $ Fn JsObject $ -> Unit
                 swap! *global-connections
                   fn (connections key) (.dissoc connections key)
@@ -1115,8 +1143,8 @@
                               ssl-options $ &js-object :key (fs/readFileSync key-file) :cert $ fs/readFileSync cert-file
                               raw-server $ https/createServer ssl-options $ fn (req res) (write-health-response! res)
                               server $ js-cast raw-server 'NodeHttpServerHost
-                            .add-listener server |upgrade $ fn (req res head) (log-request-url! req)
-                            .on server |error $ fn (error) (log-server-error! error)
+                            .on-upgrade server |upgrade $ fn (req res head) (log-request-url! req)
+                            .on-error server |error $ fn (error) (log-server-error! error)
                             match host
                               (:some hostname)
                                 .listen-host server port hostname $ fn () $ println "|server at" port
@@ -1132,13 +1160,13 @@
                           (:some hostname) (&js-object :port port :host hostname)
                           (:none) (&js-object :port port)
                         , 'NodeWebSocketServerHost
-                .on wss |connection $ fn (socket req) (maintain-host-socket! socket options) &unit
-                .on wss |listening $ fn ()
+                .on-connection wss |connection $ fn (socket req) (maintain-host-socket! socket options) &unit
+                .on-listening wss |listening $ fn ()
                   match on-listening
                     (:some callback) (callback)
                     (:none) &unit
                   , &unit
-                .on wss |error $ fn (error)
+                .on-error wss |error $ fn (error)
                   hint-fn $ Fn JsObject $ -> Unit
                   match on-error
                     (:some callback) (callback error)
