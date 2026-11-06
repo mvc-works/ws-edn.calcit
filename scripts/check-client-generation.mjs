@@ -13,6 +13,7 @@ import {
   install_browser_lifecycle_$x_,
   ws_connect_$x_,
   ws_connected_$q_,
+  ws_set_on_data_$x_,
 } from "../out-page/ws-edn.client.mjs";
 import { Track, decode_track } from "../out-page/ws-edn.schema.mjs";
 import { server_option_callback, server_option_string } from "../js-out/ws-edn.server.mjs";
@@ -353,10 +354,18 @@ globalThis.WebSocket = class extends FakeSocket {
   }
 };
 try {
-  const first = ws_connect_$x_("ws://singleton-first.test", new CalcitMap());
+  const initial = [];
+  const first = ws_connect_$x_("ws://singleton-first.test",
+    new CalcitMap().assoc(tags["on-data"], data => initial.push(data)));
   assert.equal(invoke_method("connected?", first), false);
   singletonSockets[0].onopen({ singleton: true });
   assert.equal(ws_connected_$q_(), true);
+  singletonSockets[0].onmessage({ data: "do |initial" });
+  const replacements = [];
+  ws_set_on_data_$x_(data => replacements.push(data));
+  singletonSockets[0].onmessage({ data: "do |replacement" });
+  assert.deepEqual(initial, ["initial"]);
+  assert.deepEqual(replacements, ["replacement"]);
   const second = ws_connect_$x_("ws://singleton-second.test", new CalcitMap());
   assert.equal(singletonSockets[0].closeCalls, 1);
   assert.equal(ws_connected_$q_(), false);

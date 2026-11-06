@@ -116,7 +116,8 @@
             :state $ Ref WsClientState
             :url String
             :options $ Map Tag Dynamic
-            :on-data $ Ref $ Option AnyFn
+            :on-data $ Ref $ Option
+              Fn Dynamic $ -> Dynamic
             :socket-factory $ Fn String (-> ws-edn.client/BrowserWebSocketHost) (:features :js-ffi)
             :lifecycle-cleanup $ Ref $ Option
               Fn $ -> Unit
@@ -469,7 +470,6 @@
                           deref $ :on-data client
                           (:some callback)
                             let
-                                callback $ unsafe-coerce callback $ Fn Dynamic (-> Unit)
                                 message-event $ js-cast event 'BrowserMessageEventHost
                                 class-mapper $ .unwrap-or
                                   get (:options client) :class-mapper
@@ -512,7 +512,8 @@
           :code $ quote $ defn create-client-with! (url options socket-factory)
             let
                 state-ref $ ref $ WsClientState :generation 0 :phase (WsConnectionPhase :closed) :socket (Option :none)
-                on-data-ref $ ref $ assert-type (Option :none) (Option AnyFn)
+                on-data-ref $ ref $ assert-type (Option :none)
+                  Option $ Fn Dynamic $ -> Dynamic
                 lifecycle-cleanup-ref $ ref $ assert-type (Option :none)
                   Option $ Fn $ -> Unit
                 retry-base-ms $ match (client-option-number options :retry-base-ms)
@@ -532,7 +533,8 @@
                 client $ WsClient :state state-ref :url url :options options :on-data on-data-ref :socket-factory socket-factory :lifecycle-cleanup lifecycle-cleanup-ref :retry-state retry-state-ref :reconnect-timer reconnect-timer-ref :heartbeat-timeout-ms heartbeat-timeout-ms :heartbeat-lease heartbeat-lease-ref :heartbeat-timer heartbeat-timer-ref
               match (client-option-callback options :on-data)
                 (:some callback)
-                  reset! on-data-ref $ Option :some callback
+                  reset! on-data-ref $ Option :some $ unsafe-coerce callback
+                    Fn Dynamic $ -> Dynamic
                 (:none) &unit
               connect-client! $ client-state-handle client
               , client
@@ -779,7 +781,11 @@
             , &unit
           :examples $ [] $ quote
             ws-set-on-data! $ fn (data) (println "|New message:" data)
-          :schema $ quote $ Fn AnyFn (-> Unit) (:features :js-ffi)
+          :schema $ quote $ Fn
+            Fn Dynamic $ -> R
+            -> Unit
+            :generics R
+            :features :js-ffi
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns ws-edn.client
           :require
