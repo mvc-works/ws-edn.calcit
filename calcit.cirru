@@ -1224,7 +1224,7 @@
               non-nil? $ ~ $ .unwrap (first pair)
               , ~@body
           :examples $ []
-          :schema $ quote $ Macro SyntaxList & Syntax
+          :schema $ quote $ Macro SyntaxList (& Syntax)
             -> $ Expr Dynamic
           :tests $ [] $ %{} 'TestEntry (:name |legacy-nil-binding-keeps-symbol)
             :code $ quote $ do

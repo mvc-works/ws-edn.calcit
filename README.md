@@ -2,7 +2,14 @@
 ws-edn in calcit-js
 ----
 
-### 0.1.0 候选的浏览器数据回调
+### 0.1.1 候选：配对 Calcit 0.37.0
+
+CLI、`deps.cirru :calcit-version` 与 `@calcit/procs` 同步正式 **0.37.0**。0.37.0 把旧的 `& T`
+变长参数写法改为载入错误，并且对依赖同样生效，因此 0.1.0 不能被 0.37 项目加载。本版用官方
+`edit format` 把 `ws-edn.util/when-let` 的 schema 改成 `Macro SyntaxList (& Syntax)`，含义不变；
+客户端、服务端 API 与回调签名不变。下游固定本版 Git tag 后重新生成 JS。
+
+### 0.1.0 浏览器数据回调
 
 `ws-set-on-data!` 的回调接收一个已解析的 Cirru EDN 值，返回值会被忽略。
 如果旧代码用 `AnyFn` 保存回调，请标注实际的一参数签名。回调应在自己的入口校验所需的消息结构，
