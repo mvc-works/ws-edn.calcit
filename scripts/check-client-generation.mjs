@@ -97,7 +97,7 @@ try {
     const snippet = `fn (socket)
   hint-fn $ Fn ws-edn.server/NodeWebSocketHost (-> Unit)
   let
-      connections $ ref $ assert-type ({}) $ quote $ Map String ws-edn.server/NodeWebSocketHost
+      connections $ ref $ assert-type ({}) $ Map String ws-edn.server/NodeWebSocketHost
     swap! connections
       fn (current key value) (.assoc current key value)
       , ${key} ${value}
