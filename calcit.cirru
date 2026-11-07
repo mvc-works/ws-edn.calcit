@@ -477,7 +477,7 @@
                                 message-event $ js-cast event 'BrowserMessageEventHost
                                 class-mapper $ .unwrap-or
                                   get (:options client) :class-mapper
-                                  , nil
+                                  {}
                                 parsed $ parse-client-message (.-data message-event)
                                   fn (text) (parse-cirru-edn text class-mapper)
                               match parsed
@@ -961,7 +961,7 @@
                 match @*proxied-data-listener
                   (:some callback)
                     callback sid $ parse-cirru-edn (node-data-string raw-data)
-                      .unwrap-or (get options :class-mapper) nil
+                      .unwrap-or (get options :class-mapper) ({})
                   (:none) &unit
                 , &unit
               .on-close socket |close $ fn (event binary?)
