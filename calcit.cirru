@@ -121,7 +121,7 @@
             :url String
             :options $ Map Tag Dynamic
             :on-data $ Ref $ Option
-              Fn Dynamic $ -> Dynamic
+              Fn Dynamic $ -> Unit
             :socket-factory $ Fn String (-> ws-edn.client/BrowserWebSocketHost) (:features :js-ffi)
             :lifecycle-cleanup $ Ref $ Option
               Fn $ -> Unit
@@ -462,10 +462,7 @@
                         renew-client-heartbeat! client generation
                         match
                           client-option-callback (:options client) :on-open
-                          (:some callback)
-                            let
-                                callback $ unsafe-coerce callback $ Fn Dynamic (-> Unit)
-                              callback event
+                          (:some callback) (callback event)
                           (:none) &unit
                       , &unit
                   set! (.-onmessage socket)
@@ -498,10 +495,7 @@
                           reset! state-ref $ WsClientState :generation generation :phase (WsConnectionPhase :closed) :socket $ Option :none
                           match
                             client-option-callback (:options client) :on-close
-                            (:some callback)
-                              let
-                                  callback $ unsafe-coerce callback $ Fn Dynamic (-> Unit)
-                                callback event
+                            (:some callback) (callback event)
                             (:none) &unit
                           when (not explicit-close?) (schedule-client-reconnect! client)
                       , &unit
@@ -518,7 +512,7 @@
             let
                 state-ref $ ref $ WsClientState :generation 0 :phase (WsConnectionPhase :closed) :socket (Option :none)
                 on-data-ref $ ref $ assert-type (Option :none)
-                  Option $ Fn Dynamic $ -> Dynamic
+                  Option $ Fn Dynamic $ -> Unit
                 lifecycle-cleanup-ref $ ref $ assert-type (Option :none)
                   Option $ Fn $ -> Unit
                 retry-base-ms $ match (client-option-number options :retry-base-ms)
@@ -538,8 +532,10 @@
                 client $ WsClient :state state-ref :url url :options options :on-data on-data-ref :socket-factory socket-factory :lifecycle-cleanup lifecycle-cleanup-ref :retry-state retry-state-ref :reconnect-timer reconnect-timer-ref :heartbeat-timeout-ms heartbeat-timeout-ms :heartbeat-lease heartbeat-lease-ref :heartbeat-timer heartbeat-timer-ref
               match (client-option-callback options :on-data)
                 (:some callback)
-                  reset! on-data-ref $ Option :some $ unsafe-coerce callback
-                    Fn Dynamic $ -> Dynamic
+                  reset! on-data-ref $ Option :some $ fn (data)
+                    hint-fn $ Fn Dynamic $ -> Unit
+                    callback data
+                    , &unit
                 (:none) &unit
               connect-client! $ client-state-handle client
               , client
@@ -781,7 +777,11 @@
               (:some client)
                 let
                     state-handle $ client-state-handle client
-                  reset! (:on-data state-handle) (Option :some on-data)
+                  reset! (:on-data state-handle)
+                    Option :some $ fn (data)
+                      hint-fn $ Fn Dynamic $ -> Unit
+                      on-data data
+                      , &unit
               (:none) (js/console.warn |Missing-WebSocket-client)
             , &unit
           :examples $ [] $ quote
@@ -931,31 +931,20 @@
           :code $ quote $ defn maintain-socket! (socket options)
             let
                 sid $ new-session-id!
-                on-close $ match (server-option-callback options :on-close)
-                  (:some callback)
-                    Option :some $ unsafe-coerce callback $ Fn String Number (-> Unit)
-                  (:none)
-                    assert-type (Option :none)
-                      Option $ Fn String Number $ -> Unit
-                on-error $ match (server-option-callback options :on-error)
-                  (:some callback)
-                    Option :some $ unsafe-coerce callback $ Fn JsObject (-> Unit)
-                  (:none)
-                    assert-type (Option :none)
-                      Option $ Fn JsObject $ -> Unit
+                on-close $ server-option-callback options :on-close
+                on-error $ server-option-callback options :on-error
               swap! *global-connections
                 fn (connections key value) (.assoc connections key value)
                 , sid socket
               match (server-option-callback options :on-open)
-                (:some callback)
-                  let
-                      callback $ unsafe-coerce callback $ Fn String ws-edn.server/NodeWebSocketHost (-> Unit)
-                    callback sid socket
+                (:some callback) (callback sid socket)
                 (:none) &unit
               match (server-option-callback options :on-data)
                 (:some callback)
-                  reset! *proxied-data-listener $ Option :some $ unsafe-coerce callback
-                    Fn String Dynamic $ -> Unit
+                  reset! *proxied-data-listener $ Option :some $ fn (session-id data)
+                    hint-fn $ Fn String Dynamic $ -> Unit
+                    callback session-id data
+                    , &unit
                 (:none)
                   reset! *proxied-data-listener $ Option :none
               .on-message socket |message $ fn (raw-data binary?)
@@ -1120,18 +1109,8 @@
                 cert-path $ server-option-string options :cert
                 key-path $ server-option-string options :key
                 host $ server-option-string options :host
-                on-listening $ match (server-option-callback options :on-listening)
-                  (:some callback)
-                    Option :some $ unsafe-coerce callback $ Fn (-> Unit)
-                  (:none)
-                    assert-type (Option :none)
-                      Option $ Fn $ -> Unit
-                on-error $ match (server-option-callback options :on-error)
-                  (:some callback)
-                    Option :some $ unsafe-coerce callback $ Fn JsObject (-> Unit)
-                  (:none)
-                    assert-type (Option :none)
-                      Option $ Fn JsObject $ -> Unit
+                on-listening $ server-option-callback options :on-listening
+                on-error $ server-option-callback options :on-error
               when
                 and (contains? options :host) (.none? host)
                 raise "|ws-edn :host must be a String"
