@@ -2,7 +2,13 @@
 ws-edn in calcit-js
 ----
 
-### 0.1.1 候选：配对 Calcit 0.37.0
+### 0.1.2 候选：配对 Calcit 0.38.0
+
+CLI、`deps.cirru :calcit-version` 与 `@calcit/procs` 同步正式 **0.38.0**。`client-option-callback` /
+`server-option-callback` 从 `Map Tag Dynamic` 选项里取回调，返回 `Option AnyFn`，签名标 `:open :decode`，
+`W_OPEN_FAMILY` 不再把它们计入未审阅的开放类型。API 与运行行为不变。
+
+### 0.1.1：配对 Calcit 0.37.0
 
 CLI、`deps.cirru :calcit-version` 与 `@calcit/procs` 同步正式 **0.37.0**。0.37.0 把旧的 `& T`
 变长参数写法改为载入错误，并且对依赖同样生效，因此 0.1.0 不能被 0.37 项目加载。本版用官方

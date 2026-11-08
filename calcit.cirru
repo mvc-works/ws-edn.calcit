@@ -255,6 +255,7 @@
           :schema $ quote $ Fn (Map Tag Dynamic) Tag
             -> $ Option AnyFn
             :features :js-ffi
+            :open :decode
           :tests $ []
             %{} 'TestEntry (:name |rejects-missing-callback)
               :code $ quote $ assert= (Option :none)
@@ -1010,6 +1011,7 @@
           :schema $ quote $ Fn (Map Tag Dynamic) Tag
             -> $ calcit.core/Option AnyFn
             :features :js-ffi
+            :open :decode
           :tests $ []
             %{} 'TestEntry (:name |accepts-function-option)
               :code $ quote $ let
