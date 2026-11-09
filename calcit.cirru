@@ -881,7 +881,7 @@
           :doc "|Typed Node ws connection surface used by server lifecycle adapters."
           :code $ quote $ deftrait NodeWebSocketHost
             .on-message $ Fn NodeWebSocketHost String
-              Fn NodeDataHost Bool $ -> Unit
+              Fn ws-edn.server/NodeDataHost Bool $ -> Unit
               -> NodeWebSocketHost
             .on-close $ Fn NodeWebSocketHost String
               Fn Number JsObject $ -> Unit
@@ -983,13 +983,12 @@
           :examples $ []
           :schema $ quote $ Fn (-> String) (:features :js-ffi)
         'node-data-string $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn node-data-string (raw-data)
+          :code $ quote $ defn node-data-string (data)
             let
-                data $ unsafe-coerce raw-data 'NodeDataHost
-                text $ .!toString data
+                text $ .to-string data
               if (string? text) text $ raise |Expected-String-WebSocket-data
           :examples $ []
-          :schema $ quote $ Fn Dynamic (-> String) (:features :js-ffi)
+          :schema $ quote $ Fn ws-edn.server/NodeDataHost (-> String) (:features :js-ffi)
         'server-option-callback $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn server-option-callback (options key)
             match (get options key)
