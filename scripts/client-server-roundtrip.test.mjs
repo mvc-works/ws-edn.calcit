@@ -20,15 +20,18 @@ async function waitFor(predicate, label) {
 }
 
 test("real clients preserve EDN payloads and distinct String session IDs", { timeout: 15000 }, async t => {
-  const tags = c.init_tags(["host", "on-open", "on-data", "on-error"]);
+  const tags = c.init_tags(["host", "on-open", "on-data", "on-error", "on-close", "on-listening"]);
   const ids = [];
   const incoming = [];
   const failures = [];
   const clients = [];
   const replies = [[], []];
   const messageErrors = [[], []];
+  const closed = [];
+  let listening = 0;
   const wss = server.wss_serve_$x_(0, c._$n__$M_(
     tags.host, "127.0.0.1",
+    tags["on-listening"], () => ++listening,
     tags["on-open"], sid => {
       if (typeof sid !== "string") failures.push("session ID is not a String");
       ids.push(sid);
@@ -36,7 +39,9 @@ test("real clients preserve EDN payloads and distinct String session IDs", { tim
     tags["on-data"], (sid, data) => {
       incoming.push([sid, data]);
       server.wss_send_$x_(sid, data);
+      return incoming.length;
     },
+    tags["on-close"], (sid, code) => closed.push([sid, code]),
   ));
   t.after(async () => {
     for (const connection of clients) client.client_close_$x_(connection);
@@ -44,6 +49,7 @@ test("real clients preserve EDN payloads and distinct String session IDs", { tim
     await new Promise(resolve => wss.close(resolve));
   });
   await once(wss, "listening", { signal: t.signal });
+  assert.equal(listening, 1);
   assert.equal(wss.address().address, "127.0.0.1");
   const url = `ws://127.0.0.1:${wss.address().port}`;
   for (let index = 0; index < 2; index += 1) {
@@ -87,6 +93,8 @@ test("real clients preserve EDN payloads and distinct String session IDs", { tim
   }
   for (const connection of clients) client.client_close_$x_(connection);
   await waitFor(() => c._$n_map_$o_count(c.deref(server._$s_global_connections)) === 0, "session cleanup");
+  assert.deepEqual(closed.map(([sid]) => sid).sort(), [...ids].sort());
+  assert.ok(closed.every(([, code]) => Number.isInteger(code)));
 });
 
 test("TLS host binding preserves health and Unicode EDN with an explicitly trusted certificate", { timeout: 15000 }, async t => {

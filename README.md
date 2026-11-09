@@ -6,7 +6,7 @@ ws-edn in calcit-js
 
 CLI、`deps.cirru :calcit-version` 与 `@calcit/procs` 同步正式 **0.38.0**。`client-option-callback` /
 `server-option-callback` 从 `Map Tag Dynamic` 选项里取回调，返回 `Option AnyFn`，签名标 `:open :decode`，
-`W_OPEN_FAMILY` 不再把它们计入未审阅的开放类型。API 与运行行为不变。
+`W_OPEN_FAMILY` 不再把它们计入未审阅的开放类型。旧 options Map 沿用原有回调参数，生命周期处理器按事件传参，消息处理器在内部适配为返回 `Unit` 的回调。直接读取内部 `:on-data` 引用时，取到的是适配函数。
 
 ### 0.1.1：配对 Calcit 0.37.0
 
