@@ -248,8 +248,9 @@
                 if (fn? value) (Some value) None
               (:none) None
           :examples $ []
-          :schema $ quote $ Fn (Map Tag Dynamic) Tag
+          :schema $ quote $ Fn (Map Tag V) Tag
             -> $ Option AnyFn
+            :generics V
             :features :js-ffi
             :open :decode
           :tests $ []
@@ -324,8 +325,9 @@
                 if (number? value) (Some value) None
               (:none) None
           :examples $ []
-          :schema $ quote $ Fn (Map Tag Dynamic) Tag
+          :schema $ quote $ Fn (Map Tag V) Tag
             -> $ Option Number
+            :generics V
             :features :js-ffi
           :tests $ []
             %{} 'TestEntry (:name |missing-number-option-is-none)
@@ -903,12 +905,12 @@
         'log-server-error! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn log-server-error! (error) (js/console.error error) &unit
           :examples $ []
-          :schema $ quote $ Fn Dynamic (-> Unit) (:features :js-ffi)
+          :schema $ quote $ Fn E (-> Unit) (:generics E) (:features :js-ffi)
         'maintain-host-socket! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn maintain-host-socket! (raw-socket options)
             maintain-socket! (js-cast raw-socket 'NodeWebSocketHost) options
           :examples $ []
-          :schema $ quote $ Fn Dynamic (Map Tag Dynamic) (-> Unit) (:features :js-ffi)
+          :schema $ quote $ Fn SocketInput (Map Tag Dynamic) (-> Unit) (:generics SocketInput) (:features :js-ffi)
         'maintain-socket! $ %{} 'CodeEntry
           :doc "|Registers and maintains a WebSocket connection. Sets up event handlers for message, close, and error events. Accepts options map with :on-open, :on-close, :on-data, :on-error, and :class-mapper callbacks."
           :code $ quote $ defn maintain-socket! (socket options)
@@ -978,8 +980,9 @@
                 if (fn? value) (Some value) None
               (:none) None
           :examples $ []
-          :schema $ quote $ Fn (Map Tag Dynamic) Tag
+          :schema $ quote $ Fn (Map Tag V) Tag
             -> $ Option AnyFn
+            :generics V
             :features :js-ffi
             :open :decode
           :tests $ []
@@ -1008,8 +1011,9 @@
                 if (string? value) (Some value) None
               (:none) None
           :examples $ []
-          :schema $ quote $ Fn (Map Tag Dynamic) Tag
+          :schema $ quote $ Fn (Map Tag V) Tag
             -> $ Option String
+            :generics V
             :features :js-ffi
           :tests $ []
             %{} 'TestEntry (:name |preserves-empty-and-unicode-string-options)
@@ -1047,7 +1051,7 @@
               .end response "|WSS Server"
               , &unit
           :examples $ []
-          :schema $ quote $ Fn Dynamic (-> Unit) (:features :js-ffi)
+          :schema $ quote $ Fn ResponseInput (-> Unit) (:generics ResponseInput) (:features :js-ffi)
         'wss-each! $ %{} 'CodeEntry
           :doc "|Iterates over all active WebSocket connections. Handler function receives session-id and socket as arguments."
           :code $ quote $ defn wss-each! (handler)
