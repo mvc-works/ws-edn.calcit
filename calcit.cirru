@@ -795,7 +795,7 @@
         'decode-track $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn decode-track (value) (decode-map-as value Track)
           :examples $ []
-          :schema $ quote $ Fn Dynamic (-> Track)
+          :schema $ quote $ Fn Input (-> Track) (:generics Input)
           :tests $ []
             %{} 'TestEntry (:name |decodes-track-map)
               :code $ quote $ assert "|decoded track should retain fields"
