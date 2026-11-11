@@ -527,9 +527,10 @@
               connect-client! $ client-state-handle client
               , client
           :examples $ []
-          :schema $ quote $ Fn String (Map Tag Dynamic)
+          :schema $ quote $ Fn String (Map Tag V)
             Fn String $ -> BrowserWebSocketHost
             -> WsClient
+            :generics V
             :features :js-ffi
         'generation-current? $ %{} 'CodeEntry
           :doc "|Returns whether an event belongs to the active socket generation."
@@ -732,7 +733,7 @@
               :on-open $ fn (event) (println |connected)
               :on-close $ fn (event) (println |closed)
               :on-data $ fn (data) (println |received: data)
-          :schema $ quote $ Fn String (Map Tag Dynamic) (-> WsClient) (:features :js-ffi)
+          :schema $ quote $ Fn String (Map Tag V) (-> WsClient) (:generics V) (:features :js-ffi)
         'ws-connected? $ %{} 'CodeEntry
           :doc "|Returns true if WebSocket is currently connected, false otherwise."
           :code $ quote $ defn ws-connected? ()
@@ -1134,7 +1135,7 @@
             wss-serve! 8080 $ {}
               :on-listening $ fn () $ println "|Server listening on 8080"
               :on-data $ fn (sid data) (println "|Received from" sid : data)
-          :schema $ quote $ Fn Number (Map Tag Dynamic) (-> NodeWebSocketServerHost) (:features :js-ffi)
+          :schema $ quote $ Fn Number (Map Tag V) (-> NodeWebSocketServerHost) (:generics V) (:features :js-ffi)
         'wss-set-on-data! $ %{} 'CodeEntry
           :doc "|Sets the message handler for incoming WebSocket data across all connections. Handler receives session-id and parsed Cirru EDN data."
           :code $ quote $ defn wss-set-on-data! (on-data)
