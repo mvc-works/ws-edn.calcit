@@ -724,7 +724,7 @@
               (:none) &unit
             let
                 client $ create-client-with! ws-url options $ fn (url)
-                  hint-fn $ Fn String $ -> ws-edn.client/BrowserWebSocketHost
+                  hint-fn $ Fn String $ -> BrowserWebSocketHost
                   js-cast (new js/WebSocket url) 'ws-edn.client/BrowserWebSocketHost
               install-browser-lifecycle! client
               assert-type client WsClient
@@ -1057,7 +1057,7 @@
           :doc "|Iterates over all active WebSocket connections. Handler function receives session-id and socket as arguments."
           :code $ quote $ defn wss-each! (handler)
             let
-                connections $ assert-type @*global-connections $ Map String ws-edn.server/NodeWebSocketHost
+                connections $ assert-type @*global-connections $ Map String NodeWebSocketHost
               &doseq
                 sid $ .keys connections
                 match
