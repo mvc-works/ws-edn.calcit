@@ -32,13 +32,13 @@
               , 2000
             , &unit
           :examples $ []
-          :schema $ quote $ Fn (-> Unit) (:features :js-ffi)
+          :schema $ quote $ Fn (-> Unit) (:features :io :js-ffi :state)
         'reload! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn reload! ()
             ws-set-on-data! $ fn (data) (println "|reloaded 8:" data)
             println |reload
           :examples $ []
-          :schema $ quote $ Fn (-> Unit)
+          :schema $ quote $ Fn (-> Unit) (:features :io :state)
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns ws-edn.app.page
           :require
@@ -70,13 +70,13 @@
               , 2000
             , &unit
           :examples $ []
-          :schema $ quote $ Fn (-> Unit) (:features :js-ffi)
+          :schema $ quote $ Fn (-> Unit) (:features :io :js-ffi :state)
         'reload! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn reload! ()
             wss-set-on-data! $ fn (sid data) (js/console.log "|reloaded 8:" sid data) &unit
             println |reload!
           :examples $ []
-          :schema $ quote $ Fn (-> Unit) (:features :js-ffi)
+          :schema $ quote $ Fn (-> Unit) (:features :io :js-ffi :state)
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns ws-edn.app.server
           :require
@@ -171,7 +171,7 @@
               reset! (:heartbeat-lease client) None
               , &unit
           :examples $ []
-          :schema $ quote $ Fn WsClient0 (-> Unit) (:features :js-ffi)
+          :schema $ quote $ Fn WsClient0 (-> Unit) (:features :js-ffi :state)
         'cancel-client-reconnect! $ %{} 'CodeEntry
           :doc "|Cancels and clears the single pending reconnect timer."
           :code $ quote $ defn cancel-client-reconnect! (client)
@@ -182,7 +182,7 @@
                   do (js/clearTimeout timer) (reset! timer-ref None) &unit
                 (:none) &unit
           :examples $ []
-          :schema $ quote $ Fn WsClient0 (-> Unit) (:features :js-ffi)
+          :schema $ quote $ Fn WsClient0 (-> Unit) (:features :js-ffi :state)
         'checked-message-text $ %{} 'CodeEntry (:doc "|在浏览器 WebSocket 边界确认消息为文本。")
           :code $ quote $ defn checked-message-text (data)
             if (string? data) data $ raise "|ws-edn expected a text WebSocket message"
@@ -212,7 +212,7 @@
                   do (cleanup) (reset! cleanup-ref None) &unit
                 (:none) &unit
           :examples $ []
-          :schema $ quote $ Fn WsClient0 (-> Unit)
+          :schema $ quote $ Fn WsClient0 (-> Unit) (:features :state)
         'client-close! $ %{} 'CodeEntry
           :doc "|Method implementation for explicitly closing a client."
           :code $ quote $ defn client-close! (client) (cancel-client-reconnect! client) (cancel-client-heartbeat! client) (cleanup-client-lifecycle! client)
@@ -231,7 +231,7 @@
                     reset! state-ref $ .assoc state :phase $ WsConnectionPhase :closed
                     , &unit
           :examples $ []
-          :schema $ quote $ Fn WsClient0 (-> Unit) (:features :js-ffi)
+          :schema $ quote $ Fn WsClient0 (-> Unit) (:features :js-ffi :state)
         'client-connected? $ %{} 'CodeEntry
           :doc "|Method implementation for checking the open phase."
           :code $ quote $ defn client-connected? (client)
@@ -240,7 +240,7 @@
               assert-type state WsClientState
               = (WsConnectionPhase :open) (:phase state)
           :examples $ []
-          :schema $ quote $ Fn WsClient0 (-> Bool)
+          :schema $ quote $ Fn WsClient0 (-> Bool) (:features :state)
         'client-option-callback $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn client-option-callback (options key)
             match (get options key)
@@ -368,7 +368,7 @@
           :doc "|Method implementation for replacing the active generation."
           :code $ quote $ defn client-reconnect! (client) (cancel-client-reconnect! client) (connect-client! client)
           :examples $ []
-          :schema $ quote $ Fn WsClient0 (-> Unit) (:features :js-ffi)
+          :schema $ quote $ Fn WsClient0 (-> Unit) (:features :js-ffi :state)
         'client-recover! $ %{} 'CodeEntry
           :doc "|Reconnects from closed or backoff after cancelling a pending timer, preserving single-flight attempts."
           :code $ quote $ defn client-recover! (client)
@@ -382,7 +382,7 @@
                 do (cancel-client-reconnect! client) (connect-client! client) &unit
                 , &unit
           :examples $ []
-          :schema $ quote $ Fn WsClient0 (-> Unit)
+          :schema $ quote $ Fn WsClient0 (-> Unit) (:features :state)
         'client-send $ %{} 'CodeEntry
           :doc "|Method implementation returning a typed send outcome."
           :code $ quote $ defn client-send (client data)
@@ -400,7 +400,7 @@
                     WsSendOutcome :not-open $ :phase state
                 WsSendOutcome :not-open $ :phase state
           :examples $ []
-          :schema $ quote $ Fn WsClient0 D (-> WsSendOutcome) (:generics D) (:features :js-ffi)
+          :schema $ quote $ Fn WsClient0 D (-> WsSendOutcome) (:generics D) (:features :js-ffi :state)
         'client-state-handle $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn client-state-handle (value)
             if (struct? value)
@@ -494,7 +494,7 @@
                       , &unit
                   , &unit
           :examples $ []
-          :schema $ quote $ Fn WsClient0 (-> Unit) (:features :js-ffi)
+          :schema $ quote $ Fn WsClient0 (-> Unit) (:features :js-ffi :state)
         'create-client-with! $ %{} 'CodeEntry
           :doc "|Creates a client with an injected socket factory, primarily for tests and adapters."
           :code $ quote $ defn create-client-with! (url options socket-factory)
@@ -533,7 +533,7 @@
             Fn String $ -> BrowserWebSocketHost
             -> WsClient
             :generics V
-            :features :js-ffi
+            :features :js-ffi :state
         'generation-current? $ %{} 'CodeEntry
           :doc "|Returns whether an event belongs to the active socket generation."
           :code $ quote $ defn generation-current? (state generation)
@@ -563,7 +563,7 @@
                 reset! (:lifecycle-cleanup client) (Some cleanup)
                 , &unit
           :examples $ []
-          :schema $ quote $ Fn ClientInput (-> Unit) (:generics ClientInput) (:features :js-ffi)
+          :schema $ quote $ Fn ClientInput (-> Unit) (:generics ClientInput) (:features :js-ffi :state)
         'notify-client-error! $ %{} 'CodeEntry
           :doc "|调用已有 on-error 一次并报告是否通知；保留开放宿主错误对象与 callback 的异常传播。"
           :code $ quote $ defn notify-client-error! (client error)
@@ -658,7 +658,7 @@
                     reset! timer-ref $ Some timer
                     , &unit
           :examples $ []
-          :schema $ quote $ Fn WsClient0 Number (-> Unit) (:features :js-ffi)
+          :schema $ quote $ Fn WsClient0 Number (-> Unit) (:features :js-ffi :state)
         'schedule-client-reconnect! $ %{} 'CodeEntry
           :doc "|Schedules one bounded backoff retry unless one is already pending."
           :code $ quote $ defn schedule-client-reconnect! (client)
@@ -691,7 +691,7 @@
                     reset! timer-ref $ Some timer
                     , &unit
           :examples $ []
-          :schema $ quote $ Fn WsClient0 (-> Unit) (:features :js-ffi)
+          :schema $ quote $ Fn WsClient0 (-> Unit) (:features :js-ffi :state)
         'transition-phase $ %{} 'CodeEntry
           :doc "|Applies a phase transition only for the active generation."
           :code $ quote $ defn transition-phase (state generation phase)
@@ -735,7 +735,7 @@
               :on-open $ fn (event) (println |connected)
               :on-close $ fn (event) (println |closed)
               :on-data $ fn (data) (println |received: data)
-          :schema $ quote $ Fn String (Map Tag V) (-> WsClient) (:generics V) (:features :js-ffi)
+          :schema $ quote $ Fn String (Map Tag V) (-> WsClient) (:generics V) (:features :js-ffi :state)
         'ws-connected? $ %{} 'CodeEntry
           :doc "|Returns true if WebSocket is currently connected, false otherwise."
           :code $ quote $ defn ws-connected? ()
@@ -743,7 +743,7 @@
               (:some client) (client .connected?)
               (:none) false
           :examples $ [] $ quote (ws-connected?)
-          :schema $ quote $ Fn (-> Bool)
+          :schema $ quote $ Fn (-> Bool) (:features :state)
         'ws-send! $ %{} 'CodeEntry
           :doc "|Sends data through the WebSocket connection. Data will be formatted as Cirru EDN before sending."
           :code $ quote $ defn ws-send! (data)
@@ -757,7 +757,7 @@
           :examples $ [] $ quote
             ws-send! $ {} (:type |ping)
               :timestamp $ unix-time!
-          :schema $ quote $ Fn Payload (-> Unit) (:generics Payload) (:features :js-ffi)
+          :schema $ quote $ Fn Payload (-> Unit) (:generics Payload) (:features :js-ffi :state)
         'ws-set-on-data! $ %{} 'CodeEntry
           :doc "|Sets the message handler for incoming WebSocket data. Handler receives parsed Cirru EDN data."
           :code $ quote $ defn ws-set-on-data! (on-data)
@@ -778,7 +778,7 @@
             Fn Dynamic $ -> R
             -> Unit
             :generics R
-            :features :js-ffi
+            :features :js-ffi :state
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns ws-edn.client
           :require
@@ -911,7 +911,7 @@
           :code $ quote $ defn maintain-host-socket! (raw-socket options)
             maintain-socket! (js-cast raw-socket 'NodeWebSocketHost) options
           :examples $ []
-          :schema $ quote $ Fn SocketInput (Map Tag Dynamic) (-> Unit) (:generics SocketInput) (:features :js-ffi)
+          :schema $ quote $ Fn SocketInput (Map Tag Dynamic) (-> Unit) (:generics SocketInput) (:features :js-ffi :state)
         'maintain-socket! $ %{} 'CodeEntry
           :doc "|Registers and maintains a WebSocket connection. Sets up event handlers for message, close, and error events. Accepts options map with :on-open, :on-close, :on-data, :on-error, and :class-mapper callbacks."
           :code $ quote $ defn maintain-socket! (socket options)
@@ -959,7 +959,7 @@
                 , &unit
               , &unit
           :examples $ []
-          :schema $ quote $ Fn NodeWebSocketHost (Map Tag Dynamic) (-> Unit) (:features :js-ffi)
+          :schema $ quote $ Fn NodeWebSocketHost (Map Tag Dynamic) (-> Unit) (:features :js-ffi :state)
         'new-session-id! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn new-session-id! ()
             let
@@ -1070,6 +1070,7 @@
           :schema $ quote $ Fn
             Fn String NodeWebSocketHost $ -> Unit
             -> Unit
+            :features :state
         'wss-send! $ %{} 'CodeEntry
           :doc "|Sends data to a specific WebSocket connection identified by session-id. Data will be formatted as Cirru EDN before sending."
           :code $ quote $ defn wss-send! (sid data)
@@ -1082,7 +1083,7 @@
               , &unit
           :examples $ [] $ quote
             wss-send! |session-123 $ {} (:type |notification) (:message "|Hello client")
-          :schema $ quote $ Fn String Payload (-> Unit) (:generics Payload) (:features :js-ffi)
+          :schema $ quote $ Fn String Payload (-> Unit) (:generics Payload) (:features :js-ffi :state)
         'wss-serve! $ %{} 'CodeEntry
           :doc "|Starts a WebSocket server on the specified port. Optional :host String selects the bind address for WS and TLS; omission preserves the Node default. Other options: :cert, :key, :on-listening, :on-open, :on-close, :on-data, :on-error, :class-mapper."
           :code $ quote $ defn wss-serve! (port options)
@@ -1139,7 +1140,7 @@
             wss-serve! 8080 $ {}
               :on-listening $ fn () $ println "|Server listening on 8080"
               :on-data $ fn (sid data) (println "|Received from" sid : data)
-          :schema $ quote $ Fn Number (Map Tag V) (-> NodeWebSocketServerHost) (:generics V) (:features :js-ffi)
+          :schema $ quote $ Fn Number (Map Tag V) (-> NodeWebSocketServerHost) (:generics V) (:features :io :js-ffi :state)
         'wss-set-on-data! $ %{} 'CodeEntry
           :doc "|Sets the message handler for incoming WebSocket data across all connections. Handler receives session-id and parsed Cirru EDN data."
           :code $ quote $ defn wss-set-on-data! (on-data)
@@ -1151,6 +1152,7 @@
           :schema $ quote $ Fn
             Fn String Dynamic $ -> Unit
             -> Unit
+            :features :state
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns ws-edn.server
           :require
