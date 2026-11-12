@@ -83,7 +83,7 @@ try {
       const rejected = spawnSync("calcit", ["eval", "--dep", "./", snippet], commandOptions);
       if (rejected.error) throw rejected.error;
       assert.notEqual(rejected.status, 0, `${name}: invalid options ${input}`);
-      assert.match(`${rejected.stdout}\n${rejected.stderr}`, /W_FN_ARG_TYPE_MISMATCH|E_CALL_ARGUMENT_MISMATCH/);
+      assert.match(`${rejected.stdout}\n${rejected.stderr}`, /\[E_FN_ARG_TYPE_MISMATCH\]/);
     }
   }
 
@@ -109,7 +109,7 @@ try {
       assert.equal(result.status, 0, output);
     } else {
       assert.notEqual(result.status, 0, output);
-      assert.match(output, new RegExp(`\\[W_PROC_ARG_TYPE_MISMATCH\\].*arg ${invalidArgument} expects type`));
+      assert.match(output, new RegExp(`\\[E_PROC_ARG_TYPE_MISMATCH\\].*arg ${invalidArgument} expects type`));
     }
   }
   assert.deepEqual(await readFile("calcit.cirru"), originalSnapshot);
