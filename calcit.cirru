@@ -911,7 +911,7 @@
           :code $ quote $ defn maintain-host-socket! (raw-socket options)
             maintain-socket! (js-cast raw-socket 'NodeWebSocketHost) options
           :examples $ []
-          :schema $ quote $ Fn SocketInput (Map Tag Dynamic) (-> Unit) (:generics SocketInput) (:features :js-ffi :state)
+          :schema $ quote $ Fn SocketInput (Map Tag V) (-> Unit) (:generics SocketInput V) (:features :js-ffi :state)
         'maintain-socket! $ %{} 'CodeEntry
           :doc "|Registers and maintains a WebSocket connection. Sets up event handlers for message, close, and error events. Accepts options map with :on-open, :on-close, :on-data, :on-error, and :class-mapper callbacks."
           :code $ quote $ defn maintain-socket! (socket options)
@@ -959,7 +959,7 @@
                 , &unit
               , &unit
           :examples $ []
-          :schema $ quote $ Fn NodeWebSocketHost (Map Tag Dynamic) (-> Unit) (:features :js-ffi :state)
+          :schema $ quote $ Fn NodeWebSocketHost (Map Tag V) (-> Unit) (:generics V) (:features :js-ffi :state)
         'new-session-id! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn new-session-id! ()
             let
