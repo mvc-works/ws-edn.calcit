@@ -1044,14 +1044,9 @@
                   , :cert
               :tags $ #{} :server :unit
         'write-health-response! $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn write-health-response! (raw-response)
-            let
-                response $ js-cast raw-response 'NodeHttpResponseHost
-              .write-head response 200
-              .end response "|WSS Server"
-              , &unit
+          :code $ quote $ defn write-health-response! (response) (.write-head response 200) (.end response "|WSS Server") &unit
           :examples $ []
-          :schema $ quote $ Fn ResponseInput (-> Unit) (:generics ResponseInput) (:features :js-ffi)
+          :schema $ quote $ Fn NodeHttpResponseHost (-> Unit) (:features :js-ffi)
         'wss-each! $ %{} 'CodeEntry
           :doc "|Iterates over all active WebSocket connections. Handler function receives session-id and socket as arguments."
           :code $ quote $ defn wss-each! (handler)
@@ -1103,7 +1098,8 @@
                         (:some key-file)
                           let
                               ssl-options $ &js-object :key (fs/readFileSync key-file) :cert $ fs/readFileSync cert-file
-                              raw-server $ https/createServer ssl-options $ fn (req res) (write-health-response! res)
+                              raw-server $ https/createServer ssl-options $ fn (req res)
+                                write-health-response! $ js-cast res 'NodeHttpResponseHost
                               server $ js-cast raw-server 'NodeHttpServerHost
                             .on-upgrade server |upgrade $ fn (req res head) (log-request-url! req)
                             .on-error server |error $ fn (error) (log-server-error! error)
