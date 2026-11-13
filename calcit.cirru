@@ -885,7 +885,7 @@
         'NodeWebSocketServerHost $ %{} 'CodeEntry (:doc "|Typed Node ws server event surface.")
           :code $ quote $ deftrait NodeWebSocketServerHost
             .on-connection $ Fn NodeWebSocketServerHost String
-              Fn NodeWebSocketHost NodeHttpRequestHost $ -> Unit
+              Fn ws-edn.server/NodeWebSocketHost NodeHttpRequestHost $ -> Unit
               -> NodeWebSocketServerHost
             .on-listening $ Fn NodeWebSocketServerHost String
               Fn $ -> Unit
@@ -908,10 +908,9 @@
           :examples $ []
           :schema $ quote $ Fn E (-> Unit) (:generics E) (:features :js-ffi)
         'maintain-host-socket! $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn maintain-host-socket! (raw-socket options)
-            maintain-socket! (js-cast raw-socket 'NodeWebSocketHost) options
+          :code $ quote $ defn maintain-host-socket! (raw-socket options) (maintain-socket! raw-socket options)
           :examples $ []
-          :schema $ quote $ Fn SocketInput (Map Tag V) (-> Unit) (:generics SocketInput V) (:features :js-ffi :state)
+          :schema $ quote $ Fn NodeWebSocketHost (Map Tag V) (-> Unit) (:generics V) (:features :js-ffi :state)
         'maintain-socket! $ %{} 'CodeEntry
           :doc "|Registers and maintains a WebSocket connection. Sets up event handlers for message, close, and error events. Accepts options map with :on-open, :on-close, :on-data, :on-error, and :class-mapper callbacks."
           :code $ quote $ defn maintain-socket! (socket options)
