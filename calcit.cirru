@@ -872,7 +872,7 @@
               Fn ws-edn.server/NodeDataHost Bool $ -> Unit
               -> NodeWebSocketHost
             .on-close $ Fn NodeWebSocketHost String
-              Fn Number JsObject $ -> Unit
+              Fn Number ws-edn.server/NodeDataHost $ -> Unit
               -> NodeWebSocketHost
             .on-error $ Fn NodeWebSocketHost String
               Fn JsObject $ -> Unit
@@ -938,13 +938,13 @@
                       .unwrap-or (get options :class-mapper) ({})
                   (:none) &unit
                 , &unit
-              .on-close socket |close $ fn (event binary?)
-                hint-fn $ Fn Number JsObject $ -> Unit
+              .on-close socket |close $ fn (code reason)
+                hint-fn $ Fn Number NodeDataHost $ -> Unit
                 swap! *global-connections
                   fn (connections key) (.dissoc connections key)
                   , sid
                 match on-close
-                  (:some callback) (callback sid event)
+                  (:some callback) (callback sid code)
                   (:none) &unit
                 , &unit
               .on-error socket |error $ fn (error)
