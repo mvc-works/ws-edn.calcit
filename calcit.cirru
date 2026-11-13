@@ -885,7 +885,7 @@
         'NodeWebSocketServerHost $ %{} 'CodeEntry (:doc "|Typed Node ws server event surface.")
           :code $ quote $ deftrait NodeWebSocketServerHost
             .on-connection $ Fn NodeWebSocketServerHost String
-              Fn NodeWebSocketHost NodeHttpRequestHost $ -> Unit
+              Fn ws-edn.server/NodeWebSocketHost NodeHttpRequestHost $ -> Unit
               -> NodeWebSocketServerHost
             .on-listening $ Fn NodeWebSocketServerHost String
               Fn $ -> Unit
@@ -908,10 +908,9 @@
           :examples $ []
           :schema $ quote $ Fn E (-> Unit) (:generics E) (:features :js-ffi)
         'maintain-host-socket! $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn maintain-host-socket! (raw-socket options)
-            maintain-socket! (js-cast raw-socket 'NodeWebSocketHost) options
+          :code $ quote $ defn maintain-host-socket! (raw-socket options) (maintain-socket! raw-socket options)
           :examples $ []
-          :schema $ quote $ Fn SocketInput (Map Tag V) (-> Unit) (:generics SocketInput V) (:features :js-ffi :state)
+          :schema $ quote $ Fn NodeWebSocketHost (Map Tag V) (-> Unit) (:generics V) (:features :js-ffi :state)
         'maintain-socket! $ %{} 'CodeEntry
           :doc "|Registers and maintains a WebSocket connection. Sets up event handlers for message, close, and error events. Accepts options map with :on-open, :on-close, :on-data, :on-error, and :class-mapper callbacks."
           :code $ quote $ defn maintain-socket! (socket options)
@@ -1045,14 +1044,9 @@
                   , :cert
               :tags $ #{} :server :unit
         'write-health-response! $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn write-health-response! (raw-response)
-            let
-                response $ js-cast raw-response 'NodeHttpResponseHost
-              .write-head response 200
-              .end response "|WSS Server"
-              , &unit
+          :code $ quote $ defn write-health-response! (response) (.write-head response 200) (.end response "|WSS Server") &unit
           :examples $ []
-          :schema $ quote $ Fn ResponseInput (-> Unit) (:generics ResponseInput) (:features :js-ffi)
+          :schema $ quote $ Fn NodeHttpResponseHost (-> Unit) (:features :js-ffi)
         'wss-each! $ %{} 'CodeEntry
           :doc "|Iterates over all active WebSocket connections. Handler function receives session-id and socket as arguments."
           :code $ quote $ defn wss-each! (handler)
@@ -1104,7 +1098,8 @@
                         (:some key-file)
                           let
                               ssl-options $ &js-object :key (fs/readFileSync key-file) :cert $ fs/readFileSync cert-file
-                              raw-server $ https/createServer ssl-options $ fn (req res) (write-health-response! res)
+                              raw-server $ https/createServer ssl-options $ fn (req res)
+                                write-health-response! $ js-cast res 'NodeHttpResponseHost
                               server $ js-cast raw-server 'NodeHttpServerHost
                             .on-upgrade server |upgrade $ fn (req res head) (log-request-url! req)
                             .on-error server |error $ fn (error) (log-server-error! error)
