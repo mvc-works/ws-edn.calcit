@@ -456,16 +456,16 @@
                       , &unit
                   set! (.-onmessage socket)
                     fn (event)
+                      hint-fn $ Fn BrowserMessageEventHost $ -> Unit
                       when (generation-current? @state-ref generation) (renew-client-heartbeat! client generation)
                         match
                           deref $ :on-data client
                           (:some callback)
                             let
-                                message-event $ js-cast event 'BrowserMessageEventHost
                                 class-mapper $ .unwrap-or
                                   get (:options client) :class-mapper
                                   {}
-                                parsed $ parse-client-message (.-data message-event)
+                                parsed $ parse-client-message (.-data event)
                                   fn (text) (parse-cirru-edn text class-mapper)
                               match parsed
                                 (:ok data) (callback data)
