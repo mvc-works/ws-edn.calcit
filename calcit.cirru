@@ -99,9 +99,9 @@
         'BrowserWebSocketHost $ %{} 'CodeEntry
           :doc "|Typed browser WebSocket surface used by the client lifecycle adapter."
           :code $ quote $ deftrait BrowserWebSocketHost
-            :onopen $ Fn JsObject $ -> Unit
+            :onopen $ Fn js-ffi.browser/EventHost $ -> Unit
             :onmessage $ Fn BrowserMessageEventHost $ -> Unit
-            :onclose $ Fn JsObject $ -> Unit
+            :onclose $ Fn js-ffi.browser/EventHost $ -> Unit
             :onerror $ Fn JsObject $ -> Unit
             .send $ Fn BrowserWebSocketHost String $ -> Unit
             .close $ Fn BrowserWebSocketHost $ -> Unit
