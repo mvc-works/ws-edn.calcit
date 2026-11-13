@@ -102,7 +102,7 @@
             :onopen $ Fn js-ffi.browser/EventHost $ -> Unit
             :onmessage $ Fn BrowserMessageEventHost $ -> Unit
             :onclose $ Fn js-ffi.browser/EventHost $ -> Unit
-            :onerror $ Fn JsObject $ -> Unit
+            :onerror $ Fn js-ffi.browser/EventHost $ -> Unit
             .send $ Fn BrowserWebSocketHost String $ -> Unit
             .close $ Fn BrowserWebSocketHost $ -> Unit
           :examples $ []
