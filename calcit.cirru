@@ -99,10 +99,10 @@
         'BrowserWebSocketHost $ %{} 'CodeEntry
           :doc "|Typed browser WebSocket surface used by the client lifecycle adapter."
           :code $ quote $ deftrait BrowserWebSocketHost
-            :onopen $ Fn JsObject $ -> Unit
+            :onopen $ Fn js-ffi.browser/EventHost $ -> Unit
             :onmessage $ Fn BrowserMessageEventHost $ -> Unit
-            :onclose $ Fn JsObject $ -> Unit
-            :onerror $ Fn JsObject $ -> Unit
+            :onclose $ Fn js-ffi.browser/EventHost $ -> Unit
+            :onerror $ Fn js-ffi.browser/EventHost $ -> Unit
             .send $ Fn BrowserWebSocketHost String $ -> Unit
             .close $ Fn BrowserWebSocketHost $ -> Unit
           :examples $ []
@@ -456,16 +456,16 @@
                       , &unit
                   set! (.-onmessage socket)
                     fn (event)
+                      hint-fn $ Fn BrowserMessageEventHost $ -> Unit
                       when (generation-current? @state-ref generation) (renew-client-heartbeat! client generation)
                         match
                           deref $ :on-data client
                           (:some callback)
                             let
-                                message-event $ js-cast event 'BrowserMessageEventHost
                                 class-mapper $ .unwrap-or
                                   get (:options client) :class-mapper
                                   {}
-                                parsed $ parse-client-message (.-data message-event)
+                                parsed $ parse-client-message (.-data event)
                                   fn (text) (parse-cirru-edn text class-mapper)
                               match parsed
                                 (:ok data) (callback data)
