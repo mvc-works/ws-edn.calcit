@@ -1137,16 +1137,19 @@
               :on-data $ fn (sid data) (println "|Received from" sid : data)
           :schema $ quote $ Fn Number (Map Tag V) (-> NodeWebSocketServerHost) (:generics V) (:features :io :js-ffi :state)
         'wss-set-on-data! $ %{} 'CodeEntry
-          :doc "|Sets the message handler for incoming WebSocket data across all connections. Handler receives session-id and parsed Cirru EDN data."
+          :doc "|Sets the global listener for a String session ID and parsed Cirru EDN payload. The callback return value is ignored."
           :code $ quote $ defn wss-set-on-data! (on-data)
-            &let
-              _listener $ reset! *proxied-data-listener $ Some on-data
+            reset! *proxied-data-listener $ Some $ fn (session-id data)
+              hint-fn $ Fn String Dynamic $ -> Unit
+              on-data session-id data
               , &unit
+            , &unit
           :examples $ [] $ quote
             wss-set-on-data! $ fn (sid data) (println "|New message from" sid : data)
           :schema $ quote $ Fn
-            Fn String Dynamic $ -> Unit
+            Fn String Dynamic $ -> R
             -> Unit
+            :generics R
             :features :state
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns ws-edn.server
