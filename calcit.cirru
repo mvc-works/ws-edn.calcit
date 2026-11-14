@@ -441,6 +441,7 @@
                   reset! state-ref $ WsClientState :generation generation :phase (WsConnectionPhase :connecting) :socket $ Some socket
                   set! (.-onopen socket)
                     fn (event)
+                      hint-fn $ Fn js-ffi.browser/EventHost $ -> Unit
                       when (generation-current? @state-ref generation) (cancel-client-reconnect! client)
                         let
                             retry-state $ assert-type
@@ -477,6 +478,7 @@
                       , &unit
                   set! (.-onclose socket)
                     fn (event)
+                      hint-fn $ Fn js-ffi.browser/EventHost $ -> Unit
                       when (generation-current? @state-ref generation) (cancel-client-heartbeat! client)
                         let
                             current-state $ assert-type (deref state-ref) WsClientState
@@ -490,6 +492,7 @@
                       , &unit
                   set! (.-onerror socket)
                     fn (error)
+                      hint-fn $ Fn js-ffi.browser/EventHost $ -> Unit
                       when (generation-current? @state-ref generation) (js/console.error |Failed-to-establish-WebSocket-connection error) (notify-client-error! client error)
                       , &unit
                   , &unit
