@@ -76,6 +76,13 @@ test("real clients preserve EDN payloads and distinct String session IDs", { tim
   assert.ok(incoming.every(([sid]) => typeof sid === "string" && ids.includes(sid)));
   assert.equal(new Set(incoming.map(([sid]) => sid)).size, 2);
 
+  // Replacing the listener on live connections also ignores its return value.
+  server.wss_set_on_data_$x_((sid, data) => {
+    incoming.push([sid, data]);
+    server.wss_send_$x_(sid, data);
+    return "handled";
+  });
+
   // Real wire parsing failures notify once without delivering private payloads;
   // the same connections must still deliver their next valid message once.
   for (const socket of wss.clients) socket.send("{} $ :token $ private-wire-token-53");
