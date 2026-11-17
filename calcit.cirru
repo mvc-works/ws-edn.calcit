@@ -111,12 +111,7 @@
           :schema $ quote Trait
         'WsClient $ %{} 'CodeEntry
           :doc "|Browser WebSocket client with nominal lifecycle methods."
-          :code $ quote $ def WsClient (impl-traits WsClient0 WsClientOpsImpl)
-          :examples $ []
-          :schema $ quote StructDef
-        'WsClient0 $ %{} 'CodeEntry
-          :doc "|Raw browser client handle before attaching lifecycle methods."
-          :code $ quote $ defstruct WsClient0
+          :code $ quote $ defstruct WsClient
             :state $ Ref WsClientState
             :url String
             :options $ Map Tag Dynamic
@@ -130,18 +125,19 @@
             :heartbeat-timeout-ms $ Option Number
             :heartbeat-lease $ Ref $ Option cumulo-util.realtime/HeartbeatLease
             :heartbeat-timer $ Ref $ Option Number
+            :impls WsClientOps
           :examples $ []
           :schema $ quote StructDef
         'WsClientOps $ %{} 'CodeEntry (:doc "|Method contract for browser WebSocket clients.")
           :code $ quote $ deftrait WsClientOps
-            .connected? $ Fn T (-> Bool) (:generics T)
-            .send $ Fn T D (-> WsSendOutcome) (:generics T D)
-            .close $ Fn T (-> Unit) (:generics T)
-            .reconnect $ Fn T (-> Unit) (:generics T)
+            .connected? $ Fn Self (-> Bool) (:features :state)
+            .send $ Fn Self D (-> WsSendOutcome) (:generics D) (:features :js-ffi :state)
+            .close $ Fn Self (-> Unit) (:features :js-ffi :state)
+            .reconnect $ Fn Self (-> Unit) (:features :js-ffi :state)
           :examples $ []
           :schema $ quote Trait
         'WsClientOpsImpl $ %{} 'CodeEntry (:doc "|Lifecycle method implementation for WsClient.")
-          :code $ quote $ defimpl WsClientOpsImpl WsClientOps (.connected? client-connected?) (.send client-send) (.close client-close!) (.reconnect client-reconnect!)
+          :code $ quote $ defimpl WsClient WsClientOps (.connected? client-connected?) (.send client-send) (.close client-close!) (.reconnect client-reconnect!)
           :examples $ []
           :schema $ quote Impl
         'WsClientState $ %{} 'CodeEntry
@@ -171,7 +167,7 @@
               reset! (:heartbeat-lease client) None
               , &unit
           :examples $ []
-          :schema $ quote $ Fn WsClient0 (-> Unit) (:features :js-ffi :state)
+          :schema $ quote $ Fn WsClient (-> Unit) (:features :js-ffi :state)
         'cancel-client-reconnect! $ %{} 'CodeEntry
           :doc "|Cancels and clears the single pending reconnect timer."
           :code $ quote $ defn cancel-client-reconnect! (client)
@@ -182,7 +178,7 @@
                   do (js/clearTimeout timer) (reset! timer-ref None) &unit
                 (:none) &unit
           :examples $ []
-          :schema $ quote $ Fn WsClient0 (-> Unit) (:features :js-ffi :state)
+          :schema $ quote $ Fn WsClient (-> Unit) (:features :js-ffi :state)
         'checked-message-text $ %{} 'CodeEntry (:doc "|在浏览器 WebSocket 边界确认消息为文本。")
           :code $ quote $ defn checked-message-text (data)
             if (string? data) data $ raise "|ws-edn expected a text WebSocket message"
@@ -212,7 +208,7 @@
                   do (cleanup) (reset! cleanup-ref None) &unit
                 (:none) &unit
           :examples $ []
-          :schema $ quote $ Fn WsClient0 (-> Unit) (:features :state)
+          :schema $ quote $ Fn WsClient (-> Unit) (:features :state)
         'client-close! $ %{} 'CodeEntry
           :doc "|Method implementation for explicitly closing a client."
           :code $ quote $ defn client-close! (client) (cancel-client-reconnect! client) (cancel-client-heartbeat! client) (cleanup-client-lifecycle! client)
@@ -231,7 +227,7 @@
                     reset! state-ref $ .assoc state :phase $ WsConnectionPhase :closed
                     , &unit
           :examples $ []
-          :schema $ quote $ Fn WsClient0 (-> Unit) (:features :js-ffi :state)
+          :schema $ quote $ Fn WsClient (-> Unit) (:features :js-ffi :state)
         'client-connected? $ %{} 'CodeEntry
           :doc "|Method implementation for checking the open phase."
           :code $ quote $ defn client-connected? (client)
@@ -240,7 +236,7 @@
               assert-type state WsClientState
               = (WsConnectionPhase :open) (:phase state)
           :examples $ []
-          :schema $ quote $ Fn WsClient0 (-> Bool) (:features :state)
+          :schema $ quote $ Fn WsClient (-> Bool) (:features :state)
         'client-option-callback $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn client-option-callback (options key)
             match (get options key)
@@ -368,7 +364,7 @@
           :doc "|Method implementation for replacing the active generation."
           :code $ quote $ defn client-reconnect! (client) (cancel-client-reconnect! client) (connect-client! client)
           :examples $ []
-          :schema $ quote $ Fn WsClient0 (-> Unit) (:features :js-ffi :state)
+          :schema $ quote $ Fn WsClient (-> Unit) (:features :js-ffi :state)
         'client-recover! $ %{} 'CodeEntry
           :doc "|Reconnects from closed or backoff after cancelling a pending timer, preserving single-flight attempts."
           :code $ quote $ defn client-recover! (client)
@@ -382,7 +378,7 @@
                 do (cancel-client-reconnect! client) (connect-client! client) &unit
                 , &unit
           :examples $ []
-          :schema $ quote $ Fn WsClient0 (-> Unit) (:features :state)
+          :schema $ quote $ Fn WsClient (-> Unit) (:features :state)
         'client-send $ %{} 'CodeEntry
           :doc "|Method implementation returning a typed send outcome."
           :code $ quote $ defn client-send (client data)
@@ -400,14 +396,14 @@
                     WsSendOutcome :not-open $ :phase state
                 WsSendOutcome :not-open $ :phase state
           :examples $ []
-          :schema $ quote $ Fn WsClient0 D (-> WsSendOutcome) (:generics D) (:features :js-ffi :state)
+          :schema $ quote $ Fn WsClient D (-> WsSendOutcome) (:generics D) (:features :js-ffi :state)
         'client-state-handle $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn client-state-handle (value)
             if (struct? value)
-              if (&struct:matches? value WsClient0) value $ raise "|[ws-edn] expected a WsClient state handle"
+              if (&struct:matches? value WsClient) value $ raise "|[ws-edn] expected a WsClient state handle"
               raise "|[ws-edn] expected a WsClient state handle"
           :examples $ []
-          :schema $ quote $ Fn ClientInput (-> WsClient0) (:generics ClientInput)
+          :schema $ quote $ Fn ClientInput (-> WsClient) (:generics ClientInput)
           :tests $ [] $ %{} 'TestEntry (:name |rejects-invalid-handles)
             :code $ quote $ each
               [] nil 0 false ({}) ([])
@@ -497,7 +493,7 @@
                       , &unit
                   , &unit
           :examples $ []
-          :schema $ quote $ Fn WsClient0 (-> Unit) (:features :js-ffi :state)
+          :schema $ quote $ Fn WsClient (-> Unit) (:features :js-ffi :state)
         'create-client-with! $ %{} 'CodeEntry
           :doc "|Creates a client with an injected socket factory, primarily for tests and adapters."
           :code $ quote $ defn create-client-with! (url options socket-factory)
@@ -576,7 +572,7 @@
                 do (callback error) true
               (:none) false
           :examples $ []
-          :schema $ quote $ Fn WsClient0 E (-> Bool) (:generics E) (:features :js-ffi)
+          :schema $ quote $ Fn WsClient E (-> Bool) (:generics E) (:features :js-ffi)
         'parse-client-message $ %{} 'CodeEntry
           :doc "|校验文本帧并用传入的 decoder 解析，返回 Result<Payload,String>；错误不携带原始帧或解析器诊断。payload 类型由 decoder 决定，connect-client! 传入带 class-mapper 的开放 EDN 解析。"
           :code $ quote $ defn parse-client-message (data decode)
@@ -661,7 +657,7 @@
                     reset! timer-ref $ Some timer
                     , &unit
           :examples $ []
-          :schema $ quote $ Fn WsClient0 Number (-> Unit) (:features :js-ffi :state)
+          :schema $ quote $ Fn WsClient Number (-> Unit) (:features :js-ffi :state)
         'schedule-client-reconnect! $ %{} 'CodeEntry
           :doc "|Schedules one bounded backoff retry unless one is already pending."
           :code $ quote $ defn schedule-client-reconnect! (client)
@@ -694,7 +690,7 @@
                     reset! timer-ref $ Some timer
                     , &unit
           :examples $ []
-          :schema $ quote $ Fn WsClient0 (-> Unit) (:features :js-ffi :state)
+          :schema $ quote $ Fn WsClient (-> Unit) (:features :js-ffi :state)
         'transition-phase $ %{} 'CodeEntry
           :doc "|Applies a phase transition only for the active generation."
           :code $ quote $ defn transition-phase (state generation phase)
