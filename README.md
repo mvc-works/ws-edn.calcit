@@ -2,9 +2,9 @@
 ws-edn in calcit-js
 ----
 
-### 0.2.2
+### 0.2.3
 
-依赖使用正式 Cumulo Util 0.0.43 与 js-ffi 0.2.16。
+依赖使用正式 Cumulo Util 0.0.44 与 js-ffi 0.2.18；下游需对齐依赖图并重新编译。
 
 升级到正式 Calcit CLI / `@calcit/procs` 0.43.0 后，请重新安装依赖并编译页面和服务端。WebSocket 消息协议和应用回调保持原用法。Node 消息转换通过已声明的宿主方法读取文本。若直接调用 `node-data-string`，请从 `NodeWebSocketHost` 的 `.on-message` 回调传入 `NodeDataHost`。
 
