@@ -2,6 +2,10 @@
 ws-edn in calcit-js
 ----
 
+### 0.2.6
+
+配对 Calcit 0.44.0、Cumulo Util 0.0.46 与 JS-FFI 0.2.19；请统一依赖并重新生成浏览器及 Node 代码。公开协议、回调和连接行为不变。
+
 ### 0.2.5
 
 候选配对 Calcit / `@calcit/procs` 0.44.0 与已发布 Cumulo Util 0.0.45、JS-FFI 0.2.18。下游需统一依赖图并重新生成浏览器及 Node 代码。公开协议、回调与连接行为保持不变；请在正式 Git tag 发布后升级。
