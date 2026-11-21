@@ -49,17 +49,18 @@
       :defs $ {}
         'main! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn main! () (println |started) (load-console-formatter!)
-            wss-serve! 9001 $ {}
-              :on-listening $ fn () $ println "|server listening"
-              :on-open $ fn (sid socket)
-                hint-fn $ Fn String ws-edn.server/NodeWebSocketHost $ -> Unit
-                println |opened sid
-                wss-send! sid $ : op "|initial message"
-              :on-data $ fn (sid data) (js/console.log "|just data" sid data)
-              :on-close $ fn (sid event) (println |close sid)
-              ; :key |certs/key.pem
-              ; :cert |certs/cert.pem
-              :class-mapper $ {} $ :Track (Track :message | :time |)
+            let
+                on-listening $ fn () (println "|server listening") &unit
+                on-open $ fn (sid socket)
+                  hint-fn $ Fn String ws-edn.server/NodeWebSocketHost (-> Unit) (:features :js-ffi)
+                  println |opened sid
+                  wss-send! sid $ : op "|initial message"
+                  , &unit
+                on-data $ fn (sid data) (js/console.log "|just data" sid data) &unit
+                on-close $ fn (sid code) (println |close sid) &unit
+              ws-edn.server/wss-serve-typed! 9001
+                ws-edn.server/ServerConfig :host None :cert None :key None :class-mapper $ {} $ :Track (Track :message | :time |)
+                ws-edn.server/ServerCallbacks :on-listening (Some on-listening) :on-open (Some on-open) :on-data (Some on-data) :on-close (Some on-close) :on-error None
             js/setInterval
               fn () (println |heartbeat)
                 wss-each! $ fn (sid socket)
@@ -896,6 +897,23 @@
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :node)
             :names $ {} (:on-connection |on) (:on-error |on) (:on-listening |on)
           :schema $ quote Trait
+        'ServerCallbacks $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defstruct ServerCallbacks
+            :on-listening $ Option $ Fn (-> Unit) (:features :io :js-ffi :state)
+            :on-open $ Option $ Fn String ws-edn.server/NodeWebSocketHost (-> Unit) (:features :io :js-ffi :state)
+            :on-close $ Option $ Fn String Number (-> Unit) (:features :io :js-ffi :state)
+            :on-error $ Option $ Fn JsObject (-> Unit) (:features :io :js-ffi :state)
+            :on-data $ Option $ Fn String Dynamic (-> Unit) (:features :io :js-ffi :state)
+          :examples $ []
+          :schema $ quote StructDef
+        'ServerConfig $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defstruct ServerConfig
+            :host $ Option String
+            :cert $ Option String
+            :key $ Option String
+            :class-mapper $ Map Tag Dynamic
+          :examples $ []
+          :schema $ quote StructDef
         'log-request-url! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn log-request-url! (request)
             js/console.log $ .-url request
@@ -1042,6 +1060,39 @@
                   {} $ :cert $ fn () 1
                   , :cert
               :tags $ #{} :server :unit
+        'server-typed-options $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn server-typed-options (config callbacks)
+            let
+                initial $ assert-type
+                  {} $ :class-mapper $ :class-mapper config
+                  Map Tag Dynamic
+                host-options $ match (:host config)
+                  (:some v) (.assoc initial :host v)
+                  (:none) initial
+                cert-options $ match (:cert config)
+                  (:some v) (.assoc host-options :cert v)
+                  (:none) host-options
+                base $ match (:key config)
+                  (:some v) (.assoc cert-options :key v)
+                  (:none) cert-options
+                a $ match (:on-listening callbacks)
+                  (:some f) (.assoc base :on-listening f)
+                  (:none) base
+                b $ match (:on-open callbacks)
+                  (:some f) (.assoc a :on-open f)
+                  (:none) a
+                c $ match (:on-close callbacks)
+                  (:some f) (.assoc b :on-close f)
+                  (:none) b
+                d $ match (:on-error callbacks)
+                  (:some f) (.assoc c :on-error f)
+                  (:none) c
+              match (:on-data callbacks)
+                (:some f) (.assoc d :on-data f)
+                (:none) d
+          :examples $ []
+          :schema $ quote $ Fn ServerConfig ServerCallbacks
+            -> $ Map Tag Dynamic
         'write-health-response! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn write-health-response! (response) (.write-head response 200) (.end response "|WSS Server") &unit
           :examples $ []
@@ -1135,6 +1186,11 @@
               :on-listening $ fn () $ println "|Server listening on 8080"
               :on-data $ fn (sid data) (println "|Received from" sid : data)
           :schema $ quote $ Fn Number (Map Tag V) (-> NodeWebSocketServerHost) (:generics V) (:features :io :js-ffi :state)
+        'wss-serve-typed! $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn wss-serve-typed! (port options callbacks)
+            wss-serve! port $ server-typed-options options callbacks
+          :examples $ []
+          :schema $ quote $ Fn Number ServerConfig ServerCallbacks (-> NodeWebSocketServerHost) (:features :io :js-ffi :state)
         'wss-set-on-data! $ %{} 'CodeEntry
           :doc "|Sets the global listener for a String session ID and parsed Cirru EDN payload. The callback return value is ignored."
           :code $ quote $ defn wss-set-on-data! (on-data)
