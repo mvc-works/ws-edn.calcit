@@ -144,3 +144,44 @@ test("TLS host binding preserves health and Unicode EDN with an explicitly trust
   const [message] = await reply;
   assert.ok(c._$n__$e_(payload, c.parse_cirru_edn(message.toString())));
 });
+
+test("typed client callbacks receive open, payload, parse error and close", { timeout: 15000 }, async t => {
+  const tags = c.init_tags(["host", "on-open", "on-close", "on-error", "on-data", "class-mapper", "retry-base-ms", "retry-max-ms", "retry-jitter", "heartbeat-timeout-ms", "some", "none"]);
+  const none = c._PCT__$o__$o_(c.Option, tags.none);
+  const some = value => c._PCT__$o__$o_(c.Option, tags.some, value);
+  const config = c._$n__PCT__$M_(client.ClientConfig,
+    tags["retry-base-ms"], none, tags["retry-max-ms"], none, tags["retry-jitter"], none,
+    tags["heartbeat-timeout-ms"], none, tags["class-mapper"], c._$n__$M_(),
+  );
+  const opened = [], closed = [], errors = [], received = [];
+  const callbacks = c._$n__PCT__$M_(client.ClientCallbacks,
+    tags["on-open"], some(event => { opened.push(event); }),
+    tags["on-close"], some(event => { closed.push(event); }),
+    tags["on-error"], some(error => { errors.push(error); }),
+    tags["on-data"], some(data => { received.push(data); }),
+  );
+  const wss = server.wss_serve_$x_(0, c._$n__$M_(tags.host, "127.0.0.1"));
+  let connection;
+  t.after(async () => {
+    if (connection) client.client_close_$x_(connection);
+    for (const socket of wss.clients) socket.terminate();
+    await new Promise(resolve => wss.close(resolve));
+  });
+  await once(wss, "listening", { signal: t.signal });
+  connection = client.create_client_with_typed_$x_(
+    `ws://127.0.0.1:${wss.address().port}`, config, callbacks, address => new WebSocket(address),
+  );
+  await waitFor(() => opened.length === 1 && wss.clients.size === 1, "typed client open");
+  assert.equal(opened[0].type, "open");
+  const socket = [...wss.clients][0];
+  socket.send("do |typed-message");
+  await waitFor(() => received.length === 1, "typed data");
+  assert.deepEqual(received, ["typed-message"]);
+  socket.send("{} $ :token $ private-wire-token-typed");
+  await waitFor(() => errors.length === 1, "typed parse error");
+  assert.match(errors[0].message, /^\[ws-edn\/message\] invalid Cirru EDN$/);
+  assert.doesNotMatch(errors[0].message, /private-wire-token/);
+  client.client_close_$x_(connection);
+  await waitFor(() => closed.length === 1, "typed client close");
+  assert.equal(closed[0].type, "close");
+});
