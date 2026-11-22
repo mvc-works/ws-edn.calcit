@@ -136,7 +136,7 @@ remain checked by `calcit docs check-md`.
 
 Server side:
 
-服务端也提供 `wss-serve-typed!`：参数依次是端口、`ServerConfig` 和 `ServerCallbacks`。`ServerConfig` 的 `:host`、`:cert`、`:key` 均为 `Option String`，`:class-mapper` 为 Tag 键 Map；未设置的配置使用 `None`，空 class mapper 使用 `{}`。`ServerCallbacks` 的 `:on-listening`、`:on-open`、`:on-close`、`:on-error`、`:on-data` 均为可选函数，参数分别为零个、会话 ID 与 socket、会话 ID 与关闭码、Node 错误对象、会话 ID 与开放 EDN 消息，回调返回 `Unit`。可以参照 `ws-edn.app.server/main!` 的完整示例。类型化入口将这些字段转为原有选项并复用 `wss-serve!`；旧 Map 入口不变，客户端配置仍使用旧入口。
+服务端也提供 `wss-serve-typed!`：参数依次是端口、`ServerConfig` 和 `ServerCallbacks`。`ServerConfig` 的 `:host`、`:cert`、`:key` 均为 `Option String`，`:class-mapper` 为 Tag 键 Map；未设置的配置使用 `None`，空 class mapper 使用 `{}`。`ServerCallbacks` 的 `:on-listening`、`:on-open`、`:on-close`、`:on-error`、`:on-data` 均为可选函数，参数分别为零个、会话 ID 与 socket、会话 ID 与关闭码、Node 错误对象、会话 ID 与开放 EDN 消息，回调返回 `Unit`。可以参照 `ws-edn.app.server/main!` 的完整示例。类型化入口将这些字段转为原有选项并复用 `wss-serve!`；旧 Map 入口不变；客户端也提供下文的类型化入口。
 
 `wss-serve!` 新增可选 `:host` String，例如 `:host |127.0.0.1` 用于只接受回环连接。
 WS 和 TLS 都传递该地址；省略时保留 Node 原默认监听行为，不会自动变为回环。
@@ -172,6 +172,8 @@ ws-edn.server/wss-each! $ fn (sid socket)
 ws-edn.server/wss-set-on-data! $ fn (sid data)
   println "|received data" sid data
 ```
+
+客户端提供 `ws-connect-typed!` 和可注入 socket 工厂的 `create-client-with-typed!`。`ClientConfig` 将重试、heartbeat 时间配置为 `Option Number`，并保留 Tag 键 class mapper；未指定的配置使用 `None`，沿用原默认值。`ClientCallbacks` 的 open/close 接收浏览器事件，error 接收宿主对象（可能为浏览器事件或解析错误），data 接收开放 Cirru EDN；可选回调返回 `Unit`。完整示例见 `ws-edn.app.page/main!`。原 `ws-connect!` Map 入口继续可用。
 
 Client side (legacy singleton helpers remain compatible):
 

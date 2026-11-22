@@ -16,13 +16,17 @@
       :defs $ {}
         'main! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn main! () (println |start) (load-console-formatter!)
-            ws-connect! (do |wss://localhost:5001 |ws://localhost:9001)
-              {}
-                :on-open $ fn (event) (println |open)
+            let
+                on-open $ fn (event)
+                  hint-fn $ Fn js-ffi.browser/EventHost (-> Unit) (:features :io :js-ffi :state)
+                  println |open
                   ws-send! $ : test
-                :on-data $ fn (data) (js/console.log |data data)
-                :on-close $ fn (event) (println |close)
-                :class-mapper $ {} $ :Track (Track :message | :time |)
+                  , &unit
+                on-data $ fn (data) (js/console.log |data data) &unit
+                on-close $ fn (event) (println |close) &unit
+              ws-edn.client/ws-connect-typed! (do |wss://localhost:5001 |ws://localhost:9001)
+                ws-edn.client/ClientConfig :retry-base-ms None :retry-max-ms None :retry-jitter None :heartbeat-timeout-ms None :class-mapper $ {} $ :Track (Track :message | :time |)
+                ws-edn.client/ClientCallbacks :on-open (Some on-open) :on-close (Some on-close) :on-error None :on-data $ Some on-data
             js/setInterval
               fn ()
                 println "|connected try send" $ ws-connected?
@@ -110,6 +114,23 @@
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :browser)
             :writable $ #{} :onclose :onerror :onmessage :onopen
           :schema $ quote Trait
+        'ClientCallbacks $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defstruct ClientCallbacks
+            :on-open $ Option $ Fn js-ffi.browser/EventHost (-> Unit) (:features :io :js-ffi :state)
+            :on-close $ Option $ Fn js-ffi.browser/EventHost (-> Unit) (:features :io :js-ffi :state)
+            :on-error $ Option $ Fn JsObject (-> Unit) (:features :io :js-ffi :state)
+            :on-data $ Option $ Fn Dynamic (-> Unit) (:features :io :js-ffi :state)
+          :examples $ []
+          :schema $ quote StructDef
+        'ClientConfig $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defstruct ClientConfig
+            :retry-base-ms $ Option Number
+            :retry-max-ms $ Option Number
+            :retry-jitter $ Option Number
+            :heartbeat-timeout-ms $ Option Number
+            :class-mapper $ Map Tag Dynamic
+          :examples $ []
+          :schema $ quote StructDef
         'WsClient $ %{} 'CodeEntry
           :doc "|Browser WebSocket client with nominal lifecycle methods."
           :code $ quote $ defstruct WsClient
@@ -416,6 +437,39 @@
                     fn (error) (assert= "|[ws-edn] expected a WsClient state handle" error) (reset! rejected? true)
                   assert |invalid-handle-rejected $ deref rejected?
             :tags $ #{} :regression :unit
+        'client-typed-options $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn client-typed-options (config callbacks)
+            let
+                initial $ assert-type
+                  {} $ :class-mapper $ :class-mapper config
+                  Map Tag Dynamic
+                base $ match (:retry-base-ms config)
+                  (:some v) (.assoc initial :retry-base-ms v)
+                  (:none) initial
+                max-retry $ match (:retry-max-ms config)
+                  (:some v) (.assoc base :retry-max-ms v)
+                  (:none) base
+                jitter $ match (:retry-jitter config)
+                  (:some v) (.assoc max-retry :retry-jitter v)
+                  (:none) max-retry
+                heartbeat $ match (:heartbeat-timeout-ms config)
+                  (:some v) (.assoc jitter :heartbeat-timeout-ms v)
+                  (:none) jitter
+                opened $ match (:on-open callbacks)
+                  (:some f) (.assoc heartbeat :on-open f)
+                  (:none) heartbeat
+                closed $ match (:on-close callbacks)
+                  (:some f) (.assoc opened :on-close f)
+                  (:none) opened
+                errors $ match (:on-error callbacks)
+                  (:some f) (.assoc closed :on-error f)
+                  (:none) closed
+              match (:on-data callbacks)
+                (:some f) (.assoc errors :on-data f)
+                (:none) errors
+          :examples $ []
+          :schema $ quote $ Fn ClientConfig ClientCallbacks
+            -> $ Map Tag Dynamic
         'connect-client! $ %{} 'CodeEntry
           :doc "|Starts a new generation and installs stale-event-safe host callbacks."
           :code $ quote $ defn connect-client! (client) (cancel-client-heartbeat! client)
@@ -533,6 +587,14 @@
             Fn String $ -> BrowserWebSocketHost
             -> WsClient
             :generics V
+            :features :io :js-ffi :state
+        'create-client-with-typed! $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn create-client-with-typed! (url config callbacks socket-factory)
+            create-client-with! url (client-typed-options config callbacks) socket-factory
+          :examples $ []
+          :schema $ quote $ Fn String ClientConfig ClientCallbacks
+            Fn String (-> BrowserWebSocketHost) (:features :js-ffi)
+            -> WsClient
             :features :io :js-ffi :state
         'generation-current? $ %{} 'CodeEntry
           :doc "|Returns whether an event belongs to the active socket generation."
@@ -736,6 +798,11 @@
               :on-close $ fn (event) (println |closed)
               :on-data $ fn (data) (println |received: data)
           :schema $ quote $ Fn String (Map Tag V) (-> WsClient) (:generics V) (:features :io :js-ffi :state)
+        'ws-connect-typed! $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn ws-connect-typed! (url config callbacks)
+            ws-connect! url $ client-typed-options config callbacks
+          :examples $ []
+          :schema $ quote $ Fn String ClientConfig ClientCallbacks (-> WsClient) (:features :io :js-ffi :state)
         'ws-connected? $ %{} 'CodeEntry
           :doc "|Returns true if WebSocket is currently connected, false otherwise."
           :code $ quote $ defn ws-connected? ()
