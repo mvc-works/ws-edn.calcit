@@ -11,6 +11,16 @@ import * as c from "../out-page/calcit.core.mjs";
 import * as client from "../out-page/ws-edn.client.mjs";
 import * as server from "../js-out/ws-edn.server.mjs";
 
+function serverConfig(host, key, cert) {
+  const tags = c.init_tags(["host", "key", "cert", "class-mapper", "some", "none"]);
+  const none = c._PCT__$o__$o_(c.Option, tags.none);
+  const optional = value => value == null ? none : c._PCT__$o__$o_(c.Option, tags.some, value);
+  return c._$n__PCT__$M_(server.ServerConfig,
+    tags.host, optional(host), tags.key, optional(key), tags.cert, optional(cert),
+    tags["class-mapper"], c._$n__$M_(),
+  );
+}
+
 async function waitFor(predicate, label) {
   const deadline = Date.now() + 5000;
   while (!predicate()) {
@@ -19,7 +29,8 @@ async function waitFor(predicate, label) {
   }
 }
 
-test("real clients preserve EDN payloads and distinct String session IDs", { timeout: 15000 }, async t => {
+for (const typed of [false, true]) {
+test(`${typed ? "typed" : "legacy"} callbacks preserve EDN payloads and distinct String session IDs`, { timeout: 15000 }, async t => {
   const tags = c.init_tags(["host", "on-open", "on-data", "on-error", "on-close", "on-listening"]);
   const ids = [];
   const incoming = [];
@@ -29,11 +40,12 @@ test("real clients preserve EDN payloads and distinct String session IDs", { tim
   const messageErrors = [[], []];
   const closed = [];
   let listening = 0;
-  const wss = server.wss_serve_$x_(0, c._$n__$M_(
+  const options = c._$n__$M_(
     tags.host, "127.0.0.1",
     tags["on-listening"], () => ++listening,
-    tags["on-open"], sid => {
+    tags["on-open"], (sid, socket) => {
       if (typeof sid !== "string") failures.push("session ID is not a String");
+      if (typeof socket.send !== "function") failures.push("socket has no send method");
       ids.push(sid);
     },
     tags["on-data"], (sid, data) => {
@@ -42,7 +54,20 @@ test("real clients preserve EDN payloads and distinct String session IDs", { tim
       return incoming.length;
     },
     tags["on-close"], (sid, code) => closed.push([sid, code]),
-  ));
+  );
+  let wss;
+  if (typed) {
+    const optionTags = c.init_tags(["some", "none"]);
+    const callback = key => server.server_option_callback(options, tags[key]);
+    const callbacks = c._$n__PCT__$M_(server.ServerCallbacks,
+      tags["on-listening"], callback("on-listening"), tags["on-open"], callback("on-open"),
+      tags["on-close"], callback("on-close"), tags["on-data"], callback("on-data"),
+      tags["on-error"], c._PCT__$o__$o_(c.Option, optionTags.none),
+    );
+    wss = server.wss_serve_typed_$x_(0, serverConfig("127.0.0.1"), callbacks);
+  } else {
+    wss = server.wss_serve_$x_(0, options);
+  }
   t.after(async () => {
     for (const connection of clients) client.client_close_$x_(connection);
     for (const socket of wss.clients) socket.terminate();
@@ -103,6 +128,7 @@ test("real clients preserve EDN payloads and distinct String session IDs", { tim
   assert.deepEqual(closed.map(([sid]) => sid).sort(), [...ids].sort());
   assert.ok(closed.every(([, code]) => Number.isInteger(code)));
 });
+}
 
 test("TLS host binding preserves health and Unicode EDN with an explicitly trusted certificate", { timeout: 15000 }, async t => {
   const directory = await mkdtemp(join(tmpdir(), "ws-edn-host-tls-"));
@@ -113,11 +139,13 @@ test("TLS host binding preserves health and Unicode EDN with an explicitly trust
     "-keyout", key, "-out", cert, "-days", "1", "-subj", "/CN=localhost",
     "-addext", "subjectAltName=IP:127.0.0.1"], { stdio: "ignore" });
   const ca = await readFile(cert);
-  const tags = c.init_tags(["host", "key", "cert", "on-data"]);
-  const wss = server.wss_serve_$x_(0, c._$n__$M_(
-    tags.host, "127.0.0.1", tags.key, key, tags.cert, cert,
-    tags["on-data"], (sid, data) => server.wss_send_$x_(sid, data),
-  ));
+  const tags = c.init_tags(["host", "key", "cert", "on-data", "on-open", "on-close", "on-error", "on-listening", "some", "none"]);
+  const none = c._PCT__$o__$o_(c.Option, tags.none);
+  const callbacks = c._$n__PCT__$M_(server.ServerCallbacks,
+    tags["on-listening"], none, tags["on-open"], none, tags["on-close"], none, tags["on-error"], none,
+    tags["on-data"], c._PCT__$o__$o_(c.Option, tags.some, (sid, data) => server.wss_send_$x_(sid, data)),
+  );
+  const wss = server.wss_serve_typed_$x_(0, serverConfig("127.0.0.1", key, cert), callbacks);
   const httpsServer = wss.options.server;
   let socket;
   t.after(async () => {
