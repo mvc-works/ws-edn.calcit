@@ -213,3 +213,23 @@ test("typed client callbacks receive open, payload, parse error and close", { ti
   await waitFor(() => closed.length === 1, "typed client close");
   assert.equal(closed[0].type, "close");
 });
+
+test("legacy non-function callbacks remain ignored", { timeout: 15000 }, async t => {
+  const tags = c.init_tags(["host", "on-listening", "on-open", "on-close", "on-data", "on-error"]);
+  const options = c._$n__$M_(
+    tags.host, "127.0.0.1", tags["on-listening"], false,
+    tags["on-open"], 1, tags["on-close"], "not a function",
+    tags["on-data"], false, tags["on-error"], 1,
+  );
+  const wss = server.wss_serve_$x_(0, options);
+  t.after(async () => {
+    for (const socket of wss.clients) socket.terminate();
+    await new Promise(resolve => wss.close(resolve));
+  });
+  await once(wss, "listening", { signal: t.signal });
+  const socket = new NodeWebSocket(`ws://127.0.0.1:${wss.address().port}`);
+  await once(socket, "open", { signal: t.signal });
+  socket.send("invalid EDN that should not be parsed without a listener");
+  socket.close();
+  await once(socket, "close", { signal: t.signal });
+});

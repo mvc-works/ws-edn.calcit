@@ -2,6 +2,10 @@
 ws-edn in calcit-js
 ----
 
+### 0.2.11
+
+服务端具名回调在连接处理过程中保持各自的函数类型，旧 Map 配置和协议继续可用。直接调用低层 `maintain-socket!` 或 `maintain-host-socket!` 的代码需要声明 `:io` 效果；回调执行行为不变。升级后请重新生成 Node 代码，正式 Git tag 发布前为候选。
+
 ### 0.2.10
 
 配对正式 Calcit 0.44.0、Cumulo Util 0.0.49 与 JS-FFI 0.2.22；请统一依赖图并重新生成浏览器及 Node 代码。WebSocket 协议、回调与连接行为不变；正式标签发布前为候选。
@@ -152,7 +156,7 @@ remain checked by `calcit docs check-md`.
 
 Server side:
 
-服务端也提供 `wss-serve-typed!`：参数依次是端口、`ServerConfig` 和 `ServerCallbacks`。`ServerConfig` 的 `:host`、`:cert`、`:key` 均为 `Option String`，`:class-mapper` 为 Tag 键 Map；未设置的配置使用 `None`，空 class mapper 使用 `{}`。`ServerCallbacks` 的 `:on-listening`、`:on-open`、`:on-close`、`:on-error`、`:on-data` 均为可选函数，参数分别为零个、会话 ID 与 socket、会话 ID 与关闭码、Node 错误对象、会话 ID 与开放 EDN 消息，回调返回 `Unit`。可以参照 `ws-edn.app.server/main!` 的完整示例。类型化入口将这些字段转为原有选项并复用 `wss-serve!`；旧 Map 入口不变；客户端也提供下文的类型化入口。
+服务端也提供 `wss-serve-typed!`：参数依次是端口、`ServerConfig` 和 `ServerCallbacks`。`ServerConfig` 的 `:host`、`:cert`、`:key` 均为 `Option String`，`:class-mapper` 为 Tag 键 Map；未设置的配置使用 `None`，空 class mapper 使用 `{}`。`ServerCallbacks` 的 `:on-listening`、`:on-open`、`:on-close`、`:on-error`、`:on-data` 均为可选函数，参数分别为零个、会话 ID 与 socket、会话 ID 与关闭码、Node 错误对象、会话 ID 与开放 EDN 消息，回调返回 `Unit`。可以参照 `ws-edn.app.server/main!` 的完整示例。类型化入口保留具名回调并复用连接处理逻辑；旧 Map 入口在边界适配回调，仍然可用；客户端也提供下文的类型化入口。
 
 `wss-serve!` 新增可选 `:host` String，例如 `:host |127.0.0.1` 用于只接受回环连接。
 WS 和 TLS 都传递该地址；省略时保留 Node 原默认监听行为，不会自动变为回环。
