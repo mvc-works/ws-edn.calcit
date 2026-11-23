@@ -994,21 +994,27 @@
         'maintain-host-socket! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn maintain-host-socket! (raw-socket options) (maintain-socket! raw-socket options)
           :examples $ []
-          :schema $ quote $ Fn NodeWebSocketHost (Map Tag V) (-> Unit) (:generics V) (:features :js-ffi :state)
+          :schema $ quote $ Fn NodeWebSocketHost (Map Tag V) (-> Unit) (:generics V) (:features :io :js-ffi :state)
         'maintain-socket! $ %{} 'CodeEntry
           :doc "|Registers and maintains a WebSocket connection. Sets up event handlers for message, close, and error events. Accepts options map with :on-open, :on-close, :on-data, :on-error, and :class-mapper callbacks."
           :code $ quote $ defn maintain-socket! (socket options)
+            maintain-socket-typed! socket options $ server-callbacks-from-options options
+          :examples $ []
+          :schema $ quote $ Fn NodeWebSocketHost (Map Tag V) (-> Unit) (:generics V) (:features :io :js-ffi :state)
+        'maintain-socket-typed! $ %{} 'CodeEntry
+          :doc "|Registers socket handlers using checked ServerCallbacks; options retains the legacy class mapper."
+          :code $ quote $ defn maintain-socket-typed! (socket options callbacks)
             let
                 sid $ new-session-id!
-                on-close $ server-option-callback options :on-close
-                on-error $ server-option-callback options :on-error
+                on-close $ :on-close callbacks
+                on-error $ :on-error callbacks
               swap! *global-connections
                 fn (connections key value) (.assoc connections key value)
                 , sid socket
-              match (server-option-callback options :on-open)
+              match (:on-open callbacks)
                 (:some callback) (callback sid socket)
                 (:none) &unit
-              match (server-option-callback options :on-data)
+              match (:on-data callbacks)
                 (:some callback)
                   reset! *proxied-data-listener $ Some $ fn (session-id data)
                     hint-fn $ Fn String Dynamic $ -> Unit
@@ -1042,7 +1048,7 @@
                 , &unit
               , &unit
           :examples $ []
-          :schema $ quote $ Fn NodeWebSocketHost (Map Tag V) (-> Unit) (:generics V) (:features :js-ffi :state)
+          :schema $ quote $ Fn NodeWebSocketHost (Map Tag V) ServerCallbacks (-> Unit) (:generics V) (:features :io :js-ffi :state)
         'new-session-id! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn new-session-id! ()
             let
@@ -1057,6 +1063,34 @@
               if (string? text) text $ raise |Expected-String-WebSocket-data
           :examples $ []
           :schema $ quote $ Fn NodeDataHost (-> String) (:features :js-ffi)
+        'server-callbacks-from-options $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn server-callbacks-from-options (options)
+            ServerCallbacks :on-listening
+              match (server-option-callback options :on-listening)
+                (:some callback)
+                  Some $ fn () (callback) &unit
+                (:none) None
+              , :on-open
+                match (server-option-callback options :on-open)
+                  (:some callback)
+                    Some $ fn (sid socket) (callback sid socket) &unit
+                  (:none) None
+                , :on-close
+                  match (server-option-callback options :on-close)
+                    (:some callback)
+                      Some $ fn (sid code) (callback sid code) &unit
+                    (:none) None
+                  , :on-error
+                    match (server-option-callback options :on-error)
+                      (:some callback)
+                        Some $ fn (error) (callback error) &unit
+                      (:none) None
+                    , :on-data $ match (server-option-callback options :on-data)
+                      (:some callback)
+                        Some $ fn (sid data) (callback sid data) &unit
+                      (:none) None
+          :examples $ []
+          :schema $ quote $ Fn (Map Tag V) (-> ServerCallbacks) (:generics V) (:features :js-ffi)
         'server-option-callback $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn server-option-callback (options key)
             match (get options key)
@@ -1198,12 +1232,39 @@
         'wss-serve! $ %{} 'CodeEntry
           :doc "|Starts a WebSocket server on the specified port. Optional :host String selects the bind address for WS and TLS; omission preserves the Node default. Other options: :cert, :key, :on-listening, :on-open, :on-close, :on-data, :on-error, :class-mapper."
           :code $ quote $ defn wss-serve! (port options)
+            wss-serve-with-callbacks! port options $ server-callbacks-from-options options
+          :examples $ [] $ quote
+            wss-serve! 8080 $ {}
+              :on-listening $ fn () $ println "|Server listening on 8080"
+              :on-data $ fn (sid data) (println "|Received from" sid : data)
+          :schema $ quote $ Fn Number (Map Tag V) (-> NodeWebSocketServerHost) (:generics V) (:features :io :js-ffi :state)
+        'wss-serve-typed! $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn wss-serve-typed! (port options callbacks)
+            let
+                initial $ assert-type
+                  {} $ :class-mapper $ :class-mapper options
+                  Map Tag Dynamic
+                host-options $ match (:host options)
+                  (:some v) (.assoc initial :host v)
+                  (:none) initial
+                cert-options $ match (:cert options)
+                  (:some v) (.assoc host-options :cert v)
+                  (:none) host-options
+                config-map $ match (:key options)
+                  (:some v) (.assoc cert-options :key v)
+                  (:none) cert-options
+              wss-serve-with-callbacks! port config-map callbacks
+          :examples $ []
+          :schema $ quote $ Fn Number ServerConfig ServerCallbacks (-> NodeWebSocketServerHost) (:features :io :js-ffi :state)
+        'wss-serve-with-callbacks! $ %{} 'CodeEntry
+          :doc "|Starts a WebSocket server with checked ServerCallbacks and the existing host and TLS options."
+          :code $ quote $ defn wss-serve-with-callbacks! (port options callbacks)
             let
                 cert-path $ server-option-string options :cert
                 key-path $ server-option-string options :key
                 host $ server-option-string options :host
-                on-listening $ server-option-callback options :on-listening
-                on-error $ server-option-callback options :on-error
+                on-listening $ :on-listening callbacks
+                on-error $ :on-error callbacks
               when
                 and (contains? options :host) (.none? host)
                 raise "|ws-edn :host must be a String"
@@ -1235,7 +1296,7 @@
                           (:some hostname) (&js-object :port port :host hostname)
                           (:none) (&js-object :port port)
                         , 'NodeWebSocketServerHost
-                .on-connection wss |connection $ fn (socket req) (maintain-host-socket! socket options) &unit
+                .on-connection wss |connection $ fn (socket req) (maintain-socket-typed! socket options callbacks) &unit
                 .on-listening wss |listening $ fn ()
                   match on-listening
                     (:some callback) (callback)
@@ -1248,16 +1309,8 @@
                     (:none) (log-server-error! error)
                   , &unit
                 , wss
-          :examples $ [] $ quote
-            wss-serve! 8080 $ {}
-              :on-listening $ fn () $ println "|Server listening on 8080"
-              :on-data $ fn (sid data) (println "|Received from" sid : data)
-          :schema $ quote $ Fn Number (Map Tag V) (-> NodeWebSocketServerHost) (:generics V) (:features :io :js-ffi :state)
-        'wss-serve-typed! $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn wss-serve-typed! (port options callbacks)
-            wss-serve! port $ server-typed-options options callbacks
           :examples $ []
-          :schema $ quote $ Fn Number ServerConfig ServerCallbacks (-> NodeWebSocketServerHost) (:features :io :js-ffi :state)
+          :schema $ quote $ Fn Number (Map Tag V) ServerCallbacks (-> NodeWebSocketServerHost) (:generics V) (:features :io :js-ffi :state)
         'wss-set-on-data! $ %{} 'CodeEntry
           :doc "|Sets the global listener for a String session ID and parsed Cirru EDN payload. The callback return value is ignored."
           :code $ quote $ defn wss-set-on-data! (on-data)
