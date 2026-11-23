@@ -4,7 +4,7 @@ ws-edn in calcit-js
 
 ### 0.2.11
 
-服务端具名回调在连接处理过程中保持各自的函数类型，旧 Map 配置和协议继续可用。直接调用低层 `maintain-socket!` 或 `maintain-host-socket!` 的代码需要声明 `:io` 效果；回调执行行为不变。升级后请重新生成 Node 代码，正式 Git tag 发布前为候选。
+配对 Calcit 0.44.0、正式 Cumulo Util 0.0.50 与 JS-FFI 0.2.23。服务端具名回调在连接处理过程中保持各自的函数类型，旧 Map 配置和协议继续可用。直接调用低层 `maintain-socket!` 或 `maintain-host-socket!` 的代码需要声明 `:io` 效果；回调执行行为不变。升级后请重新生成 Node 代码，正式 Git tag 发布前为候选。
 
 ### 0.2.10
 
