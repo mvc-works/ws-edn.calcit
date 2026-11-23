@@ -2,6 +2,10 @@
 ws-edn in calcit-js
 ----
 
+### 0.2.10
+
+配对正式 Calcit 0.44.0、Cumulo Util 0.0.49 与 JS-FFI 0.2.22；请统一依赖图并重新生成浏览器及 Node 代码。WebSocket 协议、回调与连接行为不变；正式标签发布前为候选。
+
 ### 0.2.9
 
 配对正式 Calcit 0.44.0、Cumulo Util 0.0.48 与 JS-FFI 0.2.21；请统一依赖图并重新生成浏览器及 Node 代码。WebSocket 协议、回调与连接行为不变。
