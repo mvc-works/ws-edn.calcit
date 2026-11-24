@@ -114,6 +114,10 @@
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :browser)
             :writable $ #{} :onclose :onerror :onmessage :onopen
           :schema $ quote Trait
+        'ClientCallbackMode $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defenum ClientCallbackMode (:legacy) (:typed ClientCallbacks)
+          :examples $ []
+          :schema $ quote EnumDef
         'ClientCallbacks $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defstruct ClientCallbacks
             :on-open $ Option $ Fn js-ffi.browser/EventHost (-> Unit) (:features :io :js-ffi :state)
@@ -137,6 +141,7 @@
             :state $ Ref WsClientState
             :url String
             :options $ Map Tag Dynamic
+            :callbacks ClientCallbackMode
             :on-data $ Ref $ Option
               Fn Dynamic (-> Unit) (:features :state :io :js-ffi)
             :socket-factory $ Fn String (-> ws-edn.client/BrowserWebSocketHost) (:features :js-ffi)
@@ -501,10 +506,16 @@
                           reset! (:retry-state client) (retry-state .reset)
                         reset! state-ref $ .assoc @state-ref :phase $ WsConnectionPhase :open
                         renew-client-heartbeat! client generation
-                        match
-                          client-option-callback (:options client) :on-open
-                          (:some callback) (callback event)
-                          (:none) &unit
+                        match (:callbacks client)
+                          (:legacy)
+                            match
+                              client-option-callback (:options client) :on-open
+                              (:some callback) (callback event)
+                              (:none) &unit
+                          (:typed callbacks)
+                            match (:on-open callbacks)
+                              (:some callback) (callback event)
+                              (:none) &unit
                       , &unit
                   set! (.-onmessage socket)
                     fn (event)
@@ -535,10 +546,16 @@
                             current-state $ assert-type (deref state-ref) WsClientState
                             explicit-close? $ = (WsConnectionPhase :closing) (:phase current-state)
                           reset! state-ref $ WsClientState :generation generation :phase (WsConnectionPhase :closed) :socket None
-                          match
-                            client-option-callback (:options client) :on-close
-                            (:some callback) (callback event)
-                            (:none) &unit
+                          match (:callbacks client)
+                            (:legacy)
+                              match
+                                client-option-callback (:options client) :on-close
+                                (:some callback) (callback event)
+                                (:none) &unit
+                            (:typed callbacks)
+                              match (:on-close callbacks)
+                                (:some callback) (callback event)
+                                (:none) &unit
                           when (not explicit-close?) (schedule-client-reconnect! client)
                       , &unit
                   set! (.-onerror socket)
@@ -549,9 +566,18 @@
                   , &unit
           :examples $ []
           :schema $ quote $ Fn WsClient (-> Unit) (:features :io :js-ffi :state)
-        'create-client-with! $ %{} 'CodeEntry
-          :doc "|Creates a client with an injected socket factory, primarily for tests and adapters."
+        'create-client-with! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn create-client-with! (url options socket-factory)
+            create-client-with-callbacks! url options (ClientCallbackMode :legacy) socket-factory
+          :examples $ []
+          :schema $ quote $ Fn String (Map Tag V)
+            Fn String $ -> BrowserWebSocketHost
+            -> WsClient
+            :generics V
+            :features :io :js-ffi :state
+        'create-client-with-callbacks! $ %{} 'CodeEntry
+          :doc "|Creates a client with an injected socket factory, primarily for tests and adapters."
+          :code $ quote $ defn create-client-with-callbacks! (url options callbacks socket-factory)
             let
                 state-ref $ ref $ WsClientState :generation 0 :phase (WsConnectionPhase :closed) :socket None
                 on-data-ref $ ref $ assert-type None
@@ -572,25 +598,29 @@
                 heartbeat-timeout-ms $ client-option-number options :heartbeat-timeout-ms
                 heartbeat-lease-ref $ ref $ assert-type None (Option cumulo-util.realtime/HeartbeatLease)
                 heartbeat-timer-ref $ ref $ assert-type None (Option Number)
-                client $ WsClient :state state-ref :url url :options options :on-data on-data-ref :socket-factory socket-factory :lifecycle-cleanup lifecycle-cleanup-ref :retry-state retry-state-ref :reconnect-timer reconnect-timer-ref :heartbeat-timeout-ms heartbeat-timeout-ms :heartbeat-lease heartbeat-lease-ref :heartbeat-timer heartbeat-timer-ref
-              match (client-option-callback options :on-data)
-                (:some callback)
-                  reset! on-data-ref $ Some $ fn (data)
-                    hint-fn $ Fn Dynamic (-> Unit) (:features :io :state :js-ffi)
-                    callback data
-                    , &unit
-                (:none) &unit
+                client $ WsClient :state state-ref :url url :options options :callbacks callbacks :on-data on-data-ref :socket-factory socket-factory :lifecycle-cleanup lifecycle-cleanup-ref :retry-state retry-state-ref :reconnect-timer reconnect-timer-ref :heartbeat-timeout-ms heartbeat-timeout-ms :heartbeat-lease heartbeat-lease-ref :heartbeat-timer heartbeat-timer-ref
+              match callbacks
+                (:legacy)
+                  match (client-option-callback options :on-data)
+                    (:some callback)
+                      reset! on-data-ref $ Some $ fn (data)
+                        hint-fn $ Fn Dynamic (-> Unit) (:features :io :state :js-ffi)
+                        callback data
+                        , &unit
+                    (:none) &unit
+                (:typed typed-callbacks)
+                  reset! on-data-ref $ :on-data typed-callbacks
               connect-client! $ client-state-handle client
               , client
           :examples $ []
-          :schema $ quote $ Fn String (Map Tag V)
+          :schema $ quote $ Fn String (Map Tag V) ClientCallbackMode
             Fn String $ -> BrowserWebSocketHost
             -> WsClient
             :generics V
             :features :io :js-ffi :state
         'create-client-with-typed! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn create-client-with-typed! (url config callbacks socket-factory)
-            create-client-with! url (client-typed-options config callbacks) socket-factory
+            create-client-with-callbacks! url (client-typed-options config callbacks) (ClientCallbackMode :typed callbacks) socket-factory
           :examples $ []
           :schema $ quote $ Fn String ClientConfig ClientCallbacks
             Fn String (-> BrowserWebSocketHost) (:features :js-ffi)
@@ -629,13 +659,22 @@
         'notify-client-error! $ %{} 'CodeEntry
           :doc "|调用已有 on-error 一次并报告是否通知；保留开放宿主错误对象与 callback 的异常传播。"
           :code $ quote $ defn notify-client-error! (client error)
-            match
-              client-option-callback (:options client) :on-error
-              (:some callback)
-                do (callback error) true
-              (:none) false
+            match (:callbacks client)
+              (:legacy)
+                match
+                  client-option-callback (:options client) :on-error
+                  (:some callback)
+                    do (callback error) true
+                  (:none) false
+              (:typed callbacks)
+                match (:on-error callbacks)
+                  (:some callback)
+                    do
+                      callback $ expect-object |client-error error
+                      , true
+                  (:none) false
           :examples $ []
-          :schema $ quote $ Fn WsClient E (-> Bool) (:generics E) (:features :js-ffi)
+          :schema $ quote $ Fn WsClient E (-> Bool) (:generics E) (:features :io :js-ffi :state)
         'parse-client-message $ %{} 'CodeEntry
           :doc "|校验文本帧并用传入的 decoder 解析，返回 Result<Payload,String>；错误不携带原始帧或解析器诊断。payload 类型由 decoder 决定，connect-client! 传入带 class-mapper 的开放 EDN 解析。"
           :code $ quote $ defn parse-client-message (data decode)
@@ -800,7 +839,16 @@
           :schema $ quote $ Fn String (Map Tag V) (-> WsClient) (:generics V) (:features :io :js-ffi :state)
         'ws-connect-typed! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn ws-connect-typed! (url config callbacks)
-            ws-connect! url $ client-typed-options config callbacks
+            assert |required-an-url-for-WebSocket-server $ string? url
+            match @*global-client
+              (:some client) (client .close)
+              (:none) &unit
+            let
+                client $ create-client-with-typed! url config callbacks $ fn (socket-url)
+                  js-cast (new js/WebSocket socket-url) 'ws-edn.client/BrowserWebSocketHost
+              install-browser-lifecycle! client
+              reset! *global-client $ Some client
+              , client
           :examples $ []
           :schema $ quote $ Fn String ClientConfig ClientCallbacks (-> WsClient) (:features :io :js-ffi :state)
         'ws-connected? $ %{} 'CodeEntry
@@ -853,6 +901,7 @@
             cumulo-util.activity :refer $ watch-browser-lifecycle!
             cumulo-util.realtime :refer $ retry-backoff heartbeat-lease
             js-ffi.browser :refer $ set-timeout!
+            js-ffi.contract :refer $ expect-object
     'ws-edn.schema $ %{} 'FileEntry
       :defs $ {}
         'Track $ %{} 'CodeEntry (:doc |)

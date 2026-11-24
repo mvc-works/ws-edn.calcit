@@ -209,6 +209,12 @@ test("typed client callbacks receive open, payload, parse error and close", { ti
   await waitFor(() => errors.length === 1, "typed parse error");
   assert.match(errors[0].message, /^\[ws-edn\/message\] invalid Cirru EDN$/);
   assert.doesNotMatch(errors[0].message, /private-wire-token/);
+  client.client_reconnect_$x_(connection);
+  await waitFor(() => opened.length === 2 && [...wss.clients].some(peer => peer !== socket), "typed client reconnect");
+  const reconnected = [...wss.clients].find(peer => peer !== socket);
+  reconnected.send("do |after-reconnect");
+  await waitFor(() => received.length === 2, "typed data after reconnect");
+  assert.deepEqual(received, ["typed-message", "after-reconnect"]);
   client.client_close_$x_(connection);
   await waitFor(() => closed.length === 1, "typed client close");
   assert.equal(closed[0].type, "close");
