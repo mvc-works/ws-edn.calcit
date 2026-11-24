@@ -434,6 +434,13 @@ try {
   console.error = previousConsoleError;
 }
 assert.equal(messageErrors.at(-1), transportError);
+console.error = () => {};
+try {
+  messageSockets[1].onerror(42);
+} finally {
+  console.error = previousConsoleError;
+}
+assert.equal(messageErrors.at(-1), 42);
 invoke_method("close", messageClient);
 
 // The legacy mapper still reaches the parser through the public client path.

@@ -2,6 +2,10 @@
 ws-edn in calcit-js
 ----
 
+### 0.3.0（候选）
+
+客户端的具名配置现在在连接、重连和消息处理时保留具体回调类型；旧 Map 入口继续按原方式处理。直接构造 `WsClient` 的调用方需要新增 `:callbacks` 字段：旧 Map 模式使用 `ClientCallbackMode :legacy`，具名模式使用 `ClientCallbackMode :typed` 和 `ClientCallbacks`。通常应使用现有连接函数创建句柄。具名错误回调要求传入 JS 宿主对象；旧 Map 错误回调仍保留开放输入。重新生成浏览器代码，并配对 Calcit 及 `@calcit/procs` 0.45.0。
+
 ### 0.2.11
 
 配对 Calcit 0.44.0、正式 Cumulo Util 0.0.50 与 JS-FFI 0.2.23。服务端具名回调在连接处理过程中保持各自的函数类型，旧 Map 配置和协议继续可用。直接调用低层 `maintain-socket!` 或 `maintain-host-socket!` 的代码需要声明 `:io` 效果；回调执行行为不变。升级后请重新生成 Node 代码，正式 Git tag 发布前为候选。
