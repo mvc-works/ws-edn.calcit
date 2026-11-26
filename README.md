@@ -2,7 +2,11 @@
 ws-edn in calcit-js
 ----
 
-### 0.3.3（候选）
+### 0.3.4（候选）
+
+统一使用 Calcit / `@calcit/procs` 0.46.0、Cumulo Util 0.0.53 和 JS-FFI 0.2.26。升级时请同步依赖并重新生成浏览器和 Node 代码；协议及回调行为不变。
+
+### 0.3.3（已发布）
 
 配套 Calcit / `@calcit/procs` 0.46.0、Cumulo Util 0.0.52 和 JS-FFI 0.2.24。心跳定时器按身份比较，保留旧回调失效与当前定时器保护；升级后需重新生成浏览器和 Node 代码。
 
