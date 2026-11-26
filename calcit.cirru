@@ -736,7 +736,7 @@
                         fn ()
                           match @timer-ref
                             (:some active-timer)
-                              when (= active-timer timer) (reset! timer-ref None)
+                              when (identical? active-timer timer) (reset! timer-ref None)
                                 let
                                     state $ assert-type (deref state-ref) WsClientState
                                     current-now $ checked-now-ms
