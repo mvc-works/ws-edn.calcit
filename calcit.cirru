@@ -436,7 +436,7 @@
               if (&struct:matches? value WsClient) value $ raise "|[ws-edn] expected a WsClient state handle"
               raise "|[ws-edn] expected a WsClient state handle"
           :examples $ []
-          :schema $ quote $ Fn ClientInput (-> WsClient) (:generics ClientInput)
+          :schema $ quote $ Fn ClientInput (-> WsClient) (:generics ClientInput) (:open :decode)
           :tests $ [] $ %{} 'TestEntry (:name |rejects-invalid-handles)
             :code $ quote $ each
               [] nil 0 false ({}) ([])
@@ -640,7 +640,7 @@
           :schema $ quote $ Fn WsClientState Number (-> Bool)
           :tests $ [] $ %{} 'TestEntry (:name |accepts-only-current-generation)
             :code $ quote $ let
-                state $ WsClientState :generation 2 :phase (%:: WsConnectionPhase :connecting) :socket None
+                state $ WsClientState :generation 2 :phase (WsConnectionPhase :connecting) :socket None
               assert "|current generation should match" $ = true $ generation-current? state 2
               assert "|stale generation should not match" $ = false $ generation-current? state 1
             :tags $ #{} :unit
@@ -1169,7 +1169,7 @@
                   callback $ fn (value) value
                   options $ {} $ :on-data callback
                 assert= true $ match (server-option-callback options :on-data)
-                  (:some found) (fn? found)
+                  (:some found) (identical? found callback)
                   (:none) false
               :tags $ #{} :server :unit
             %{} 'TestEntry (:name |rejects-non-function-options)

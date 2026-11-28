@@ -2,7 +2,11 @@
 ws-edn in calcit-js
 ----
 
-### 0.3.5（候选）
+### 0.3.6（候选）
+
+配对 Calcit / `@calcit/procs` 0.49.0，暂时保留已发布的 Cumulo Util 0.0.54 和 JS-FFI 0.2.26，以维持严格依赖解析；协议和公开回调行为不变。下游升级后将继续统一 JS-FFI 版本。
+
+### 0.3.5
 
 统一使用 Calcit / `@calcit/procs` 0.47.1、Cumulo Util 0.0.54 与 JS-FFI 0.2.26，并清理冗余 `hint-fn` 与可收敛的运行时类型谓词（`legacy-migration` 由 15 项降至 3 项，改用 `try-decode-map-as` 与宏语法契约校验）。升级时请同步依赖并重新生成浏览器和 Node 代码；协议、回调与消息边界行为不变。
 
