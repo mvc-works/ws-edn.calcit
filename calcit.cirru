@@ -208,21 +208,25 @@
           :schema $ quote $ Fn WsClient (-> Unit) (:features :js-ffi :state)
         'checked-message-text $ %{} 'CodeEntry (:doc "|在浏览器 WebSocket 边界确认消息为文本。")
           :code $ quote $ defn checked-message-text (data)
-            if (string? data) data $ raise "|ws-edn expected a text WebSocket message"
+            match (try-decode-map-as data 'String)
+              (:ok text) text
+              (:err _) (raise "|ws-edn expected a text WebSocket message")
           :examples $ []
           :schema $ quote $ Fn T (-> String) (:generics T) (:features :js-ffi)
         'checked-now-ms $ %{} 'CodeEntry (:doc "|读取浏览器当前毫秒时间，并在 JS 边界检查其为 Number。")
           :code $ quote $ defn checked-now-ms ()
-            &let
-              now $ js/Date.now
-              if (number? now) now $ raise "|ws-edn expected Date.now to return a Number"
+            match
+              try-decode-map-as (js/Date.now) 'Number
+              (:ok now) now
+              (:err _) (raise "|ws-edn expected Date.now to return a Number")
           :examples $ []
           :schema $ quote $ Fn (-> Number) (:features :js-ffi)
         'checked-random-number $ %{} 'CodeEntry (:doc "|在 JS 边界读取随机数并检查其为 Number。")
           :code $ quote $ defn checked-random-number ()
-            &let
-              value $ js/Math.random
-              if (number? value) value $ raise "|ws-edn expected Math.random to return a Number"
+            match
+              try-decode-map-as (js/Math.random) 'Number
+              (:ok value) value
+              (:err _) (raise "|ws-edn expected Math.random to return a Number")
           :examples $ []
           :schema $ quote $ Fn (-> Number) (:features :js-ffi)
         'cleanup-client-lifecycle! $ %{} 'CodeEntry
@@ -345,7 +349,9 @@
           :code $ quote $ defn client-option-number (options key)
             match (get options key)
               (:some value)
-                if (number? value) (Some value) None
+                match (try-decode-map-as value 'Number)
+                  (:ok number) (Some number)
+                  (:err _) None
               (:none) None
           :examples $ []
           :schema $ quote $ Fn (Map Tag V) Tag
@@ -678,11 +684,13 @@
         'parse-client-message $ %{} 'CodeEntry
           :doc "|校验文本帧并用传入的 decoder 解析，返回 Result<Payload,String>；错误不携带原始帧或解析器诊断。payload 类型由 decoder 决定，connect-client! 传入带 class-mapper 的开放 EDN 解析。"
           :code $ quote $ defn parse-client-message (data decode)
-            if (string? data)
-              try
-                Result :ok $ decode data
-                fn (message) (Result :err "|[ws-edn/message] invalid Cirru EDN")
-              Result :err "|[ws-edn/message] expected a text WebSocket message"
+            match (try-decode-map-as data 'String)
+              (:ok text)
+                try
+                  Result :ok $ decode text
+                  fn (message) (Result :err "|[ws-edn/message] invalid Cirru EDN")
+              (:err _)
+                Result :err "|[ws-edn/message] expected a text WebSocket message"
           :examples $ []
           :schema $ quote $ Fn Data
             Fn String $ -> Payload
@@ -819,13 +827,14 @@
         'ws-connect! $ %{} 'CodeEntry
           :doc "|Establishes a WebSocket connection to the specified URL. Accepts options map with :on-open, :on-close, :on-data, :on-error, and :class-mapper callbacks."
           :code $ quote $ defn ws-connect! (ws-url options)
-            assert |required-an-url-for-WebSocket-server $ string? ws-url
+            match (try-decode-map-as ws-url 'String)
+              (:ok _) &unit
+              (:err _) (raise |required-an-url-for-WebSocket-server)
             match @*global-client
               (:some client) (client .close)
               (:none) &unit
             let
                 client $ create-client-with! ws-url options $ fn (url)
-                  hint-fn $ Fn String $ -> BrowserWebSocketHost
                   js-cast (new js/WebSocket url) 'ws-edn.client/BrowserWebSocketHost
               install-browser-lifecycle! client
               assert-type client WsClient
@@ -839,7 +848,9 @@
           :schema $ quote $ Fn String (Map Tag V) (-> WsClient) (:generics V) (:features :io :js-ffi :state)
         'ws-connect-typed! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn ws-connect-typed! (url config callbacks)
-            assert |required-an-url-for-WebSocket-server $ string? url
+            match (try-decode-map-as url 'String)
+              (:ok _) &unit
+              (:err _) (raise |required-an-url-for-WebSocket-server)
             match @*global-client
               (:some client) (client .close)
               (:none) &unit
@@ -1078,7 +1089,6 @@
                   (:none) &unit
                 , &unit
               .on-close socket |close $ fn (code reason)
-                hint-fn $ Fn Number NodeDataHost $ -> Unit
                 swap! *global-connections
                   fn (connections key) (.dissoc connections key)
                   , sid
@@ -1087,7 +1097,6 @@
                   (:none) &unit
                 , &unit
               .on-error socket |error $ fn (error)
-                hint-fn $ Fn JsObject $ -> Unit
                 swap! *global-connections
                   fn (connections key) (.dissoc connections key)
                   , sid
@@ -1100,16 +1109,18 @@
           :schema $ quote $ Fn NodeWebSocketHost (Map Tag V) ServerCallbacks (-> Unit) (:generics V) (:features :io :js-ffi :state)
         'new-session-id! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn new-session-id! ()
-            let
-                value $ nanoid
-              if (string? value) value $ raise |Expected-String-session-id-from-nanoid
+            match
+              try-decode-map-as (nanoid) 'String
+              (:ok value) value
+              (:err _) (raise |Expected-String-session-id-from-nanoid)
           :examples $ []
           :schema $ quote $ Fn (-> String) (:features :js-ffi)
         'node-data-string $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn node-data-string (data)
-            let
-                text $ .to-string data
-              if (string? text) text $ raise |Expected-String-WebSocket-data
+            match
+              try-decode-map-as (.to-string data) 'String
+              (:ok text) text
+              (:err _) (raise |Expected-String-WebSocket-data)
           :examples $ []
           :schema $ quote $ Fn NodeDataHost (-> String) (:features :js-ffi)
         'server-callbacks-from-options $ %{} 'CodeEntry (:doc |)
@@ -1175,7 +1186,9 @@
           :code $ quote $ defn server-option-string (options key)
             match (get options key)
               (:some value)
-                if (string? value) (Some value) None
+                match (try-decode-map-as value 'String)
+                  (:ok text) (Some text)
+                  (:err _) None
               (:none) None
           :examples $ []
           :schema $ quote $ Fn (Map Tag V) Tag
@@ -1352,7 +1365,6 @@
                     (:none) &unit
                   , &unit
                 .on-error wss |error $ fn (error)
-                  hint-fn $ Fn JsObject $ -> Unit
                   match on-error
                     (:some callback) (callback error)
                     (:none) (log-server-error! error)
@@ -1398,14 +1410,15 @@
           :code $ quote $ defn current-iso-time! ()
             let
                 date $ js-cast (new js/Date) 'DateHost
-                text $ .to-iso-string date
-              if (string? text) text $ raise |Expected-String-ISO-time
+              match
+                try-decode-map-as (.to-iso-string date) 'String
+                (:ok text) text
+                (:err _) (raise |Expected-String-ISO-time)
           :examples $ []
           :schema $ quote $ Fn (-> String) (:features :js-ffi)
         'when-let $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defmacro when-let (pair & body)
-            assert "|expected 2 tokens" $ and (list? pair)
-              = 2 $ .len pair
+            assert "|expected 2 tokens" $ = 2 $ .len pair
             quasiquote $ &let ~pair $ when
               non-nil? $ ~ $ .unwrap (first pair)
               , ~@body
